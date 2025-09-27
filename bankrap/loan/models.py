@@ -27,7 +27,7 @@ class LoanRequest(models.Model):
     term_unit = models.CharField(max_length=10, choices=TERM_UNIT_CHOICES, default="DAYS", help_text="Loan term unit")
 
     def __str__(self):
-        return f"LoanRequest {self.id} - {self.status}"
+        return f"LoanRequest {self.loan_id} - {self.status}"
 
 class LoanOffer(models.Model):
     OFFER_STATUS_CHOICES = [
@@ -46,4 +46,4 @@ class LoanOffer(models.Model):
     offer_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"LoanOffer {self.id} for LoanRequest {self.loan_request.id}"
+        return f"LoanOffer {self.offer_id} for LoanRequest {self.loan_request.loan_id}"

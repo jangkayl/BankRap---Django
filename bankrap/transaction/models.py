@@ -29,4 +29,5 @@ class Transaction(models.Model):
         verbose_name_plural = "Transactions"
 
     def __str__(self):
-        return f"TX {self.transaction_id}: {self.get_transaction_type_display()} - {self.amount}"
+        return f"TX {self.transaction_id}: {self.type} - {self.amount}"
+
