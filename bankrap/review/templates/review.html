@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Reviews | BankRap</title>
+    <link rel="stylesheet" href="{% static 'review.css' %}">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a class="navbar-brand" href="#">
+            <img src="{% static 'images/logo.png' %}" alt="BankRap Logo" width="35">
+            Bank<span class="blue-text">Rap</span>
+        </a>
+        <div class="navbar-toggler" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/">Home</a></li>
+            <li><a href="/">Accounts</a></li>
+            <li><a href="/">Loans</a></li>
+            <li><a href="/">Transactions</a></li>
+            <li><a href="/">Reviews</a></li>
+        </ul>
+    </nav>
+
+    <!-- Reviews Section -->
+    <div class="review-container">
+        <h2 class="mb-4" style="text-align:center; color:#0d6efd;">User Reviews</h2>
+
+        {% for review in reviews %}
+        <div class="review-card">
+            <div class="review-header">
+                <div class="reviewer">{{ review.reviewer.name }}</div>
+                <div class="rating">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= review.rating %}
+                            ★
+                        {% else %}
+                            ☆
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="comment">{{ review.comment }}</div>
+            <div class="review-date">{{ review.review_date|date:"M d, Y" }} • {{ review.get_review_type_display }}</div>
+        </div>
+        {% empty %}
+        <p style="text-align:center; color:#888; margin-top:1rem;">No reviews available for this user yet.</p>
+        {% endfor %}
+    </div>
+
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('navLinks');
+            nav.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>
