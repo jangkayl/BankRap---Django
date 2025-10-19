@@ -58,7 +58,7 @@ ROOT_URLCONF = 'bankrap.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -81,7 +81,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'bankrap',
         'USER': 'root',
-        'PASSWORD': 'bre@kingbad123',
+        'PASSWORD': 'hahaha',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {'init_command': "SET SQL_MODE='STRICT_TRANS_TABLES'"}

@@ -1,9 +1,11 @@
-from django.urls import path
-from . import views
+from django.shortcuts import render
+from django.views import View
+from .models import LoanRequest
+# Create your views here.
 
-app_name = 'loan'
+class LoanView(View):
+    template_name = 'loan.html'
 
-urlpatterns = [
-    path('', views.LoanView.as_view(), name='loan'),
-    path('list/', views.LoanListView.as_view(), name='loan_list'),
-]
+    def get(self,request):
+        loans = LoanRequest.objects.all()
+        return render(request, self.template_name, {'loans': loans})
