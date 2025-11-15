@@ -1,6 +1,9 @@
 /* Body */
+* {
+    box-sizing: border-box;
+}
 body {
-    background-color: #f8fafc;
+    background-color: hsl(210, 40%, 98%);
     font-family: 'Poppins', sans-serif;
     margin: 0;
 }
@@ -11,8 +14,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-color: #ffffff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background-color: hsl(0, 0%, 100%);
     position: relative;
     z-index: 100;
 }
@@ -20,12 +22,14 @@ body {
 .navbar-brand {
     display: flex;
     align-items: center;
-    color: #0d6efd;
+    color: hsl(0, 0%, 0%);
     font-weight: 700;
     font-size: 1.25rem;
     text-decoration: none;
 }
-
+.blue-text {
+    color: hsl(216, 98%, 52%);
+}
 .navbar-brand img {
     margin-right: 0.5rem;
 }
@@ -39,16 +43,16 @@ body {
 }
 
 .nav-links a {
-    color: #0d6efd;
+    color: hsl(216, 98%, 52%);
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 700;
     transition: color 0.3s, border-bottom 0.3s;
     padding-bottom: 2px;
 }
 
 .nav-links a:hover,
 .nav-links a.active {
-    border-bottom: 2px solid #0d6efd;
+    border-bottom: 2px solid hsl(216, 98%, 52%);
 }
 
 /* Navbar toggler for mobile */
@@ -64,7 +68,7 @@ body {
 .navbar-toggler span {
     display: block;
     height: 3px;
-    background: #0d6efd;
+    background: hsl(216, 98%, 52%);
     border-radius: 2px;
 }
 
@@ -76,7 +80,7 @@ body {
         display: none;
         flex-direction: column;
         gap: 0.5rem;
-        background-color: #0d6efd;
+        background-color: hsl(216, 98%, 52%);
         position: absolute;
         top: 60px;
         right: 0;
@@ -85,61 +89,151 @@ body {
         border-radius: 0 0 12px 12px;
     }
     .nav-links a {
-        color: white;
+        color: hsl(0, 0%, 100%);
     }
     .nav-links.show {
         display: flex;
     }
 }
 
-/* Review Section */
-.review-container {
-    max-width: 900px;
-    margin: 3rem auto;
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    padding: 2rem;
-}
-
-.review-card {
-    border-bottom: 1px solid #e5e5e5;
-    padding: 1rem 0;
-}
-
-.review-card:last-child {
-    border-bottom: none;
+/* Header container */
+.header-container {
+    margin: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: 2px solid hsl(0, 0%, 20%);
+    padding:15px;
 }
 
 .review-header {
+    font-size: 1.5rem;
+    margin-bottom:5px;
+}
+.write-button {
     display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 
-.reviewer {
-    font-weight: 600;
-    color: #0d6efd;
+.write-button button {
+    font-size: 1rem;
+    padding: 7px 12px;
+    border: none;
+    outline: none;
+    background-color: hsl(216, 98%, 52%); /* blue */
+    color: hsl(0, 0%, 100%); /* white text */
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    min-width: 130px;
 }
 
-.rating {
-    color: #ffc107;
+.write-button button:hover {
+    background-color: hsl(216, 98%, 45%); /* slightly darker blue */
+}
+
+.write-button button:active {
+    background-color: hsl(216, 98%, 40%); /* deeper blue on click */
+    transform: scale(0.98); /* subtle press effect */
+}
+
+/* Given and Reviews Button container */
+.given-received-container {
+    margin: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: 2px solid hsl(0, 0%, 20%);
+    padding: 0;
+}
+
+.given-received-button {
+    flex-grow: 1;
+    text-align: left;
+    padding: 15px;
     font-size: 1.1rem;
+    border: none;
+    outline: none;
+    background: none;
+    cursor: pointer;
 }
 
-.comment {
-    margin-top: 0.5rem;
-    color: #555;
+.given-received-button:focus {
+    background-color: hsl(0, 0%, 90%)
 }
 
-.review-date {
-    font-size: 0.9rem;
-    color: #888;
+/* Review Form */
+#reviewForm {
+    margin: 20px auto;
+    border: 2px solid hsl(0, 0%, 20%);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* space between fields */
+    background-color: hsl(0, 0%, 100%);
+    max-width: 500px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .review-container {
-        padding: 1.5rem;
-    }
+#reviewForm label {
+    font-weight: 600;
+    color: hsl(0, 0%, 20%);
+    margin-bottom: 5px;
+    display: block;
+}
+
+#reviewForm select,
+#reviewForm input,
+#reviewForm textarea {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 1rem;
+    border: 1px solid hsl(0, 0%, 70%);
+    border-radius: 5px;
+    background-color: hsl(0, 0%, 98%);
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+#reviewForm select:focus,
+#reviewForm input:focus,
+#reviewForm textarea:focus {
+    border-color: hsl(216, 98%, 52%);
+}
+
+#reviewForm textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+#reviewForm button[type="submit"],
+#reviewForm button[type="reset"] {
+    font-size: 1rem;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#reviewForm button[type="submit"] {
+    background-color: hsl(216, 98%, 52%);
+    color: hsl(0, 0%, 100%);
+}
+
+#reviewForm button[type="submit"]:hover {
+    background-color: hsl(216, 98%, 45%);
+}
+
+#reviewForm button[type="reset"] {
+    background-color: hsl(0, 0%, 85%);
+    color: hsl(0, 0%, 20%);
+}
+
+#reviewForm button[type="reset"]:hover {
+    background-color: hsl(0, 0%, 75%);
+}
+
+#reviewForm button:active {
+    transform: scale(0.98);
 }

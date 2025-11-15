@@ -22,44 +22,63 @@
         </div>
         <ul class="nav-links" id="navLinks">
             <li><a href="/">Home</a></li>
-            <li><a href="/">Accounts</a></li>
+            <li><a href="/">Account</a></li>
             <li><a href="/">Loans</a></li>
             <li><a href="/">Transactions</a></li>
             <li><a href="/">Reviews</a></li>
         </ul>
     </nav>
 
-    <!-- Reviews Section -->
-    <div class="review-container">
-        <h2 class="mb-4" style="text-align:center; color:#0d6efd;">User Reviews</h2>
-
-        {% for review in reviews %}
-        <div class="review-card">
-            <div class="review-header">
-                <div class="reviewer">{{ review.reviewer.name }}</div>
-                <div class="rating">
-                    {% for i in "12345" %}
-                        {% if forloop.counter <= review.rating %}
-                            ★
-                        {% else %}
-                            ☆
-                        {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-            <div class="comment">{{ review.comment }}</div>
-            <div class="review-date">{{ review.review_date|date:"M d, Y" }} • {{ review.get_review_type_display }}</div>
+    <div class="header-container">
+        <div>
+            <div class="review-header">Review Center</div>
+            <div class="review-description">Create, edit, and browse reviews - clean, minimal, and fast.</div>
         </div>
-        {% empty %}
-        <p style="text-align:center; color:#888; margin-top:1rem;">No reviews available for this user yet.</p>
-        {% endfor %}
+        <div class="write-button">
+            <button id="writeBtn">Write a Review</button>
+        </div>
     </div>
 
-    <script>
-        function toggleMenu() {
-            const nav = document.getElementById('navLinks');
-            nav.classList.toggle('show');
-        }
-    </script>
+    <div class="given-received-container" id="givenReceivedContainer">
+        <button class="given-received-button">Given Reviews (0)</button>
+        <button class="given-received-button">Received Reviews (0)</button>
+    </div>
+
+    <div id="reviewForm" style="display: none;">
+        <form method="post">
+            {% csrf_token %}
+            <div>
+                <label>Reviewee</label>
+                <select name="reviewee" required>
+                    <option value="">Select a user</option>
+                    {% for user in users %}
+                    <option value="{{ user.user_id }}">{{ user.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Review Type</label>
+                <select name="review_type" required>
+                    <option value="B2L">Borrower-to-Lender</option>
+                    <option value="L2B">Lender-to-Borrower</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Rating</label>
+                <input type="number" name="rating" min="1" max="5" required>
+            </div>
+
+            <div>
+                <label>Comment</label>
+                <textarea name="comment" placeholder="Leave a concise, helpful comment..." required></textarea>
+            </div>
+
+            <button type="submit">Submit Review</button>
+            <button type="reset" id="resetBtn">Reset</button>
+        </form>
+    </div>
+    <script src="{% static 'review.js' %}"></script>
 </body>
 </html>

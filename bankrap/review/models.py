@@ -7,7 +7,7 @@ from account.models import User
 # Create your models here.
 class ReviewAndRating(models.Model):
     REVIEW_TYPE_CHOICES = [
-        ('B2L', 'Borrow-to-Lender'),
+        ('B2L', 'Borrower-to-Lender'),
         ('L2B', 'Lender-to-Borrower'),
     ]
 
