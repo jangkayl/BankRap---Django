@@ -1,14 +1,25 @@
-/* Body */
+/* --------------------------------
+   Base / Body
+-------------------------------- */
 * {
     box-sizing: border-box;
 }
+
+html {
+    height: 100%;
+    overflow-y: scroll; /* Always show vertical scrollbar */
+}
+
 body {
     background-color: hsl(210, 40%, 98%);
     font-family: 'Poppins', sans-serif;
+    min-height: 100vh; /* Ensure body takes full viewport height */
     margin: 0;
 }
 
-/* Navbar */
+/* --------------------------------
+   Navbar
+-------------------------------- */
 .navbar {
     padding: 1rem 2rem;
     display: flex;
@@ -27,11 +38,13 @@ body {
     font-size: 1.25rem;
     text-decoration: none;
 }
-.blue-text {
-    color: hsl(216, 98%, 52%);
-}
+
 .navbar-brand img {
     margin-right: 0.5rem;
+}
+
+.blue-text {
+    color: hsl(216, 98%, 52%);
 }
 
 .nav-links {
@@ -55,7 +68,7 @@ body {
     border-bottom: 2px solid hsl(216, 98%, 52%);
 }
 
-/* Navbar toggler for mobile */
+/* Navbar toggler (mobile) */
 .navbar-toggler {
     display: none;
     flex-direction: column;
@@ -96,20 +109,23 @@ body {
     }
 }
 
-/* Header container */
+/* --------------------------------
+   Header / Write Button
+-------------------------------- */
 .header-container {
     margin: 20px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     border: 2px solid hsl(0, 0%, 20%);
-    padding:15px;
+    padding: 15px;
 }
 
 .review-header {
     font-size: 1.5rem;
-    margin-bottom:5px;
+    margin-bottom: 5px;
 }
+
 .write-button {
     display: flex;
     align-items: center;
@@ -120,8 +136,8 @@ body {
     padding: 7px 12px;
     border: none;
     outline: none;
-    background-color: hsl(216, 98%, 52%); /* blue */
-    color: hsl(0, 0%, 100%); /* white text */
+    background-color: hsl(216, 98%, 52%);
+    color: hsl(0, 0%, 100%);
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease;
@@ -129,15 +145,17 @@ body {
 }
 
 .write-button button:hover {
-    background-color: hsl(216, 98%, 45%); /* slightly darker blue */
+    background-color: hsl(216, 98%, 45%);
 }
 
 .write-button button:active {
-    background-color: hsl(216, 98%, 40%); /* deeper blue on click */
-    transform: scale(0.98); /* subtle press effect */
+    background-color: hsl(216, 98%, 40%);
+    transform: scale(0.98);
 }
 
-/* Given and Reviews Button container */
+/* --------------------------------
+   Tabs: Given / Received
+-------------------------------- */
 .given-received-container {
     margin: 20px;
     display: flex;
@@ -159,10 +177,12 @@ body {
 }
 
 .given-received-button:focus {
-    background-color: hsl(0, 0%, 90%)
+    background-color: hsl(0, 0%, 90%);
 }
 
-/* Review Form */
+/* --------------------------------
+   Review Form
+-------------------------------- */
 #reviewForm {
     margin: 20px auto;
     border: 2px solid hsl(0, 0%, 20%);
@@ -170,9 +190,27 @@ body {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 15px; /* space between fields */
+    gap: 15px;
     background-color: hsl(0, 0%, 100%);
     max-width: 500px;
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    display: none;
+}
+
+#reviewForm.show {
+    display: flex;
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+#reviewForm form {
+    display:flex;
+    flex-direction:column;
+    gap: 15px;
 }
 
 #reviewForm label {
@@ -237,3 +275,214 @@ body {
 #reviewForm button:active {
     transform: scale(0.98);
 }
+
+/* Star rating */
+.star-rating {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 5px;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    display: inline-block;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.star-rating label::before {
+    content: '☆';
+    color: #ccc;
+    transition: color 0.2s ease;
+}
+
+.star-rating label:hover::before,
+.star-rating label:hover ~ label::before {
+    content: '★';
+    color: #ffc107;
+}
+
+.star-rating input:checked ~ label::before {
+    content: '★';
+    color: #ffc107;
+}
+
+/* --------------------------------
+   Review Panels / Cards
+-------------------------------- */
+.reviews-panels {
+    margin: 20px;
+}
+
+.reviews-panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 992px) {
+    .reviews-panel {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .reviews-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Individual review card */
+.review-card {
+    border: 2px solid hsl(0, 0%, 20%);
+    background-color: hsl(0, 0%, 100%);
+    padding: 0;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header: name, type, stars, actions */
+.review-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px;
+    border-bottom: 2px solid hsl(0, 0%, 20%);
+}
+
+.review-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.review-title strong {
+    font-size: 1.1rem;
+}
+
+.review-type {
+    color: hsl(0, 0%, 30%);
+    font-size: 0.9rem;
+}
+
+.stars-inline {
+    font-size: 1.2rem;
+    color: #ffc107;
+}
+
+.review-actions {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+.btn-edit, .btn-delete {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.btn-edit {
+    border: 2px solid hsl(0, 0%, 20%);
+    background: white;
+    color: hsl(0, 0%, 20%);
+}
+
+.btn-edit:hover {
+    background-color: hsl(0, 0%, 90%);
+}
+
+.btn-delete {
+    border: 2px solid #e53935;
+    background: #fff;
+    color: #b71c1c;
+}
+
+.btn-delete:hover {
+    background-color: #fff0f0;
+}
+
+/* Comment section */
+.review-comment {
+    padding: 15px;
+    border-bottom: 2px solid hsl(0, 0%, 20%);
+    font-size: 1rem;
+}
+
+/* Meta info */
+.review-meta {
+    padding: 15px;
+    font-size: 0.9rem;
+    color: hsl(0, 0%, 30%);
+}
+
+@media (max-width: 480px) {
+    .review-actions {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    .btn-edit, .btn-delete {
+        width: auto;
+    }
+}
+
+/* --------------------------------
+   Django Messages
+-------------------------------- */
+.messages {
+    margin: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: 2px solid;
+    opacity: 0;
+    transform: translateY(-4px);
+    animation: fadeSlide 0.25s ease forwards;
+}
+
+@keyframes fadeSlide {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Message colors */
+.message.success { background-color: hsl(140, 40%, 96%); border-color: hsl(140, 40%, 40%); color: hsl(140, 40%, 25%); }
+.message.info { background-color: hsl(216, 98%, 95%); border-color: hsl(216, 98%, 52%); color: hsl(216, 98%, 32%); }
+.message.warning { background-color: hsl(40, 100%, 95%); border-color: hsl(40, 100%, 45%); color: hsl(40, 100%, 28%); }
+.message.error { background-color: hsl(0, 85%, 96%); border-color: hsl(0, 70%, 50%); color: hsl(0, 65%, 35%); }
+
+/* --------------------------------
+   Empty panels
+-------------------------------- */
+.empty {
+    text-align: center;
+    color: #888;
+    font-size: 1rem;
+    padding: 2rem 1rem;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin: 1rem 0;
+}
+
