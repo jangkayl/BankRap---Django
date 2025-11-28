@@ -1,11 +1,767 @@
 <!DOCTYPE html>
 <html lang="en">
-{% load static %}
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankRap - Peer to Peer Lending Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .blue-text {
+            color: #0d6efd;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(45deg, #0d6efd, #6610f2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #0d6efd;
+        }
+
+        .navbar-toggler {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .navbar-toggler span {
+            width: 25px;
+            height: 3px;
+            background: #333;
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Dashboard Header */
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-header h1 {
+            color: #0d6efd;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .dashboard-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.pending { background: linear-gradient(45deg, #ffc107, #fd7e14); }
+        .stat-icon.approved { background: linear-gradient(45deg, #28a745, #20c997); }
+        .stat-icon.rejected { background: linear-gradient(45deg, #dc3545, #e83e8c); }
+        .stat-icon.repaid { background: linear-gradient(45deg, #6f42c1, #0d6efd); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #0d6efd;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #0d6efd;
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(13, 110, 253, 0.1);
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Loan Request Form */
+        .loan-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #0d6efd;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #0d6efd, #6610f2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #e83e8c);
+            color: white;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f8f9fa;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d1edff; color: #0c5460; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-repaid { background: #d4edda; color: #155724; }
+        .status-accepted { background: #d1ecf1; color: #0c5460; }
+        .status-declined { background: #f5c6cb; color: #721c24; }
+
+        .card-content {
+            margin-bottom: 1rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 70px;
+                left: -100%;
+                width: 100%;
+                height: calc(100vh - 70px);
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: center;
+                padding-top: 2rem;
+                transition: left 0.3s ease;
+            }
+
+            .nav-links.show {
+                left: 0;
+            }
+
+            .navbar-toggler {
+                display: flex;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-header h1 {
+                font-size: 2rem;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-navigation {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .card-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
 </head>
 <body>
-    <div>Loan</div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a class="navbar-brand" href="#">
+            <div class="logo">BR</div>
+            Bank<span class="blue-text">Rap</span>
+        </a>
+        <div class="navbar-toggler" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#accounts">Accounts</a></li>
+            <li><a href="#loans">Loans</a></li>
+            <li><a href="#transactions">Transactions</a></li>
+            <li><a href="#reviews">Reviews</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header fade-in">
+            <h1>Welcome to BankRap</h1>
+            <p>Your trusted peer-to-peer lending platform</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-container fade-in">
+            <div class="stat-card">
+                <div class="stat-icon pending">⏳</div>
+                <div class="stat-number">12</div>
+                <div class="stat-label">Pending Requests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon approved">✅</div>
+                <div class="stat-number">8</div>
+                <div class="stat-label">Approved Loans</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon rejected">❌</div>
+                <div class="stat-number">3</div>
+                <div class="stat-label">Rejected Requests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon repaid">💰</div>
+                <div class="stat-number">15</div>
+                <div class="stat-label">Repaid Loans</div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation fade-in">
+            <button class="tab-btn active" onclick="showTab('loan-requests')">My Loan Requests</button>
+            <button class="tab-btn" onclick="showTab('create-request')">Create Request</button>
+            <button class="tab-btn" onclick="showTab('loan-offers')">Loan Offers</button>
+            <button class="tab-btn" onclick="showTab('my-offers')">My Offers</button>
+        </div>
+
+        <!-- Loan Requests Section -->
+        <div id="loan-requests" class="content-section active fade-in">
+            <div class="cards-grid">
+                <!-- Sample Loan Request Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Loan Request #1001</div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-row">
+                            <span class="info-label">Amount:</span>
+                            <span class="info-value">P5,000.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Interest Rate:</span>
+                            <span class="info-value">12.5%</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Term:</span>
+                            <span class="info-value">6 Months</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Purpose:</span>
+                            <span class="info-value">Business expansion</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Request Date:</span>
+                            <span class="info-value">Jan 15, 2025</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-sm">View Details</button>
+                        <button class="btn btn-danger btn-sm">Cancel Request</button>
+                    </div>
+                </div>
+
+                <!-- Sample Approved Loan Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Loan Request #1002</div>
+                        <span class="status-badge status-approved">Approved</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-row">
+                            <span class="info-label">Amount:</span>
+                            <span class="info-value">P3,500.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Interest Rate:</span>
+                            <span class="info-value">10.0%</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Term:</span>
+                            <span class="info-value">3 Months</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Purpose:</span>
+                            <span class="info-value">Medical expenses</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Lender:</span>
+                            <span class="info-value">John Smith</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-success btn-sm">Make Payment</button>
+                        <button class="btn btn-primary btn-sm">View Contract</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Loan Request Section -->
+        <div id="create-request" class="content-section">
+            <div class="loan-form">
+                <h2 style="color: #0d6efd; margin-bottom: 1.5rem;">Create New Loan Request</h2>
+                <form>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="amount">Loan Amount (P)</label>
+                            <input type="number" id="amount" class="form-control" placeholder="Enter amount" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="interest-rate">Preferred Interest Rate (%)</label>
+                            <input type="number" id="interest-rate" class="form-control" placeholder="Enter rate" step="0.01" min="0">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="term-value">Loan Term Duration</label>
+                            <input type="number" id="term-value" class="form-control" placeholder="Enter duration" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="term-unit">Term Unit</label>
+                            <select id="term-unit" class="form-control">
+                                <option value="DAYS">Days</option>
+                                <option value="WEEKS">Weeks</option>
+                                <option value="MONTHS">Months</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="purpose">Loan Purpose</label>
+                        <textarea id="purpose" class="form-control" rows="4" placeholder="Describe the purpose of your loan..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Submit Loan Request</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loan Offers Section -->
+        <div id="loan-offers" class="content-section">
+            <div class="cards-grid">
+                <!-- Sample Loan Offer Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Offer #2001 for Request #1001</div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-row">
+                            <span class="info-label">Lender:</span>
+                            <span class="info-value">Sarah Johnson</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Offered Amount:</span>
+                            <span class="info-value">P4,800.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Offered Rate:</span>
+                            <span class="info-value">11.5%</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Original Request:</span>
+                            <span class="info-value">P5,000.00 at 12.5%</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Offer Date:</span>
+                            <span class="info-value">Jan 16, 2025</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-success btn-sm">Accept Offer</button>
+                        <button class="btn btn-danger btn-sm">Decline Offer</button>
+                        <button class="btn btn-primary btn-sm">View Lender Profile</button>
+                    </div>
+                </div>
+
+                <!-- Sample Accepted Offer Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Offer #2002 for Request #1002</div>
+                        <span class="status-badge status-accepted">Accepted</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-row">
+                            <span class="info-label">Lender:</span>
+                            <span class="info-value">Mike Davis</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Offered Amount:</span>
+                            <span class="info-value">P3,500.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Offered Rate:</span>
+                            <span class="info-value">10.0%</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Contract Status:</span>
+                            <span class="info-value">Active</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-sm">View Contract</button>
+                        <button class="btn btn-success btn-sm">Contact Lender</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Offers Section (For Lenders) -->
+        <div id="my-offers" class="content-section">
+            <div class="cards-grid">
+                <!-- Sample Offer Made by User -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">My Offer #3001</div>
+                        <span class="status-badge status-pending">Pending</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-row">
+                            <span class="info-label">Borrower:</span>
+                            <span class="info-value">Alex Wilson</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Requested Amount:</span>
+                            <span class="info-value">P2,000.00</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">My Offer:</span>
+                            <span class="info-value">P1,800.00 at 15.0%</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Purpose:</span>
+                            <span class="info-value">Car repair</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Offer Date:</span>
+                            <span class="info-value">Jan 17, 2025</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-primary btn-sm">Modify Offer</button>
+                        <button class="btn btn-danger btn-sm">Withdraw Offer</button>
+                        <button class="btn btn-primary btn-sm">View Borrower Profile</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('navLinks');
+            nav.classList.toggle('show');
+        }
+
+        function showTab(tabName) {
+            // Hide all content sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all tab buttons
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Add fade-in animation to cards when they become visible
+        function animateCards() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('fade-in');
+                }, index * 100);
+            });
+        }
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', function() {
+            animateCards();
+        });
+
+        // Simulate form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Loan request submitted successfully! You will be notified when lenders make offers.');
+        });
+    </script>
 </body>
 </html>

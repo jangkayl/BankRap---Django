@@ -1,129 +1,758 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lending App - Transactions</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankRap Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        .transition-all {
+            transition: all 0.2s ease-in-out;
+        }
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-900">
-
-  <div class="max-w-5xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-4">📊 Loan Transactions</h1>
-
-    <!-- Transaction Form -->
-    <div class="bg-white rounded-lg shadow p-4 mb-6">
-      <h2 class="text-lg font-semibold mb-3">Record Transaction</h2>
-      <form id="transactionForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Borrower -->
-        <div>
-          <label for="borrower" class="block mb-1 font-medium">Borrower</label>
-          <select id="borrower" required class="w-full border rounded p-2">
-            <option value="">Select borrower</option>
-            <option value="John Doe">John Doe</option>
-            <option value="Jane Smith">Jane Smith</option>
-          </select>
+<body class="bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center cursor-pointer" onclick="showPage('wallet')">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
+                        <span class="text-white font-bold text-sm">B</span>
+                    </div>
+                    <span class="text-xl font-bold text-gray-900">Bank<span class="text-blue-600">Rap</span></span>
+                </div>
+                <div class="hidden md:flex items-baseline space-x-4">
+                    <button onclick="showPage('wallet')" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="wallet">Home</button>
+                    <a href="#" class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Accounts</a>
+                    <a href="#" class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Loans</a>
+                    <button onclick="showPage('wallet')" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="wallet">Wallet</button>
+                    <button onclick="showPage('transactions')" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="transactions">Transactions</button>
+                    <a href="#" class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Reviews</a>
+                </div>
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-gray-900 hover:text-blue-600 focus:outline-none">
+                        <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                        <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="hidden md:hidden px-2 pt-2 pb-3 space-y-1 bg-white border-t">
+                <button onclick="showPage('wallet')" class="mobile-nav-link w-full text-left block px-3 py-2 rounded-md text-base font-medium" data-page="wallet">Home</button>
+                <a href="#" class="text-gray-900 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium">Accounts</a>
+                <a href="#" class="text-gray-900 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium">Loans</a>
+                <button onclick="showPage('wallet')" class="mobile-nav-link w-full text-left block px-3 py-2 rounded-md text-base font-medium" data-page="wallet">Wallet</button>
+                <button onclick="showPage('transactions')" class="mobile-nav-link w-full text-left block px-3 py-2 rounded-md text-base font-medium" data-page="transactions">Transactions</button>
+                <a href="#" class="text-gray-900 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium">Reviews</a>
+            </div>
         </div>
+    </nav>
 
-        <!-- Loan Reference -->
-        <div>
-          <label for="loanRef" class="block mb-1 font-medium">Loan Reference</label>
-          <select id="loanRef" required class="w-full border rounded p-2">
-            <option value="">Select loan</option>
-            <option value="LN-0001">LN-0001</option>
-            <option value="LN-0002">LN-0002</option>
-          </select>
-        </div>
+    <!-- Wallet Page -->
+    <div id="wallet-page" class="page">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">My Wallet</h1>
+                <p class="text-gray-600">Manage your BankRap e-wallet and peer-to-peer lending</p>
+            </div>
 
-        <!-- Transaction Type -->
-        <div>
-          <label for="transactionType" class="block mb-1 font-medium">Transaction Type</label>
-          <select id="transactionType" required class="w-full border rounded p-2">
-            <option value="">Select type</option>
-            <option value="Disbursement">Disbursement</option>
-            <option value="Repayment">Repayment</option>
-          </select>
-        </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Wallet Balance -->
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-xl">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="bg-white/20 p-2 rounded-lg">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold">John Doe's Wallet</h3>
+                                    <p class="text-blue-100 text-sm">Available Balance</p>
+                                </div>
+                            </div>
+                            <button onclick="toggleBalance()" class="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-colors">
+                                <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                <svg id="eye-off-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mb-4">
+                            <div id="balance-display" class="text-3xl font-bold mb-1">₱2,547.85</div>
+                            <div class="flex items-center text-green-200 text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                </svg>
+                                <span>Available for transactions</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-white/20">
+                            <div class="text-center">
+                                <div class="text-xl font-semibold">₱254.79</div>
+                                <div class="text-blue-200 text-xs">This Month</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-xl font-semibold">₱127.39</div>
+                                <div class="text-blue-200 text-xs">P2P Lending</div>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Amount -->
-        <div>
-          <label for="amount" class="block mb-1 font-medium">Amount</label>
-          <input type="number" id="amount" placeholder="e.g. 10000" required class="w-full border rounded p-2">
-        </div>
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-2xl p-6 shadow-lg">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="openTransactionModal('DEPOSIT')" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition-all hover-scale shadow-md">
+                                <div class="flex flex-col items-center space-y-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <div class="text-center">
+                                        <div class="font-semibold text-sm">Deposit</div>
+                                        <div class="text-xs opacity-90">Add money to wallet</div>
+                                    </div>
+                                </div>
+                            </button>
+                            <button onclick="openTransactionModal('WITHDRAW')" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl transition-all hover-scale shadow-md">
+                                <div class="flex flex-col items-center space-y-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                    <div class="text-center">
+                                        <div class="font-semibold text-sm">Withdraw</div>
+                                        <div class="text-xs opacity-90">Transfer to bank</div>
+                                    </div>
+                                </div>
+                            </button>
+                            <button class="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl transition-all hover-scale shadow-md">
+                                <div class="flex flex-col items-center space-y-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    <div class="text-center">
+                                        <div class="font-semibold text-sm">P2P Lending</div>
+                                        <div class="text-xs opacity-90">Lend to peers</div>
+                                    </div>
+                                </div>
+                            </button>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl transition-all hover-scale shadow-md">
+                                <div class="flex flex-col items-center space-y-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    </svg>
+                                    <div class="text-center">
+                                        <div class="font-semibold text-sm">Pay Bills</div>
+                                        <div class="text-xs opacity-90">Quick payments</div>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Date -->
-        <div>
-          <label for="date" class="block mb-1 font-medium">Transaction Date</label>
-          <input type="date" id="date" required class="w-full border rounded p-2">
+                <!-- Transaction History -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-2xl p-6 shadow-lg">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Transaction History</h3>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                </svg>
+                                <select id="wallet-filter" class="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="ALL">All Types</option>
+                                    <option value="D">Disbursements</option>
+                                    <option value="R">Repayments</option>
+                                </select>
+                                <select id="wallet-status-filter" class="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="ALL">All Status</option>
+                                    <option value="C">Completed</option>
+                                    <option value="P">Pending</option>
+                                    <option value="F">Failed</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="wallet-transactions" class="space-y-3"></div>
+                        <div class="mt-4 text-center">
+                            <button class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All Transactions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- Status -->
-        <div>
-          <label for="status" class="block mb-1 font-medium">Status</label>
-          <select id="status" required class="w-full border rounded p-2">
-            <option value="Completed">Completed</option>
-            <option value="Pending">Pending</option>
-          </select>
-        </div>
-
-        <div class="md:col-span-2 text-right">
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Add Transaction
-          </button>
-        </div>
-      </form>
     </div>
 
-    <!-- Transaction History Table -->
-    <div class="bg-white rounded-lg shadow p-4">
-      <h2 class="text-lg font-semibold mb-3">Transaction History</h2>
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="bg-gray-200 text-left">
-            <th class="p-2 border-b">Date</th>
-            <th class="p-2 border-b">Borrower</th>
-            <th class="p-2 border-b">Loan Ref</th>
-            <th class="p-2 border-b">Type</th>
-            <th class="p-2 border-b text-right">Amount</th>
-            <th class="p-2 border-b">Status</th>
-          </tr>
-        </thead>
-        <tbody id="transactionTable">
-          <!-- Dynamic rows here -->
-        </tbody>
-      </table>
+    <!-- Transactions Page -->
+    <div id="transactions-page" class="page hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <h1 class="text-3xl font-bold text-gray-900">Loan Transactions</h1>
+                </div>
+                <p class="text-gray-600">Manage and track all peer-to-peer loan transactions</p>
+            </div>
+
+            <!-- Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8" id="stats-cards"></div>
+
+            <!-- Record Transaction -->
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Record Transaction</h2>
+                    <button onclick="toggleRecordForm()" class="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <svg id="chevron-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="record-form" class="hidden">
+                    <form id="transaction-form" class="space-y-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Borrower</label>
+                                <select name="borrower" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select borrower</option>
+                                    <option value="John Smith">John Smith</option>
+                                    <option value="Jane Doe">Jane Doe</option>
+                                    <option value="Mike Johnson">Mike Johnson</option>
+                                    <option value="Alex Brown">Alex Brown</option>
+                                    <option value="Lisa Anderson">Lisa Anderson</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Loan Reference</label>
+                                <select name="loan_ref" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select loan</option>
+                                    <option value="1023">Loan #1023</option>
+                                    <option value="1024">Loan #1024</option>
+                                    <option value="1025">Loan #1025</option>
+                                    <option value="987">Loan #987</option>
+                                    <option value="945">Loan #945</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Transaction Type</label>
+                                <select name="type" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="D">Disbursement</option>
+                                    <option value="R">Repayment</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Amount</label>
+                                <input type="number" name="amount" required step="0.01" min="0" placeholder="e.g. 10000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Transaction Date</label>
+                                <input type="date" name="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Status</label>
+                                <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="C">Completed</option>
+                                    <option value="P">Pending</option>
+                                    <option value="F">Failed</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-900 mb-2">Description (Optional)</label>
+                                <textarea name="description" rows="3" placeholder="Add any additional details about this transaction..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 justify-end">
+                            <button type="button" onclick="toggleRecordForm()" class="flex items-center gap-2 px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium">Add Transaction</button>
+                        </div>
+                    </form>
+                </div>
+                <button id="add-transaction-btn" onclick="toggleRecordForm()" class="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Transaction
+                </button>
+            </div>
+
+            <!-- Transaction History Table -->
+            <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Transaction History</h2>
+                <div class="flex flex-col md:flex-row gap-4 mb-6 pb-6 border-b border-gray-200">
+                    <div class="flex-1">
+                        <input type="text" id="search-borrower" placeholder="Search by borrower name..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="type-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            <option value="ALL">All Types</option>
+                            <option value="D">Disbursements</option>
+                            <option value="R">Repayments</option>
+                        </select>
+                        <select id="status-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            <option value="ALL">All Status</option>
+                            <option value="C">Completed</option>
+                            <option value="P">Pending</option>
+                            <option value="F">Failed</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="transactions-table"></div>
+                <div id="transaction-summary" class="mt-6 pt-6 border-t border-gray-200"></div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    const form = document.getElementById('transactionForm');
-    const tableBody = document.getElementById('transactionTable');
+    <!-- Transaction Modal -->
+    <div id="transaction-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="modal-title" class="text-xl font-semibold text-gray-900">Deposit Money</h2>
+                <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
+    <script>
+        let currentBalance = 2547.85;
+        let showBalanceFlag = true;
+        let currentPage = 'wallet';
+        let modalType = 'DEPOSIT';
+        let transactions = [
+            { transaction_id: 1, amount: 500.00, type: 'D', status: 'C', transaction_date: '2024-01-20T14:30:00Z', transaction_data: 'Loan disbursement to John Smith', loan_request_id: 1024, lender_name: 'Sarah Johnson', borrower_name: 'John Smith' },
+            { transaction_id: 2, amount: 150.00, type: 'R', status: 'C', transaction_date: '2024-01-19T09:15:00Z', transaction_data: 'Monthly payment received', loan_request_id: 987, borrower_name: 'Jane Doe' },
+            { transaction_id: 3, amount: 1000.00, type: 'D', status: 'P', transaction_date: '2024-01-18T16:45:00Z', transaction_data: 'Processing loan disbursement', loan_request_id: 1025, lender_name: 'Michael Davis', borrower_name: 'Mike Johnson' },
+            { transaction_id: 4, amount: 75.50, type: 'R', status: 'F', transaction_date: '2024-01-17T11:20:00Z', transaction_data: 'Payment failed - insufficient funds', loan_request_id: 945, borrower_name: 'Alex Brown' },
+            { transaction_id: 5, amount: 250.00, type: 'D', status: 'C', transaction_date: '2024-01-16T13:10:00Z', transaction_data: 'Emergency loan disbursement', loan_request_id: 1023, lender_name: 'Emily Wilson', borrower_name: 'Lisa Anderson' },
+            { transaction_id: 6, amount: 325.00, type: 'R', status: 'C', transaction_date: '2024-01-15T10:30:00Z', transaction_data: 'Final payment completed', loan_request_id: 856, borrower_name: 'Tom Harris' },
+        ];
 
-      const borrower = document.getElementById('borrower').value;
-      const loanRef = document.getElementById('loanRef').value;
-      const type = document.getElementById('transactionType').value;
-      const amount = document.getElementById('amount').value;
-      const date = document.getElementById('date').value;
-      const status = document.getElementById('status').value;
+        function formatCurrency(amount) {
+            return '₱' + amount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="p-2 border-b">${date}</td>
-        <td class="p-2 border-b">${borrower}</td>
-        <td class="p-2 border-b">${loanRef}</td>
-        <td class="p-2 border-b">${type}</td>
-        <td class="p-2 border-b text-right ${type === 'Repayment' ? 'text-green-600' : 'text-blue-600'}">
-          ${parseFloat(amount).toLocaleString()}
-        </td>
-        <td class="p-2 border-b">${status}</td>
-      `;
-      tableBody.appendChild(row);
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
 
-      form.reset();
-    });
-  </script>
+        function formatDateShort(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric'
+            });
+        }
+
+        function toggleBalance() {
+            showBalanceFlag = !showBalanceFlag;
+            document.getElementById('balance-display').textContent = showBalanceFlag ? formatCurrency(currentBalance) : '••••••';
+            document.getElementById('eye-icon').classList.toggle('hidden');
+            document.getElementById('eye-off-icon').classList.toggle('hidden');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+            menu.classList.toggle('hidden');
+            menuIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('hidden');
+        }
+
+        function showPage(page) {
+            currentPage = page;
+            document.getElementById('wallet-page').classList.toggle('hidden', page !== 'wallet');
+            document.getElementById('transactions-page').classList.toggle('hidden', page !== 'transactions');
+            document.getElementById('mobile-menu').classList.add('hidden');
+            document.getElementById('menu-icon').classList.remove('hidden');
+            document.getElementById('close-icon').classList.add('hidden');
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.dataset.page === page) {
+                    link.classList.add('text-blue-600', 'bg-blue-50');
+                    link.classList.remove('text-gray-900');
+                } else {
+                    link.classList.remove('text-blue-600', 'bg-blue-50');
+                    link.classList.add('text-gray-900');
+                }
+            });
+
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                if (link.dataset.page === page) {
+                    link.classList.add('text-blue-600', 'bg-blue-50');
+                    link.classList.remove('text-gray-900');
+                } else {
+                    link.classList.remove('text-blue-600', 'bg-blue-50');
+                    link.classList.add('text-gray-900');
+                }
+            });
+
+            if (page === 'transactions') {
+                renderStats();
+                renderTransactionsTable();
+            } else {
+                renderWalletTransactions();
+            }
+        }
+
+        function renderWalletTransactions() {
+            const container = document.getElementById('wallet-transactions');
+            const typeFilter = document.getElementById('wallet-filter').value;
+            const statusFilter = document.getElementById('wallet-status-filter').value;
+
+            const filtered = transactions.filter(t => {
+                const typeMatch = typeFilter === 'ALL' || t.type === typeFilter;
+                const statusMatch = statusFilter === 'ALL' || t.status === statusFilter;
+                return typeMatch && statusMatch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <p class="text-gray-500">No transactions found</p>
+                        <p class="text-sm text-gray-400">Your transaction history will appear here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(t => `
+                <div class="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-gray-100">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="${t.type === 'D' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'} p-2 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${t.type === 'D' ? 'M7 11l5-5m0 0l5 5m-5-5v12' : 'M17 13l-5 5m0 0l-5-5m5 5V6'}"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">${t.type === 'D' ? 'Disbursement' : 'Repayment'}</div>
+                                <div class="text-sm text-gray-500">${formatDate(t.transaction_date)}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="${t.type === 'D' ? 'text-blue-600' : 'text-green-600'} font-semibold text-lg">
+                                ${t.type === 'D' ? '-' : '+'}${formatCurrency(t.amount)}
+                            </div>
+                            <div class="text-xs text-gray-500">TX #${t.transaction_id}</div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        ${getStatusBadge(t.status)}
+                        ${t.loan_request_id ? `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            Loan #${t.loan_request_id}
+                        </span>` : ''}
+                        ${t.lender_name ? `<span class="text-gray-600">Lender: ${t.lender_name}</span>` : ''}
+                    </div>
+                    ${t.transaction_data ? `
+                        <div class="mt-2 pt-2 border-t border-gray-200">
+                            <div class="text-xs text-gray-600">${t.transaction_data}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'C': '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-green-50 text-green-700 border-green-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Completed</span>',
+                'P': '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-yellow-50 text-yellow-700 border-yellow-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Pending</span>',
+                'F': '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full border bg-red-50 text-red-700 border-red-200"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Failed</span>'
+            };
+            return badges[status];
+        }
+
+        function renderStats() {
+            const stats = {
+                totalDisbursed: transactions.filter(t => t.type === 'D' && t.status === 'C').reduce((sum, t) => sum + t.amount, 0),
+                totalRepaid: transactions.filter(t => t.type === 'R' && t.status === 'C').reduce((sum, t) => sum + t.amount, 0),
+                pending: transactions.filter(t => t.status === 'P').length,
+                failed: transactions.filter(t => t.status === 'F').length,
+            };
+
+            document.getElementById('stats-cards').innerHTML = `
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="text-sm text-gray-600 mb-2">Total Disbursed</div>
+                    <div class="text-2xl font-bold text-gray-900">${formatCurrency(stats.totalDisbursed)}</div>
+                    <div class="text-xs text-green-600 mt-2">Completed transactions</div>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="text-sm text-gray-600 mb-2">Total Repaid</div>
+                    <div class="text-2xl font-bold text-gray-900">${formatCurrency(stats.totalRepaid)}</div>
+                    <div class="text-xs text-blue-600 mt-2">Repayments received</div>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="text-sm text-gray-600 mb-2">Pending</div>
+                    <div class="text-2xl font-bold text-gray-900">${stats.pending}</div>
+                    <div class="text-xs text-yellow-600 mt-2">Awaiting completion</div>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="text-sm text-gray-600 mb-2">Failed</div>
+                    <div class="text-2xl font-bold text-gray-900">${stats.failed}</div>
+                    <div class="text-xs text-red-600 mt-2">Require attention</div>
+                </div>
+            `;
+        }
+
+        function renderTransactionsTable() {
+            const typeFilter = document.getElementById('type-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const search = document.getElementById('search-borrower').value.toLowerCase();
+
+            const filtered = transactions.filter(t => {
+                const typeMatch = typeFilter === 'ALL' || t.type === typeFilter;
+                const statusMatch = statusFilter === 'ALL' || t.status === statusFilter;
+                const searchMatch = search === '' || (t.borrower_name && t.borrower_name.toLowerCase().includes(search));
+                return typeMatch && statusMatch && searchMatch;
+            });
+
+            const container = document.getElementById('transactions-table');
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                        </svg>
+                        <p class="text-gray-500 font-medium">No transactions found</p>
+                        <p class="text-gray-400 text-sm">Try adjusting your filters</p>
+                    </div>
+                `;
+                document.getElementById('transaction-summary').innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="px-4 py-3 text-left font-semibold text-gray-900">Date</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-900">Borrower</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-900">Loan Ref</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-900">Type</th>
+                                <th class="px-4 py-3 text-right font-semibold text-gray-900">Amount</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filtered.map(t => `
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-4 text-gray-900">${formatDateShort(t.transaction_date)}</td>
+                                    <td class="px-4 py-4 text-gray-900 font-medium">${t.borrower_name || '-'}</td>
+                                    <td class="px-4 py-4 text-gray-600">#${t.loan_request_id || '-'}</td>
+                                    <td class="px-4 py-4">
+                                        <span class="${t.type === 'D' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'} px-3 py-1 rounded-full text-xs font-medium">
+                                            ${t.type === 'D' ? 'Disbursement' : 'Repayment'}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-right font-semibold ${t.type === 'D' ? 'text-blue-600' : 'text-green-600'}">
+                                        ${t.type === 'D' ? '-' : '+'}${formatCurrency(t.amount)}
+                                    </td>
+                                    <td class="px-4 py-4">${getStatusBadge(t.status)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            const totalDisbursed = filtered.filter(t => t.type === 'D').reduce((sum, t) => sum + t.amount, 0);
+            const totalRepaid = filtered.filter(t => t.type === 'R').reduce((sum, t) => sum + t.amount, 0);
+            const completed = filtered.filter(t => t.status === 'C').length;
+
+            document.getElementById('transaction-summary').innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-600">Total Transactions</p>
+                        <p class="text-lg font-semibold text-gray-900">${filtered.length}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Total Disbursed</p>
+                        <p class="text-lg font-semibold text-blue-600">${formatCurrency(totalDisbursed)}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Total Repaid</p>
+                        <p class="text-lg font-semibold text-green-600">${formatCurrency(totalRepaid)}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">Completed</p>
+                        <p class="text-lg font-semibold text-green-600">${completed}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleRecordForm() {
+            const form = document.getElementById('record-form');
+            const btn = document.getElementById('add-transaction-btn');
+            const chevron = document.getElementById('chevron-icon');
+
+            form.classList.toggle('hidden');
+            btn.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        function openTransactionModal(type) {
+            modalType = type;
+            document.getElementById('modal-title').textContent = type === 'DEPOSIT' ? 'Deposit Money' : 'Withdraw Money';
+            renderModalContent();
+            document.getElementById('transaction-modal').classList.remove('hidden');
+        }
+
+        function closeTransactionModal() {
+            document.getElementById('transaction-modal').classList.add('hidden');
+        }
+
+        function renderModalContent() {
+            document.getElementById('modal-content').innerHTML = `
+                <div class="mb-4">
+                    <div class="text-sm text-gray-600 mb-2">Current Balance</div>
+                    <div class="text-2xl font-bold text-gray-900">${formatCurrency(currentBalance)}</div>
+                </div>
+                <form id="modal-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <input type="number" id="modal-amount" step="0.01" min="0.01" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0.00" required>
+                        </div>
+                        <div id="modal-error" class="text-red-600 text-sm mt-1 hidden"></div>
+                    </div>
+                    <div class="mb-6">
+                        <div class="text-sm font-medium text-gray-700 mb-2">Quick Amounts</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            ${[10, 25, 50, 100, 250, 500].map(amt => `
+                                <button type="button" onclick="document.getElementById('modal-amount').value = ${amt}" class="py-2 px-3 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">₱${amt}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <button type="submit" class="${modalType === 'DEPOSIT' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} w-full py-3 px-4 rounded-lg font-medium text-white transition-colors">
+                        ${modalType === 'DEPOSIT' ? 'Deposit' : 'Withdraw'} Money
+                    </button>
+                </form>
+            `;
+
+            document.getElementById('modal-form').onsubmit = handleModalSubmit;
+        }
+
+        function handleModalSubmit(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('modal-amount').value);
+            const errorDiv = document.getElementById('modal-error');
+
+            if (!amount || amount <= 0) {
+                errorDiv.textContent = 'Please enter a valid amount greater than 0';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (modalType === 'WITHDRAW' && amount > currentBalance) {
+                errorDiv.textContent = 'Insufficient wallet balance';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            const newTransaction = {
+                transaction_id: Math.max(...transactions.map(t => t.transaction_id)) + 1,
+                amount: amount,
+                type: modalType === 'DEPOSIT' ? 'R' : 'D',
+                status: 'P',
+                transaction_date: new Date().toISOString(),
+                transaction_data: modalType === 'DEPOSIT' ? 'Repayment received' : 'Loan disbursement',
+            };
+
+            transactions.unshift(newTransaction);
+
+            if (modalType === 'DEPOSIT') {
+                currentBalance += amount;
+            } else {
+                currentBalance -= amount;
+            }
+
+            document.getElementById('balance-display').textContent = showBalanceFlag ? formatCurrency(currentBalance) : '••••••';
+
+            document.getElementById('modal-content').innerHTML = `
+                <div class="text-center py-8">
+                    <svg class="w-16 h-16 mx-auto text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Transaction Successful!</h3>
+                    <p class="text-gray-600">${formatCurrency(amount)} has been ${modalType === 'DEPOSIT' ? 'added to' : 'withdrawn from'} your wallet</p>
+                </div>
+            `;
+
+            setTimeout(() => {
+                closeTransactionModal();
+                renderWalletTransactions();
+            }, 2000);
+        }
+
+        document.getElementById('transaction-form').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newTransaction = {
+                transaction_id: Math.max(...transactions.map(t => t.transaction_id)) + 1,
+                amount: parseFloat(formData.get('amount')),
+                type: formData.get('type'),
+                status: formData.get('status'),
+                transaction_date: new Date(formData.get('date')).toISOString(),
+                transaction_data: formData.get('description'),
+                loan_request_id: parseInt(formData.get('loan_ref')),
+                borrower_name: formData.get('borrower'),
+            };
+
+            transactions.unshift(newTransaction);
+            e.target.reset();
+            toggleRecordForm();
+            renderStats();
+            renderTransactionsTable();
+        };
+
+        document.getElementById('wallet-filter').onchange = renderWalletTransactions;
+        document.getElementById('wallet-status-filter').onchange = renderWalletTransactions;
+        document.getElementById('type-filter').onchange = renderTransactionsTable;
+        document.getElementById('status-filter').onchange = renderTransactionsTable;
+        document.getElementById('search-borrower').oninput = renderTransactionsTable;
+
+        document.getElementById('transaction-form').querySelector('[name="date"]').value = new Date().toISOString().split('T')[0];
+
+        renderWalletTransactions();
+    </script>
 </body>
 </html>

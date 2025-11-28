@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankRap Wallet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bankrap-blue': '#2563eb',
+                        'bankrap-dark': '#1e40af',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 bg-bankrap-blue rounded-lg flex items-center justify-center text-white font-bold text-sm mr-2">
+                            B
+                        </div>
+                        <span class="text-xl font-bold text-gray-900">Bank<span class="text-bankrap-blue">Rap</span></span>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#" class="text-gray-500 hover:text-bankrap-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</a>
+                        <a href="#" class="text-gray-500 hover:text-bankrap-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Accounts</a>
+                        <a href="#" class="text-gray-500 hover:text-bankrap-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Loans</a>
+                        <a href="#" class="bg-blue-50 text-bankrap-blue px-3 py-2 rounded-md text-sm font-medium">Wallet</a>
+                        <a href="#" class="text-gray-500 hover:text-bankrap-blue px-3 py-2 rounded-md text-sm font-medium transition-colors">Reviews</a>
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation -->
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
+                    <a href="#" class="text-gray-500 hover:text-bankrap-blue block px-3 py-2 rounded-md text-base font-medium">Home</a>
+                    <a href="#" class="text-gray-500 hover:text-bankrap-blue block px-3 py-2 rounded-md text-base font-medium">Accounts</a>
+                    <a href="#" class="text-gray-500 hover:text-bankrap-blue block px-3 py-2 rounded-md text-base font-medium">Loans</a>
+                    <a href="#" class="bg-blue-50 text-bankrap-blue block px-3 py-2 rounded-md text-base font-medium">Wallet</a>
+                    <a href="#" class="text-gray-500 hover:text-bankrap-blue block px-3 py-2 rounded-md text-base font-medium">Reviews</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">My Wallet</h1>
+            <p class="text-gray-600 mt-2">Manage your BankRap e-wallet and peer-to-peer lending</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Balance and Quick Actions -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Wallet Balance Card -->
+                <div class="bg-gradient-to-br from-bankrap-blue to-bankrap-dark rounded-2xl p-6 text-white shadow-xl">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                                <i data-lucide="wallet" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold" id="wallet-user-name">John Doe's Wallet</h3>
+                                <p class="text-blue-100 text-sm">Available Balance</p>
+                            </div>
+                        </div>
+                        <button id="toggle-balance" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <div class="mb-6">
+                        <div class="text-3xl font-bold mb-2" id="wallet-balance">$2,547.85</div>
+                        <div class="flex items-center text-green-200 text-sm">
+                            <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i>
+                            <span>Available for transactions</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-4 border-t border-white border-opacity-20">
+                        <div class="text-center">
+                            <div class="text-xl font-semibold" id="monthly-amount">$254.79</div>
+                            <div class="text-blue-100 text-xs">This Month</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xl font-semibold" id="p2p-amount">$127.39</div>
+                            <div class="text-blue-100 text-xs">P2P Lending</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="deposit-btn" class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                            <i data-lucide="plus" class="w-6 h-6 mx-auto mb-2"></i>
+                            <div class="font-semibold text-sm">Deposit</div>
+                            <div class="text-xs opacity-90">Add money</div>
+                        </button>
+
+                        <button id="withdraw-btn" class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                            <i data-lucide="minus" class="w-6 h-6 mx-auto mb-2"></i>
+                            <div class="font-semibold text-sm">Withdraw</div>
+                            <div class="text-xs opacity-90">Transfer out</div>
+                        </button>
+
+                        <button class="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                            <i data-lucide="users" class="w-6 h-6 mx-auto mb-2"></i>
+                            <div class="font-semibold text-sm">P2P Lending</div>
+                            <div class="text-xs opacity-90">Lend to peers</div>
+                        </button>
+
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                            <i data-lucide="credit-card" class="w-6 h-6 mx-auto mb-2"></i>
+                            <div class="font-semibold text-sm">Pay Bills</div>
+                            <div class="text-xs opacity-90">Quick payments</div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Transaction History -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Transaction History</h3>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="filter" class="w-4 h-4 text-gray-400"></i>
+                            <select id="transaction-filter" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-bankrap-blue focus:border-transparent">
+                                <option value="ALL">All</option>
+                                <option value="DEPOSIT">Deposits</option>
+                                <option value="WITHDRAW">Withdrawals</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="transaction-list" class="space-y-3">
+                        <!-- Transactions will be populated by JavaScript -->
+                    </div>
+
+                    <div id="empty-state" class="text-center py-12 hidden">
+                        <i data-lucide="calendar" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
+                        <p class="text-gray-500">No transactions found</p>
+                        <p class="text-gray-400 text-sm">Your transaction history will appear here</p>
+                    </div>
+
+                    <div id="view-all-btn" class="text-center mt-6">
+                        <button class="text-bankrap-blue hover:text-bankrap-dark font-medium text-sm underline">
+                            View All Transactions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Modal -->
+    <div id="transaction-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title" class="text-xl font-semibold text-gray-900">Deposit Money</h2>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600 p-1">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Success State -->
+            <div id="success-state" class="text-center py-8 hidden">
+                <i data-lucide="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Transaction Successful!</h3>
+                <p id="success-message" class="text-gray-600">$100.00 has been added to your wallet</p>
+            </div>
+
+            <!-- Form State -->
+            <div id="form-state">
+                <div class="mb-6">
+                    <div class="text-sm text-gray-500 mb-1">Current Balance</div>
+                    <div id="current-balance" class="text-2xl font-bold text-gray-900">$2,547.85</div>
+                </div>
+
+                <form id="transaction-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                        <div class="relative">
+                            <i data-lucide="dollar-sign" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                id="amount-input"
+                                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bankrap-blue focus:border-transparent text-lg"
+                                placeholder="0.00"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <div class="text-sm font-medium text-gray-700 mb-2">Quick Amounts</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" class="quick-amount-btn border border-gray-300 hover:border-bankrap-blue hover:bg-blue-50 py-2 px-3 rounded-lg text-sm transition-colors" data-amount="10">$10</button>
+                            <button type="button" class="quick-amount-btn border border-gray-300 hover:border-bankrap-blue hover:bg-blue-50 py-2 px-3 rounded-lg text-sm transition-colors" data-amount="25">$25</button>
+                            <button type="button" class="quick-amount-btn border border-gray-300 hover:border-bankrap-blue hover:bg-blue-50 py-2 px-3 rounded-lg text-sm transition-colors" data-amount="50">$50</button>
+                            <button type="button" class="quick-amount-btn border border-gray-300 hover:border-bankrap-blue hover:bg-blue-50 py-2 px-3 rounded-lg text-sm transition-colors" data-amount="100">$100</button>
+                            <button type="button" class="quick-amount-btn border border-gray-300 hover:border-bankrap-blue hover:bg-blue-50 py-2 px-3 rounded-lg text-sm transition-colors" data-amount="250">$250</button>
+                            <button type="button" class="quick-amount-btn border border-gray-300 hover:border-bankrap-blue hover:bg-blue-50 py-2 px-3 rounded-lg text-sm transition-colors" data-amount="500">$500</button>
+                        </div>
+                    </div>
+
+                    <div id="error-message" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 hidden">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-red-500"></i>
+                        <span class="text-red-700 text-sm" id="error-text"></span>
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="submit-btn"
+                        class="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                    >
+                        <span id="submit-text">Deposit Amount</span>
+                        <div id="loading-spinner" class="hidden flex items-center space-x-2">
+                            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Processing...</span>
+                        </div>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // BankRap Wallet Application
+        const BankRapWallet = {
+            // Application state
+            state: {
+                user: {
+                    name: "John Doe",
+                    wallet: {
+                        wallet_id: 1,
+                        balance: 2547.85,
+                        created_at: "2024-01-15T10:30:00Z"
+                    }
+                },
+                transactions: [
+                    {
+                        transaction_id: 1,
+                        amount: 500.00,
+                        transaction_type: 'DEPOSIT',
+                        transaction_date: '2024-01-20T14:30:00Z',
+                    },
+                    {
+                        transaction_id: 2,
+                        amount: 150.00,
+                        transaction_type: 'WITHDRAW',
+                        transaction_date: '2024-01-19T09:15:00Z',
+                    },
+                    {
+                        transaction_id: 3,
+                        amount: 1000.00,
+                        transaction_type: 'DEPOSIT',
+                        transaction_date: '2024-01-18T16:45:00Z',
+                    },
+                    {
+                        transaction_id: 4,
+                        amount: 75.50,
+                        transaction_type: 'WITHDRAW',
+                        transaction_date: '2024-01-17T11:20:00Z',
+                    },
+                    {
+                        transaction_id: 5,
+                        amount: 250.00,
+                        transaction_type: 'DEPOSIT',
+                        transaction_date: '2024-01-16T13:10:00Z',
+                    },
+                ],
+                balanceVisible: true,
+                currentFilter: 'ALL',
+                modalOpen: false,
+                modalType: 'DEPOSIT',
+                isProcessing: false
+            },
+
+            // Initialize the application
+            init() {
+                this.bindEvents();
+                this.updateUI();
+                lucide.createIcons();
+            },
+
+            // Bind event listeners
+            bindEvents() {
+                // Mobile menu toggle
+                document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                    this.toggleMobileMenu();
+                });
+
+                // Balance visibility toggle
+                document.getElementById('toggle-balance').addEventListener('click', () => {
+                    this.toggleBalanceVisibility();
+                });
+
+                // Quick action buttons
+                document.getElementById('deposit-btn').addEventListener('click', () => {
+                    this.openModal('DEPOSIT');
+                });
+
+                document.getElementById('withdraw-btn').addEventListener('click', () => {
+                    this.openModal('WITHDRAW');
+                });
+
+                // Transaction filter
+                document.getElementById('transaction-filter').addEventListener('change', (e) => {
+                    this.state.currentFilter = e.target.value;
+                    this.renderTransactions();
+                });
+
+                // Modal events
+                document.getElementById('close-modal').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                document.getElementById('transaction-modal').addEventListener('click', (e) => {
+                    if (e.target.id === 'transaction-modal') {
+                        this.closeModal();
+                    }
+                });
+
+                // Quick amount buttons
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.quick-amount-btn')) {
+                        const amount = e.target.closest('.quick-amount-btn').dataset.amount;
+                        document.getElementById('amount-input').value = amount;
+                        this.updateSubmitButton();
+                    }
+                });
+
+                // Form submission
+                document.getElementById('transaction-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleTransaction();
+                });
+
+                // Amount input change
+                document.getElementById('amount-input').addEventListener('input', () => {
+                    this.updateSubmitButton();
+                });
+            },
+
+            // Update UI elements
+            updateUI() {
+                this.updateWalletBalance();
+                this.renderTransactions();
+                lucide.createIcons();
+            },
+
+            // Toggle mobile menu
+            toggleMobileMenu() {
+                const mobileMenu = document.getElementById('mobile-menu');
+                mobileMenu.classList.toggle('hidden');
+            },
+
+            // Toggle balance visibility
+            toggleBalanceVisibility() {
+                this.state.balanceVisible = !this.state.balanceVisible;
+                this.updateWalletBalance();
+            },
+
+            // Update wallet balance display
+            updateWalletBalance() {
+                const balanceElement = document.getElementById('wallet-balance');
+                const toggleIcon = document.querySelector('#toggle-balance i');
+                const monthlyAmount = document.getElementById('monthly-amount');
+                const p2pAmount = document.getElementById('p2p-amount');
+                const userNameElement = document.getElementById('wallet-user-name');
+
+                if (balanceElement) {
+                    balanceElement.textContent = this.state.balanceVisible
+                        ? this.formatCurrency(this.state.user.wallet.balance)
+                        : '••••••';
+                }
+
+                if (toggleIcon) {
+                    toggleIcon.setAttribute('data-lucide', this.state.balanceVisible ? 'eye-off' : 'eye');
+                }
+
+                if (monthlyAmount) {
+                    monthlyAmount.textContent = this.formatCurrency(this.state.user.wallet.balance * 0.1);
+                }
+
+                if (p2pAmount) {
+                    p2pAmount.textContent = this.formatCurrency(this.state.user.wallet.balance * 0.05);
+                }
+
+                if (userNameElement) {
+                    userNameElement.textContent = `${this.state.user.name}'s Wallet`;
+                }
+
+                lucide.createIcons();
+            },
+
+            // Render transactions
+            renderTransactions() {
+                const transactionList = document.getElementById('transaction-list');
+                const emptyState = document.getElementById('empty-state');
+                const viewAllBtn = document.getElementById('view-all-btn');
+
+                if (!transactionList) return;
+
+                const filteredTransactions = this.state.transactions.filter(transaction =>
+                    this.state.currentFilter === 'ALL' || transaction.transaction_type === this.state.currentFilter
+                );
+
+                if (filteredTransactions.length === 0) {
+                    transactionList.innerHTML = '';
+                    emptyState?.classList.remove('hidden');
+                    viewAllBtn?.classList.add('hidden');
+                    return;
+                }
+
+                emptyState?.classList.add('hidden');
+                viewAllBtn?.classList.remove('hidden');
+
+                transactionList.innerHTML = filteredTransactions.map(transaction => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 rounded-lg ${transaction.transaction_type === 'DEPOSIT' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">
+                                <i data-lucide="${transaction.transaction_type === 'DEPOSIT' ? 'arrow-down-left' : 'arrow-up-right'}" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900">
+                                    ${transaction.transaction_type === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'}
+                                </h4>
+                                <p class="text-sm text-gray-500">
+                                    ${this.formatDate(transaction.transaction_date)}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold ${transaction.transaction_type === 'DEPOSIT' ? 'text-green-600' : 'text-red-600'}">
+                                ${transaction.transaction_type === 'DEPOSIT' ? '+' : '-'}${this.formatCurrency(transaction.amount)}
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                ID: ${transaction.transaction_id}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                lucide.createIcons();
+            },
+
+            // Open transaction modal
+            openModal(type) {
+                this.state.modalType = type;
+                this.state.modalOpen = true;
+
+                const modal = document.getElementById('transaction-modal');
+                const modalTitle = document.getElementById('modal-title');
+                const submitBtn = document.getElementById('submit-btn');
+                const currentBalance = document.getElementById('current-balance');
+                const amountInput = document.getElementById('amount-input');
+
+                if (modal) modal.classList.remove('hidden');
+                if (modalTitle) modalTitle.textContent = `${type === 'DEPOSIT' ? 'Deposit' : 'Withdraw'} Money`;
+                if (currentBalance) currentBalance.textContent = this.formatCurrency(this.state.user.wallet.balance);
+                if (amountInput) amountInput.value = '';
+
+                if (submitBtn) {
+                    submitBtn.className = `w-full ${
+                        type === 'DEPOSIT'
+                            ? 'bg-green-500 hover:bg-green-600'
+                            : 'bg-red-500 hover:bg-red-600'
+                    } text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2`;
+                }
+
+                this.updateSubmitButton();
+                this.hideError();
+            },
+
+            // Close transaction modal
+            closeModal() {
+                this.state.modalOpen = false;
+                const modal = document.getElementById('transaction-modal');
+                const successState = document.getElementById('success-state');
+                const formState = document.getElementById('form-state');
+
+                if (modal) modal.classList.add('hidden');
+                if (successState) successState.classList.add('hidden');
+                if (formState) formState.classList.remove('hidden');
+
+                this.hideError();
+            },
+
+            // Handle transaction
+            async handleTransaction() {
+                const amountInput = document.getElementById('amount-input');
+                const amount = parseFloat(amountInput.value);
+
+                if (!amount || amount <= 0) {
+                    this.showError('Please enter a valid amount greater than 0');
+                    return;
+                }
+
+                if (this.state.modalType === 'WITHDRAW' && amount > this.state.user.wallet.balance) {
+                    this.showError('Insufficient wallet balance');
+                    return;
+                }
+
+                this.state.isProcessing = true;
+                this.updateSubmitButton();
+                this.hideError();
+
+                // Simulate API call
+                setTimeout(() => {
+                    // Create new transaction
+                    const newTransaction = {
+                        transaction_id: this.state.transactions.length + 1,
+                        amount: amount,
+                        transaction_type: this.state.modalType,
+                        transaction_date: new Date().toISOString(),
+                    };
+
+                    this.state.transactions.unshift(newTransaction);
+
+                    // Update balance
+                    if (this.state.modalType === 'DEPOSIT') {
+                        this.state.user.wallet.balance += amount;
+                    } else {
+                        this.state.user.wallet.balance -= amount;
+                    }
+
+                    this.showSuccess(amount);
+                    this.updateWalletBalance();
+                    this.renderTransactions();
+                    this.state.isProcessing = false;
+
+                    // Auto close after success
+                    setTimeout(() => {
+                        this.closeModal();
+                    }, 2000);
+                }, 1500);
+            },
+
+            // Show success state
+            showSuccess(amount) {
+                const successState = document.getElementById('success-state');
+                const formState = document.getElementById('form-state');
+                const successMessage = document.getElementById('success-message');
+
+                if (successState) successState.classList.remove('hidden');
+                if (formState) formState.classList.add('hidden');
+                if (successMessage) {
+                    successMessage.textContent = `${this.formatCurrency(amount)} has been ${
+                        this.state.modalType === 'DEPOSIT' ? 'added to' : 'withdrawn from'
+                    } your wallet`;
+                }
+
+                lucide.createIcons();
+            },
+
+            // Show error message
+            showError(message) {
+                const errorElement = document.getElementById('error-message');
+                const errorText = document.getElementById('error-text');
+
+                if (errorElement) errorElement.classList.remove('hidden');
+                if (errorText) errorText.textContent = message;
+
+                lucide.createIcons();
+            },
+
+            // Hide error message
+            hideError() {
+                const errorElement = document.getElementById('error-message');
+                if (errorElement) errorElement.classList.add('hidden');
+            },
+
+            // Update submit button
+            updateSubmitButton() {
+                const submitText = document.getElementById('submit-text');
+                const loadingSpinner = document.getElementById('loading-spinner');
+                const submitBtn = document.getElementById('submit-btn');
+                const amountInput = document.getElementById('amount-input');
+                const amount = parseFloat(amountInput?.value || 0);
+
+                if (this.state.isProcessing) {
+                    if (submitText) submitText.classList.add('hidden');
+                    if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+                    if (submitBtn) submitBtn.disabled = true;
+                } else {
+                    if (submitText) {
+                        submitText.classList.remove('hidden');
+                        submitText.textContent = `${this.state.modalType === 'DEPOSIT' ? 'Deposit' : 'Withdraw'} ${
+                            amount > 0 ? this.formatCurrency(amount) : 'Amount'
+                        }`;
+                    }
+                    if (loadingSpinner) loadingSpinner.classList.add('hidden');
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            },
+
+            // Format currency
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                }).format(amount);
+            },
+
+            // Format date
+            formatDate(dateString) {
+                return new Date(dateString).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                });
+            }
+        };
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            BankRapWallet.init();
+        });
+    </script>
+</body>
+</html>

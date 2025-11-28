@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'account',
     'loan',
     'transaction',
-    'review'
+    'review',
+    'wallet'
 ]
 
 MIDDLEWARE = [
@@ -81,7 +82,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'bankrap',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'hahaha',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {'init_command': "SET SQL_MODE='STRICT_TRANS_TABLES'"}

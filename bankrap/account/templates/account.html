@@ -1,11 +1,491 @@
 <!DOCTYPE html>
 <html lang="en">
-{% load static %}
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankRap Account Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background-color: #f9fafb;
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
-    <div>Account</div>
+    <div id="app">
+        <!-- Navbar -->
+        <nav class="bg-white shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center mr-2">
+                                <span class="text-white font-bold text-lg">B</span>
+                            </div>
+                            <span class="text-2xl font-bold">
+                                Bank<span class="text-blue-600">Rap</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-8">
+                            <a href="#" onclick="navigateTo('accounts')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Accounts</a>
+                            <a href="#" onclick="navigateTo('loans')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Loans</a>
+                            <a href="#" onclick="navigateTo('transactions')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Transactions</a>
+                            <a href="#" onclick="navigateTo('reviews')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Reviews</a>
+                        </div>
+                    </div>
+                    <div class="md:hidden">
+                        <button onclick="toggleMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none">
+                            <i class="fas fa-bars text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="navLinks" class="hidden md:hidden bg-white border-t">
+                <a href="#" onclick="navigateTo('accounts')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Accounts</a>
+                <a href="#" onclick="navigateTo('loans')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Loans</a>
+                <a href="#" onclick="navigateTo('transactions')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Transactions</a>
+                <a href="#" onclick="navigateTo('reviews')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Reviews</a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="py-8 px-4">
+            <div id="content"></div>
+        </main>
+    </div>
+
+    <script>
+        const mockAccounts = [
+            { userId: 1, name: 'John Smith', type: 'L', availableFunds: 25000.00 },
+            { userId: 2, name: 'Sarah Johnson', type: 'B', creditScore: 720 },
+            { userId: 3, name: 'Michael Chen', type: 'L', availableFunds: 62500.00 },
+            { userId: 4, name: 'Emily Davis', type: 'B', creditScore: 680 }
+        ];
+
+        const mockLenderProfile = {
+            name: 'John Smith',
+            email: 'john.smith@example.com',
+            address: '123 Investment Ave, Manila, Philippines',
+            contactNumber: '+63 (915) 123-4567',
+            investmentPreference: 'Low-risk loans with steady returns, preference for secured loans',
+            availableFunds: 2500000.00,
+            minInvestmentAmount: 2500.00,
+            profileCreatedDate: '2024-01-15'
+        };
+
+        const mockBorrowerProfile = {
+            name: 'Sarah Johnson',
+            email: 'sarah.johnson@example.com',
+            address: '456 Borrower St, Quezon City, Philippines',
+            contactNumber: '+63 (920) 987-6543',
+            income: 325000.00,
+            creditScore: 720,
+            employmentStatus: 'Full-time Software Engineer',
+            profileCreatedDate: '2024-02-20'
+        };
+
+        let currentPage = 'accounts';
+        let selectedUserId = null;
+
+        const mockLoans = [
+            { loanId: 1, borrowerName: 'Sarah Johnson', loanAmount: 500000.00, interestRate: 8.5, loanStatus: 'Active', approvedDate: '2024-03-10', dueDate: '2025-03-10' },
+            { loanId: 2, borrowerName: 'Emily Davis', loanAmount: 750000.00, interestRate: 9.2, loanStatus: 'Active', approvedDate: '2024-02-15', dueDate: '2025-02-15' },
+            { loanId: 3, borrowerName: 'Michael Chen', loanAmount: 300000.00, interestRate: 7.8, loanStatus: 'Completed', approvedDate: '2023-12-01', dueDate: '2024-12-01' }
+        ];
+
+        const mockTransactions = [
+            { transId: 1, type: 'Transfer In', amount: 500000.00, date: '2024-11-25', status: 'Completed', description: 'Investment deposit from John Smith' },
+            { transId: 2, type: 'Loan Payment', amount: 125000.00, date: '2024-11-20', status: 'Completed', description: 'Monthly loan payment - Sarah Johnson' },
+            { transId: 3, type: 'Transfer Out', amount: 250000.00, date: '2024-11-18', status: 'Completed', description: 'Withdrawal to bank account' },
+            { transId: 4, type: 'Interest Earned', amount: 45000.00, date: '2024-11-15', status: 'Completed', description: 'Monthly interest payment' },
+            { transId: 5, type: 'Loan Disbursement', amount: 750000.00, date: '2024-11-10', status: 'Pending', description: 'Loan disbursement to Emily Davis' }
+        ];
+
+        const mockReviews = [
+            { reviewId: 1, reviewerName: 'John Smith', rating: 5, reviewType: 'Lender', comment: 'Excellent platform! Great returns on my investments and very transparent process.', date: '2024-11-20' },
+            { reviewId: 2, reviewerName: 'Sarah Johnson', rating: 4, reviewType: 'Borrower', comment: 'Easy loan application process. Good interest rates compared to traditional banks.', date: '2024-11-15' },
+            { reviewId: 3, reviewerName: 'Michael Chen', rating: 5, reviewType: 'Borrower', comment: 'Fast approval and funding. Excellent customer support team.', date: '2024-11-10' },
+            { reviewId: 4, reviewerName: 'Emily Davis', rating: 4, reviewType: 'Lender', comment: 'Good investment opportunity. Platform is user-friendly and secure.', date: '2024-11-05' }
+        ];
+
+        function toggleMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('hidden');
+        }
+
+        function navigateTo(page) {
+            currentPage = page;
+            selectedUserId = null;
+            render();
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.add('hidden');
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-PH', {
+                style: 'currency',
+                currency: 'PHP',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function getCreditScoreColor(score) {
+            if (score >= 750) return 'bg-green-50 text-green-700';
+            if (score >= 650) return 'bg-yellow-50 text-yellow-700';
+            return 'bg-red-50 text-red-700';
+        }
+
+        function getCreditScoreLabel(score) {
+            if (score >= 750) return 'Excellent';
+            if (score >= 650) return 'Good';
+            if (score >= 550) return 'Fair';
+            return 'Poor';
+        }
+
+        function renderAccountsList() {
+            return `
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">User Accounts</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${mockAccounts.map(account => `
+                            <div class="bg-white rounded-lg shadow-md hover:shadow-xl hover-lift transition-all duration-300 p-6 cursor-pointer border border-gray-200 hover:border-blue-400" onclick="selectAccount(${account.userId})">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-user text-gray-600 text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-gray-800">${account.name}</h3>
+                                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${account.type === 'L' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                                ${account.type === 'L' ? 'Lender' : 'Borrower'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${account.type === 'L' ? `
+                                    <div class="bg-blue-50 rounded p-3 flex items-center">
+                                        <i class="fas fa-peso-sign text-blue-600 mr-2 text-lg"></i>
+                                        <div>
+                                            <p class="text-xs text-gray-600">Available Funds</p>
+                                            <p class="font-bold text-blue-700">${formatCurrency(account.availableFunds)}</p>
+                                        </div>
+                                    </div>
+                                ` : `
+                                    <div class="bg-green-50 rounded p-3 flex items-center">
+                                        <i class="fas fa-star text-green-600 mr-2 text-lg"></i>
+                                        <div>
+                                            <p class="text-xs text-gray-600">Credit Score</p>
+                                            <p class="font-bold text-green-700">${account.creditScore}</p>
+                                        </div>
+                                    </div>
+                                `}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLenderProfile() {
+            return `
+                <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+                    <div class="mb-6">
+                        <button onclick="goBack()" class="text-blue-600 hover:text-blue-800 font-medium flex items-center mb-4">
+                            <i class="fas fa-arrow-left mr-2"></i> Back to Accounts
+                        </button>
+                    </div>
+                    <div class="border-b border-gray-200 pb-4 mb-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-2xl font-bold text-gray-800">${mockLenderProfile.name}</h2>
+                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Lender</span>
+                        </div>
+                        <p class="text-gray-600 mt-1">${mockLenderProfile.email}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Address</p>
+                            <p class="text-gray-800 font-medium">${mockLenderProfile.address}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Contact Number</p>
+                            <p class="text-gray-800 font-medium">${mockLenderProfile.contactNumber}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                            <p class="text-sm text-gray-600">Investment Preference</p>
+                        </div>
+                        <p class="text-gray-800 font-medium">${mockLenderProfile.investmentPreference}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-green-50 rounded-lg p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-peso-sign text-green-600 mr-2"></i>
+                                <p class="text-sm text-gray-600">Available Funds</p>
+                            </div>
+                            <p class="text-2xl font-bold text-green-700">${formatCurrency(mockLenderProfile.availableFunds)}</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-peso-sign text-orange-600 mr-2"></i>
+                                <p class="text-sm text-gray-600">Min. Investment</p>
+                            </div>
+                            <p class="text-2xl font-bold text-orange-700">${formatCurrency(mockLenderProfile.minInvestmentAmount)}</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center text-sm text-gray-500">
+                        <i class="fas fa-calendar mr-2"></i>
+                        <span>Profile created: ${new Date(mockLenderProfile.profileCreatedDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderBorrowerProfile() {
+            return `
+                <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+                    <div class="mb-6">
+                        <button onclick="goBack()" class="text-blue-600 hover:text-blue-800 font-medium flex items-center mb-4">
+                            <i class="fas fa-arrow-left mr-2"></i> Back to Accounts
+                        </button>
+                    </div>
+                    <div class="border-b border-gray-200 pb-4 mb-4">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-2xl font-bold text-gray-800">${mockBorrowerProfile.name}</h2>
+                            <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">Borrower</span>
+                        </div>
+                        <p class="text-gray-600 mt-1">${mockBorrowerProfile.email}</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Address</p>
+                            <p class="text-gray-800 font-medium">${mockBorrowerProfile.address}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Contact Number</p>
+                            <p class="text-gray-800 font-medium">${mockBorrowerProfile.contactNumber}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="${getCreditScoreColor(mockBorrowerProfile.creditScore)} rounded-lg p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-credit-card mr-2"></i>
+                                <p class="text-sm">Credit Score</p>
+                            </div>
+                            <p class="text-3xl font-bold">${mockBorrowerProfile.creditScore}</p>
+                            <p class="text-sm mt-1 font-medium">${getCreditScoreLabel(mockBorrowerProfile.creditScore)}</p>
+                        </div>
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-peso-sign text-blue-600 mr-2"></i>
+                                <p class="text-sm text-gray-600">Monthly Income</p>
+                            </div>
+                            <p class="text-2xl font-bold text-blue-700">${formatCurrency(mockBorrowerProfile.income)}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-briefcase text-gray-600 mr-2"></i>
+                            <p class="text-sm text-gray-600">Employment Status</p>
+                        </div>
+                        <p class="text-gray-800 font-medium">${mockBorrowerProfile.employmentStatus}</p>
+                    </div>
+
+                    <div class="mt-4 flex items-center text-sm text-gray-500">
+                        <i class="fas fa-calendar mr-2"></i>
+                        <span>Profile created: ${new Date(mockBorrowerProfile.profileCreatedDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getStatusBadgeClass(status) {
+            switch(status) {
+                case 'Completed':
+                case 'Active':
+                    return 'bg-green-100 text-green-800';
+                case 'Pending':
+                    return 'bg-yellow-100 text-yellow-800';
+                case 'Completed':
+                    return 'bg-blue-100 text-blue-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getTransactionTypeIcon(type) {
+            switch(type) {
+                case 'Transfer In':
+                    return 'fa-arrow-down text-green-600';
+                case 'Transfer Out':
+                    return 'fa-arrow-up text-red-600';
+                case 'Loan Payment':
+                    return 'fa-credit-card text-blue-600';
+                case 'Interest Earned':
+                    return 'fa-coins text-yellow-600';
+                case 'Loan Disbursement':
+                    return 'fa-money-bill-wave text-purple-600';
+                default:
+                    return 'fa-exchange-alt text-gray-600';
+            }
+        }
+
+        function renderLoans() {
+            return `
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">Active Loans</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        ${mockLoans.map(loan => `
+                            <div class="bg-white rounded-lg shadow-md hover-lift p-6 border border-gray-200">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-gray-800">${loan.borrowerName}</h3>
+                                    <span class="text-xs font-semibold px-3 py-1 rounded-full ${getStatusBadgeClass(loan.loanStatus)}">
+                                        ${loan.loanStatus}
+                                    </span>
+                                </div>
+                                <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-peso-sign text-blue-600 mr-2"></i>
+                                        <p class="text-sm text-gray-600">Loan Amount</p>
+                                    </div>
+                                    <p class="text-2xl font-bold text-blue-700">${formatCurrency(loan.loanAmount)}</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-500">Interest Rate</p>
+                                        <p class="text-lg font-bold text-gray-800">${loan.interestRate}%</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Due Date</p>
+                                        <p class="text-lg font-bold text-gray-800">${new Date(loan.dueDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTransactions() {
+            return `
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">Transaction History</h2>
+                    <div class="space-y-4">
+                        ${mockTransactions.map(trans => `
+                            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mr-4">
+                                            <i class="fas ${getTransactionTypeIcon(trans.type)} text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-gray-800">${trans.type}</h3>
+                                            <p class="text-sm text-gray-600">${trans.description}</p>
+                                            <p class="text-xs text-gray-500 mt-1">${new Date(trans.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-bold text-gray-800">${formatCurrency(trans.amount)}</p>
+                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${trans.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                            ${trans.status}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderReviews() {
+            return `
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">User Reviews</h2>
+                    <div class="space-y-4">
+                        ${mockReviews.map(review => `
+                            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center">
+                                        <h3 class="font-bold text-gray-800">${review.reviewerName}</h3>
+                                        <span class="ml-3 text-xs font-semibold px-2 py-1 rounded-full ${review.reviewType === 'Lender' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                                            ${review.reviewType}
+                                        </span>
+                                    </div>
+                                    <div class="text-yellow-400">
+                                        ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                                    </div>
+                                </div>
+                                <p class="text-gray-700 mb-2">${review.comment}</p>
+                                <p class="text-sm text-gray-500">${new Date(review.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            const contentDiv = document.getElementById('content');
+            if (currentPage === 'accounts') {
+                contentDiv.innerHTML = renderAccountsList();
+            } else if (currentPage === 'lender') {
+                contentDiv.innerHTML = renderLenderProfile();
+            } else if (currentPage === 'borrower') {
+                contentDiv.innerHTML = renderBorrowerProfile();
+            } else if (currentPage === 'loans') {
+                contentDiv.innerHTML = renderLoans();
+            } else if (currentPage === 'transactions') {
+                contentDiv.innerHTML = renderTransactions();
+            } else if (currentPage === 'reviews') {
+                contentDiv.innerHTML = renderReviews();
+            }
+        }
+
+        function selectAccount(userId) {
+            selectedUserId = userId;
+            const account = mockAccounts.find(a => a.userId === userId);
+            if (account.type === 'L') {
+                currentPage = 'lender';
+            } else {
+                currentPage = 'borrower';
+            }
+            render();
+        }
+
+        function goBack() {
+            currentPage = 'accounts';
+            selectedUserId = null;
+            render();
+        }
+
+        render();
+    </script>
 </body>
 </html>
