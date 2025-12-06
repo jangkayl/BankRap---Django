@@ -28,5 +28,5 @@ urlpatterns = [
     path('transaction/', include('transaction.urls')),
     path('account/', include('account.urls')),
     path('loan/', include('loan.urls')),
-    path('wallet/', include('wallet.urls')),
+    path('wallet/', include('wallet.urls'))
 ]

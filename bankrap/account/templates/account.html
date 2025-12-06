@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BankRap Account Management</title>
+    <title>BankRap - Account Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Custom Font Import */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
             background-color: #f9fafb;
         }
         .transition-all {
@@ -21,13 +24,26 @@
         }
         .hover-lift:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 25px -5px rgba(37, 99, 235, 0.1); /* Subtle blue hover shadow */
+        }
+        .nav-link.active {
+            color: #2563eb; /* blue-600 */
+            background-color: #eff6ff; /* blue-50 */
+            border-radius: 0.375rem; /* rounded-md */
+        }
+        /* New custom card styling */
+        .profile-card {
+            border-radius: 1rem; /* rounded-xl */
+            overflow: hidden;
+        }
+        .card-header-bg {
+            height: 60px;
+            background-image: linear-gradient(to right, #3b82f6, #6366f1); /* blue-500 to indigo-500 */
         }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- Navbar -->
         <nav class="bg-white shadow-md sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center h-16">
@@ -41,115 +57,131 @@
                             </span>
                         </div>
                     </div>
-                    <div class="hidden md:block">
-                        <div class="ml-10 flex items-baseline space-x-8">
-                            <a href="#" onclick="navigateTo('accounts')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Accounts</a>
-                            <a href="#" onclick="navigateTo('loans')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Loans</a>
-                            <a href="#" onclick="navigateTo('transactions')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Transactions</a>
-                            <a href="#" onclick="navigateTo('reviews')" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors">Reviews</a>
+                    <div class="flex items-center">
+                        <div class="hidden md:block">
+                            <div class="flex items-baseline space-x-8">
+                                <a href="/account/" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors active" data-page="accounts">Accounts</a>
+                                <a href="/loan/" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors" data-page="loans">Loans</a>
+                                <a href="/wallet/" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors" data-page="wallet">Wallet</a>
+                                <a href="/transaction/" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors" data-page="transactions">Transactions</a>
+                                <a href="/review/" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors" data-page="reviews">Reviews</a>
+                            </div>
                         </div>
-                    </div>
-                    <div class="md:hidden">
-                        <button onclick="toggleMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none">
-                            <i class="fas fa-bars text-2xl"></i>
-                        </button>
+
+                        <div class="ml-4 flex items-center md:ml-6">
+                            <div class="relative">
+                                <button onclick="toggleProfileMenu()" class="max-w-xs bg-gray-200 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 p-1" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                                    <span class="sr-only">Open user menu</span>
+                                    <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+                                        <i class="fas fa-user text-white text-base"></i>
+                                    </div>
+                                </button>
+
+                                <div id="profileMenu" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                                    <div class="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
+                                        <p class="font-bold">Admin User</p>
+                                        <p class="text-xs text-gray-500">admin@bankrap.com</p>
+                                    </div>
+                                    <a href="/account/profile/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" role="menuitem" tabindex="-1" id="user-menu-item-0">
+                                        <i class="fas fa-id-card-alt mr-2 text-blue-600"></i> View Profile
+                                    </a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors" role="menuitem" tabindex="-1" id="user-menu-item-1">
+                                        <i class="fas fa-sign-out-alt mr-2 text-red-500"></i> Sign out
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="md:hidden ml-4">
+                                <button onclick="toggleMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none">
+                                    <i class="fas fa-bars text-2xl"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div id="navLinks" class="hidden md:hidden bg-white border-t">
-                <a href="#" onclick="navigateTo('accounts')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Accounts</a>
-                <a href="#" onclick="navigateTo('loans')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Loans</a>
-                <a href="#" onclick="navigateTo('transactions')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Transactions</a>
-                <a href="#" onclick="navigateTo('reviews')" class="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Reviews</a>
+                <a href="/account/" class="nav-link text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium active">Accounts</a>
+                <a href="/loan/" class="nav-link text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Loans</a>
+                <a href="/wallet/" class="nav-link text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Wallet</a>
+                <a href="/transaction/" class="nav-link text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Transactions</a>
+                <a href="/review/" class="nav-link text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium">Reviews</a>
             </div>
         </nav>
 
-        <!-- Main Content -->
         <main class="py-8 px-4">
             <div id="content"></div>
         </main>
+
     </div>
 
     <script>
+        // --- Configuration for Current User (Mock) ---
+        // 'L' for Lender, 'B' for Borrower. Change this value to test the filtering.
+        const currentClientType = 'L'; // Example: The currently logged-in user is a Lender.
+
+        // --- Mock Data (Updated to include full profile data for each user) ---
         const mockAccounts = [
-            { userId: 1, name: 'John Smith', type: 'L', availableFunds: 25000.00 },
-            { userId: 2, name: 'Sarah Johnson', type: 'B', creditScore: 720 },
-            { userId: 3, name: 'Michael Chen', type: 'L', availableFunds: 62500.00 },
-            { userId: 4, name: 'Emily Davis', type: 'B', creditScore: 680 }
+            {
+                userId: 1, name: 'John Smith', type: 'L', availableFunds: 25000.00,
+                email: 'john.smith@example.com', address: '123 Investment Ave, Manila, Philippines',
+                contactNumber: '+63 (915) 123-4567', investmentPreference: 'Low-risk loans with steady returns, preference for secured loans',
+                minInvestmentAmount: 2500.00, profileCreatedDate: '2024-01-15', loansFunded: 8, rating: 4.5
+            },
+            {
+                userId: 2, name: 'Sarah Johnson', type: 'B', creditScore: 720,
+                email: 'sarah.johnson@example.com', address: '456 Borrower St, Quezon City, Philippines',
+                contactNumber: '+63 (920) 987-6543', income: 325000.00,
+                employmentStatus: 'Full-time Software Engineer', profileCreatedDate: '2024-02-20', loanCount: 3, lastLoanDate: '2024-10-01'
+            },
+            {
+                userId: 3, name: 'Michael Chen', type: 'L', availableFunds: 62500.00,
+                email: 'michael.chen@example.com', address: '789 Capital Road, Pasig City, Philippines',
+                contactNumber: '+63 (998) 555-1234', investmentPreference: 'High-yield, medium-risk, focus on tech startups',
+                minInvestmentAmount: 5000.00, profileCreatedDate: '2023-11-01', loansFunded: 22, rating: 4.9
+            },
+            {
+                userId: 4, name: 'Emily Davis', type: 'B', creditScore: 680,
+                email: 'emily.davis@example.com', address: '321 Loan Street, Cebu City, Philippines',
+                contactNumber: '+63 (922) 111-0000', income: 210000.00,
+                employmentStatus: 'Self-employed Artist', profileCreatedDate: '2024-03-10', loanCount: 1, lastLoanDate: '2024-11-20'
+            }
         ];
-
-        const mockLenderProfile = {
-            name: 'John Smith',
-            email: 'john.smith@example.com',
-            address: '123 Investment Ave, Manila, Philippines',
-            contactNumber: '+63 (915) 123-4567',
-            investmentPreference: 'Low-risk loans with steady returns, preference for secured loans',
-            availableFunds: 2500000.00,
-            minInvestmentAmount: 2500.00,
-            profileCreatedDate: '2024-01-15'
-        };
-
-        const mockBorrowerProfile = {
-            name: 'Sarah Johnson',
-            email: 'sarah.johnson@example.com',
-            address: '456 Borrower St, Quezon City, Philippines',
-            contactNumber: '+63 (920) 987-6543',
-            income: 325000.00,
-            creditScore: 720,
-            employmentStatus: 'Full-time Software Engineer',
-            profileCreatedDate: '2024-02-20'
-        };
 
         let currentPage = 'accounts';
-        let selectedUserId = null;
+        let selectedProfileData = null; // Store the data of the profile that was clicked
 
-        const mockLoans = [
-            { loanId: 1, borrowerName: 'Sarah Johnson', loanAmount: 500000.00, interestRate: 8.5, loanStatus: 'Active', approvedDate: '2024-03-10', dueDate: '2025-03-10' },
-            { loanId: 2, borrowerName: 'Emily Davis', loanAmount: 750000.00, interestRate: 9.2, loanStatus: 'Active', approvedDate: '2024-02-15', dueDate: '2025-02-15' },
-            { loanId: 3, borrowerName: 'Michael Chen', loanAmount: 300000.00, interestRate: 7.8, loanStatus: 'Completed', approvedDate: '2023-12-01', dueDate: '2024-12-01' }
-        ];
-
-        const mockTransactions = [
-            { transId: 1, type: 'Transfer In', amount: 500000.00, date: '2024-11-25', status: 'Completed', description: 'Investment deposit from John Smith' },
-            { transId: 2, type: 'Loan Payment', amount: 125000.00, date: '2024-11-20', status: 'Completed', description: 'Monthly loan payment - Sarah Johnson' },
-            { transId: 3, type: 'Transfer Out', amount: 250000.00, date: '2024-11-18', status: 'Completed', description: 'Withdrawal to bank account' },
-            { transId: 4, type: 'Interest Earned', amount: 45000.00, date: '2024-11-15', status: 'Completed', description: 'Monthly interest payment' },
-            { transId: 5, type: 'Loan Disbursement', amount: 750000.00, date: '2024-11-10', status: 'Pending', description: 'Loan disbursement to Emily Davis' }
-        ];
-
-        const mockReviews = [
-            { reviewId: 1, reviewerName: 'John Smith', rating: 5, reviewType: 'Lender', comment: 'Excellent platform! Great returns on my investments and very transparent process.', date: '2024-11-20' },
-            { reviewId: 2, reviewerName: 'Sarah Johnson', rating: 4, reviewType: 'Borrower', comment: 'Easy loan application process. Good interest rates compared to traditional banks.', date: '2024-11-15' },
-            { reviewId: 3, reviewerName: 'Michael Chen', rating: 5, reviewType: 'Borrower', comment: 'Fast approval and funding. Excellent customer support team.', date: '2024-11-10' },
-            { reviewId: 4, reviewerName: 'Emily Davis', rating: 4, reviewType: 'Lender', comment: 'Good investment opportunity. Platform is user-friendly and secure.', date: '2024-11-05' }
-        ];
+        // --- New/Updated Functions ---
 
         function toggleMenu() {
             const navLinks = document.getElementById('navLinks');
             navLinks.classList.toggle('hidden');
         }
 
-        function navigateTo(page) {
-            currentPage = page;
-            selectedUserId = null;
-            render();
-            const navLinks = document.getElementById('navLinks');
-            navLinks.classList.add('hidden');
+        function toggleProfileMenu() {
+            const profileMenu = document.getElementById('profileMenu');
+            profileMenu.classList.toggle('hidden');
         }
+
+        // Close profile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const profileMenu = document.getElementById('profileMenu');
+            const userMenuButton = document.getElementById('user-menu-button');
+            if (profileMenu && userMenuButton && !userMenuButton.contains(event.target) && !profileMenu.contains(event.target) && !profileMenu.classList.contains('hidden')) {
+                profileMenu.classList.add('hidden');
+            }
+        });
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-PH', {
-                style: 'currency',
-                currency: 'PHP',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                style: 'currency', currency: 'PHP', minimumFractionDigits: 2, maximumFractionDigits: 2
             }).format(amount);
         }
 
         function getCreditScoreColor(score) {
-            if (score >= 750) return 'bg-green-50 text-green-700';
-            if (score >= 650) return 'bg-yellow-50 text-yellow-700';
-            return 'bg-red-50 text-red-700';
+            if (score >= 750) return 'bg-green-100 text-green-800';
+            if (score >= 650) return 'bg-yellow-100 text-yellow-800';
+            return 'bg-red-100 text-red-800';
         }
 
         function getCreditScoreLabel(score) {
@@ -159,51 +191,105 @@
             return 'Poor';
         }
 
+        // --- Render functions (Updated for Social Media/Profile Card Style) ---
+
         function renderAccountsList() {
+            const oppositeType = currentClientType === 'L' ? 'B' : 'L';
+            const filteredAccounts = mockAccounts.filter(account => account.type === oppositeType);
+
+            if (filteredAccounts.length === 0) {
+                 return `
+                    <div class="max-w-6xl mx-auto text-center py-12">
+                        <i class="fas fa-search-dollar text-6xl text-gray-300 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-700 mb-2">No Matching Accounts Found</h2>
+                        <p class="text-gray-500">
+                            You are a <span class="font-semibold">${currentClientType === 'L' ? 'Lender' : 'Borrower'}</span>, so you are only shown
+                            <span class="font-semibold">${currentClientType === 'L' ? 'Borrowers' : 'Lenders'}</span>.
+                        </p>
+                    </div>
+                 `;
+            }
+
             return `
                 <div class="max-w-6xl mx-auto">
-                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">User Accounts</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        ${mockAccounts.map(account => `
-                            <div class="bg-white rounded-lg shadow-md hover:shadow-xl hover-lift transition-all duration-300 p-6 cursor-pointer border border-gray-200 hover:border-blue-400" onclick="selectAccount(${account.userId})">
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                                            <i class="fas fa-user text-gray-600 text-lg"></i>
+                    <h2 class="text-3xl font-bold text-center mb-4 text-blue-600">
+                        Discover ${oppositeType === 'L' ? 'Lenders' : 'Borrower Applicants'}
+                    </h2>
+                    <p class="text-center text-gray-500 mb-8">
+                        Explore profiles below to find investment opportunities or funding partners.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        ${filteredAccounts.map(account => {
+                            const isLender = account.type === 'L';
+                            const badgeColor = isLender ? 'bg-blue-600' : 'bg-green-600';
+                            const badgeText = isLender ? 'Top Lender' : 'Verified Borrower';
+
+                            let primaryStatIcon = isLender ? 'fas fa-peso-sign' : 'fas fa-star';
+                            let primaryStatLabel = isLender ? 'Available Funds' : 'Credit Score';
+                            let primaryStatValue = isLender ? formatCurrency(account.availableFunds) : account.creditScore;
+
+                            let secondaryStatIcon = isLender ? 'fas fa-chart-bar' : 'fas fa-briefcase';
+                            let secondaryStatLabel = isLender ? 'Loans Funded' : 'Employment';
+                            let secondaryStatValue = isLender ? `${account.loansFunded} Loans` : account.employmentStatus.split(' ')[0];
+
+                            let tertiaryStatIcon = isLender ? 'fas fa-star-half-alt' : 'fas fa-calendar-check';
+                            let tertiaryStatLabel = isLender ? 'Average Rating' : 'Last Loan Date';
+                            let tertiaryStatValue = isLender ? `${account.rating}/5.0` : new Date(account.lastLoanDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                            return `
+                                <div class="bg-white profile-card shadow-lg hover-lift transition-all duration-300 cursor-pointer border border-gray-100" onclick="selectAccount(${account.userId})">
+                                    <div class="card-header-bg relative">
+                                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-4">
+                                            <div class="w-20 h-20 rounded-full bg-white flex items-center justify-center border-4 border-white shadow-md">
+                                                <i class="fas fa-user-circle text-4xl text-gray-400"></i>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 class="font-bold text-gray-800">${account.name}</h3>
-                                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${account.type === 'L' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                                                ${account.type === 'L' ? 'Lender' : 'Borrower'}
+                                    </div>
+
+                                    <div class="pt-14 pb-4 px-4 text-center">
+                                        <div class="flex flex-col items-center">
+                                            <h3 class="font-extrabold text-xl text-gray-800">${account.name}</h3>
+                                            <span class="mt-1 text-xs font-semibold px-3 py-1 rounded-full text-white ${badgeColor}">
+                                                <i class="fas ${isLender ? 'fa-medal' : 'fa-check-circle'} mr-1"></i> ${badgeText}
                                             </span>
+                                            <p class="text-xs text-gray-500 mt-2">${account.address.split(',')[0]}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-around border-t border-gray-100 pt-4 pb-6 bg-gray-50">
+                                        <div class="text-center">
+                                            <i class="${primaryStatIcon} text-lg ${isLender ? 'text-blue-500' : 'text-yellow-600'}"></i>
+                                            <p class="text-xs font-medium text-gray-500 mt-1">${primaryStatLabel}</p>
+                                            <p class="font-bold text-sm text-gray-800">${primaryStatValue}</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <i class="${secondaryStatIcon} text-lg ${isLender ? 'text-purple-500' : 'text-gray-500'}"></i>
+                                            <p class="text-xs font-medium text-gray-500 mt-1">${secondaryStatLabel}</p>
+                                            <p class="font-bold text-sm text-gray-800">${secondaryStatValue}</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <i class="${tertiaryStatIcon} text-lg ${isLender ? 'text-orange-500' : 'text-blue-500'}"></i>
+                                            <p class="text-xs font-medium text-gray-500 mt-1">${tertiaryStatLabel}</p>
+                                            <p class="font-bold text-sm text-gray-800">${tertiaryStatValue}</p>
                                         </div>
                                     </div>
                                 </div>
-                                ${account.type === 'L' ? `
-                                    <div class="bg-blue-50 rounded p-3 flex items-center">
-                                        <i class="fas fa-peso-sign text-blue-600 mr-2 text-lg"></i>
-                                        <div>
-                                            <p class="text-xs text-gray-600">Available Funds</p>
-                                            <p class="font-bold text-blue-700">${formatCurrency(account.availableFunds)}</p>
-                                        </div>
-                                    </div>
-                                ` : `
-                                    <div class="bg-green-50 rounded p-3 flex items-center">
-                                        <i class="fas fa-star text-green-600 mr-2 text-lg"></i>
-                                        <div>
-                                            <p class="text-xs text-gray-600">Credit Score</p>
-                                            <p class="font-bold text-green-700">${account.creditScore}</p>
-                                        </div>
-                                    </div>
-                                `}
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             `;
         }
 
+        // The detailed profile render functions (renderLenderProfile and renderBorrowerProfile)
+        // are retained with their current structure as the user only requested changes to the
+        // main accounts list page, not the detail page.
+
         function renderLenderProfile() {
+            // Use the selectedProfileData instead of generic mockLenderProfile
+            const profile = selectedProfileData;
+            if (!profile || profile.type !== 'L') return '';
+
             return `
                 <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
                     <div class="mb-6">
@@ -213,20 +299,20 @@
                     </div>
                     <div class="border-b border-gray-200 pb-4 mb-4">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-2xl font-bold text-gray-800">${mockLenderProfile.name}</h2>
+                            <h2 class="text-2xl font-bold text-gray-800">${profile.name}</h2>
                             <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Lender</span>
                         </div>
-                        <p class="text-gray-600 mt-1">${mockLenderProfile.email}</p>
+                        <p class="text-gray-600 mt-1">${profile.email}</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <p class="text-sm text-gray-500">Address</p>
-                            <p class="text-gray-800 font-medium">${mockLenderProfile.address}</p>
+                            <p class="text-gray-800 font-medium">${profile.address}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Contact Number</p>
-                            <p class="text-gray-800 font-medium">${mockLenderProfile.contactNumber}</p>
+                            <p class="text-gray-800 font-medium">${profile.contactNumber}</p>
                         </div>
                     </div>
 
@@ -235,7 +321,7 @@
                             <i class="fas fa-chart-line text-blue-600 mr-2"></i>
                             <p class="text-sm text-gray-600">Investment Preference</p>
                         </div>
-                        <p class="text-gray-800 font-medium">${mockLenderProfile.investmentPreference}</p>
+                        <p class="text-gray-800 font-medium">${profile.investmentPreference}</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -244,26 +330,30 @@
                                 <i class="fas fa-peso-sign text-green-600 mr-2"></i>
                                 <p class="text-sm text-gray-600">Available Funds</p>
                             </div>
-                            <p class="text-2xl font-bold text-green-700">${formatCurrency(mockLenderProfile.availableFunds)}</p>
+                            <p class="text-2xl font-bold text-green-700">${formatCurrency(profile.availableFunds)}</p>
                         </div>
                         <div class="bg-orange-50 rounded-lg p-4">
                             <div class="flex items-center mb-2">
                                 <i class="fas fa-peso-sign text-orange-600 mr-2"></i>
                                 <p class="text-sm text-gray-600">Min. Investment</p>
                             </div>
-                            <p class="text-2xl font-bold text-orange-700">${formatCurrency(mockLenderProfile.minInvestmentAmount)}</p>
+                            <p class="text-2xl font-bold text-orange-700">${formatCurrency(profile.minInvestmentAmount)}</p>
                         </div>
                     </div>
 
                     <div class="mt-4 flex items-center text-sm text-gray-500">
                         <i class="fas fa-calendar mr-2"></i>
-                        <span>Profile created: ${new Date(mockLenderProfile.profileCreatedDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        <span>Profile created: ${new Date(profile.profileCreatedDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </div>
                 </div>
             `;
         }
 
         function renderBorrowerProfile() {
+            // Use the selectedProfileData instead of generic mockBorrowerProfile
+            const profile = selectedProfileData;
+            if (!profile || profile.type !== 'B') return '';
+
             return `
                 <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
                     <div class="mb-6">
@@ -273,38 +363,38 @@
                     </div>
                     <div class="border-b border-gray-200 pb-4 mb-4">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-2xl font-bold text-gray-800">${mockBorrowerProfile.name}</h2>
+                            <h2 class="text-2xl font-bold text-gray-800">${profile.name}</h2>
                             <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">Borrower</span>
                         </div>
-                        <p class="text-gray-600 mt-1">${mockBorrowerProfile.email}</p>
+                        <p class="text-gray-600 mt-1">${profile.email}</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <p class="text-sm text-gray-500">Address</p>
-                            <p class="text-gray-800 font-medium">${mockBorrowerProfile.address}</p>
+                            <p class="text-gray-800 font-medium">${profile.address}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Contact Number</p>
-                            <p class="text-gray-800 font-medium">${mockBorrowerProfile.contactNumber}</p>
+                            <p class="text-gray-800 font-medium">${profile.contactNumber}</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="${getCreditScoreColor(mockBorrowerProfile.creditScore)} rounded-lg p-4">
+                        <div class="${getCreditScoreColor(profile.creditScore)} rounded-lg p-4">
                             <div class="flex items-center mb-2">
                                 <i class="fas fa-credit-card mr-2"></i>
                                 <p class="text-sm">Credit Score</p>
                             </div>
-                            <p class="text-3xl font-bold">${mockBorrowerProfile.creditScore}</p>
-                            <p class="text-sm mt-1 font-medium">${getCreditScoreLabel(mockBorrowerProfile.creditScore)}</p>
+                            <p class="text-3xl font-bold">${profile.creditScore}</p>
+                            <p class="text-sm mt-1 font-medium">${getCreditScoreLabel(profile.creditScore)}</p>
                         </div>
                         <div class="bg-blue-50 rounded-lg p-4">
                             <div class="flex items-center mb-2">
                                 <i class="fas fa-peso-sign text-blue-600 mr-2"></i>
                                 <p class="text-sm text-gray-600">Monthly Income</p>
                             </div>
-                            <p class="text-2xl font-bold text-blue-700">${formatCurrency(mockBorrowerProfile.income)}</p>
+                            <p class="text-2xl font-bold text-blue-700">${formatCurrency(profile.income)}</p>
                         </div>
                     </div>
 
@@ -313,143 +403,17 @@
                             <i class="fas fa-briefcase text-gray-600 mr-2"></i>
                             <p class="text-sm text-gray-600">Employment Status</p>
                         </div>
-                        <p class="text-gray-800 font-medium">${mockBorrowerProfile.employmentStatus}</p>
+                        <p class="text-gray-800 font-medium">${profile.employmentStatus}</p>
                     </div>
 
                     <div class="mt-4 flex items-center text-sm text-gray-500">
                         <i class="fas fa-calendar mr-2"></i>
-                        <span>Profile created: ${new Date(mockBorrowerProfile.profileCreatedDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        <span>Profile created: ${new Date(profile.profileCreatedDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     </div>
                 </div>
             `;
         }
 
-        function getStatusBadgeClass(status) {
-            switch(status) {
-                case 'Completed':
-                case 'Active':
-                    return 'bg-green-100 text-green-800';
-                case 'Pending':
-                    return 'bg-yellow-100 text-yellow-800';
-                case 'Completed':
-                    return 'bg-blue-100 text-blue-800';
-                default:
-                    return 'bg-gray-100 text-gray-800';
-            }
-        }
-
-        function getTransactionTypeIcon(type) {
-            switch(type) {
-                case 'Transfer In':
-                    return 'fa-arrow-down text-green-600';
-                case 'Transfer Out':
-                    return 'fa-arrow-up text-red-600';
-                case 'Loan Payment':
-                    return 'fa-credit-card text-blue-600';
-                case 'Interest Earned':
-                    return 'fa-coins text-yellow-600';
-                case 'Loan Disbursement':
-                    return 'fa-money-bill-wave text-purple-600';
-                default:
-                    return 'fa-exchange-alt text-gray-600';
-            }
-        }
-
-        function renderLoans() {
-            return `
-                <div class="max-w-6xl mx-auto">
-                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">Active Loans</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        ${mockLoans.map(loan => `
-                            <div class="bg-white rounded-lg shadow-md hover-lift p-6 border border-gray-200">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-lg font-bold text-gray-800">${loan.borrowerName}</h3>
-                                    <span class="text-xs font-semibold px-3 py-1 rounded-full ${getStatusBadgeClass(loan.loanStatus)}">
-                                        ${loan.loanStatus}
-                                    </span>
-                                </div>
-                                <div class="bg-blue-50 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center mb-2">
-                                        <i class="fas fa-peso-sign text-blue-600 mr-2"></i>
-                                        <p class="text-sm text-gray-600">Loan Amount</p>
-                                    </div>
-                                    <p class="text-2xl font-bold text-blue-700">${formatCurrency(loan.loanAmount)}</p>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p class="text-sm text-gray-500">Interest Rate</p>
-                                        <p class="text-lg font-bold text-gray-800">${loan.interestRate}%</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-gray-500">Due Date</p>
-                                        <p class="text-lg font-bold text-gray-800">${new Date(loan.dueDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderTransactions() {
-            return `
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">Transaction History</h2>
-                    <div class="space-y-4">
-                        ${mockTransactions.map(trans => `
-                            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mr-4">
-                                            <i class="fas ${getTransactionTypeIcon(trans.type)} text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="font-bold text-gray-800">${trans.type}</h3>
-                                            <p class="text-sm text-gray-600">${trans.description}</p>
-                                            <p class="text-xs text-gray-500 mt-1">${new Date(trans.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-lg font-bold text-gray-800">${formatCurrency(trans.amount)}</p>
-                                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${trans.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                            ${trans.status}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderReviews() {
-            return `
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-bold text-center mb-8 text-blue-600">User Reviews</h2>
-                    <div class="space-y-4">
-                        ${mockReviews.map(review => `
-                            <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center">
-                                        <h3 class="font-bold text-gray-800">${review.reviewerName}</h3>
-                                        <span class="ml-3 text-xs font-semibold px-2 py-1 rounded-full ${review.reviewType === 'Lender' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
-                                            ${review.reviewType}
-                                        </span>
-                                    </div>
-                                    <div class="text-yellow-400">
-                                        ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
-                                    </div>
-                                </div>
-                                <p class="text-gray-700 mb-2">${review.comment}</p>
-                                <p class="text-sm text-gray-500">${new Date(review.date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
 
         function render() {
             const contentDiv = document.getElementById('content');
@@ -459,18 +423,14 @@
                 contentDiv.innerHTML = renderLenderProfile();
             } else if (currentPage === 'borrower') {
                 contentDiv.innerHTML = renderBorrowerProfile();
-            } else if (currentPage === 'loans') {
-                contentDiv.innerHTML = renderLoans();
-            } else if (currentPage === 'transactions') {
-                contentDiv.innerHTML = renderTransactions();
-            } else if (currentPage === 'reviews') {
-                contentDiv.innerHTML = renderReviews();
             }
         }
 
         function selectAccount(userId) {
-            selectedUserId = userId;
+            // Find the full account/profile data for the selected user
             const account = mockAccounts.find(a => a.userId === userId);
+            selectedProfileData = account; // Store the specific profile data
+
             if (account.type === 'L') {
                 currentPage = 'lender';
             } else {
@@ -481,11 +441,11 @@
 
         function goBack() {
             currentPage = 'accounts';
-            selectedUserId = null;
+            selectedProfileData = null; // Clear selected data
             render();
         }
 
-        render();
+        document.addEventListener('DOMContentLoaded', render);
     </script>
 </body>
 </html>
