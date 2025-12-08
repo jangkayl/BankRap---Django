@@ -1,10 +1,113 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Transactions - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Transaction History</h1>
+        <p class="text-gray-500">View all your financial disbursements and repayment activities within the CIT-U P2P Lend platform.</p>
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+        
+        <div class="relative w-full md:w-96">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i data-lucide="search" class="h-4 w-4 text-gray-400"></i>
+            </div>
+            <input type="text" class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-red focus:border-brand-red sm:text-sm transition duration-150 ease-in-out" placeholder="Search transactions...">
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            <div class="flex bg-gray-100 rounded-lg p-1">
+                <button class="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded shadow-sm">All Status</button>
+                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Completed</button>
+                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Pending</button>
+                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Failed</button>
+            </div>
+
+            <div class="flex bg-gray-100 rounded-lg p-1">
+                <button class="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded shadow-sm">All Types</button>
+                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Disbursement</button>
+                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Repayment</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-white border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Description</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Amount</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-sm">
+                    {% for tx in transactions %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-gray-600">
+                            {{ tx.transaction_date|date:"Y-m-d" }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-900">
+                            {{ tx.get_type_display }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">
+                            {{ tx.transaction_data }}
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold {% if tx.type == 'D' %}text-gray-900{% else %}text-gray-900{% endif %}">
+                            {% if tx.type == 'D' %}-{% else %}+{% endif %}₱{{ tx.amount|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            {% if tx.status == 'C' %} <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                                    Completed
+                                </span>
+                            {% elif tx.status == 'P' %} <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">
+                                    Pending
+                                </span>
+                            {% elif tx.status == 'F' %} <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                                    Failed
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            No transactions found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="bg-white px-4 py-3 border-t border-gray-100 flex items-center justify-between sm:px-6">
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-end">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">Previous</span>
+                        <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                        <span class="ml-1">Previous</span>
+                    </a>
+                    <a href="#" aria-current="page" class="z-10 bg-red-50 border-brand-red text-brand-red relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        1
+                    </a>
+                    <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        2
+                    </a>
+                    <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="mr-1">Next</span>
+                        <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
