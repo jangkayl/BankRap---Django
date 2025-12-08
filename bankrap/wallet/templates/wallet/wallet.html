@@ -1,10 +1,164 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}My Wallet - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Current Wallet Balance</h2>
+        <div class="text-5xl font-extrabold text-brand-red mb-8">
+            ₱{{ user.wallet.balance|floatformat:2|default:"0.00" }}
+        </div>
+
+        <div class="flex space-x-4">
+            <button onclick="openModal('add-funds-modal')" class="flex items-center px-6 py-3 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-sm">
+                <i data-lucide="plus" class="w-5 h-5 mr-2"></i> Add Funds
+            </button>
+            <button onclick="openModal('withdraw-modal')" class="flex items-center px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg transition-colors">
+                <i data-lucide="minus" class="w-5 h-5 mr-2"></i> Withdraw Funds
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <h3 class="text-lg font-bold text-gray-900 mb-6">Transaction History</h3>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                        <th class="pb-4 pl-2">Date</th>
+                        <th class="pb-4">Description</th>
+                        <th class="pb-4 text-right">Amount</th>
+                        <th class="pb-4 text-right pr-2">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-sm">
+                    {% for transaction in transactions %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="py-4 pl-2 text-gray-600">{{ transaction.transaction_date|date:"Y-m-d" }}</td>
+                        <td class="py-4 text-gray-900 font-medium">{{ transaction.get_transaction_type_display }}</td>
+                        
+                        <td class="py-4 text-right font-bold {% if transaction.transaction_type == 'DEPOSIT' %}text-green-600{% else %}text-gray-900{% endif %}">
+                            {% if transaction.transaction_type == 'DEPOSIT' %}+{% else %}-{% endif %}₱{{ transaction.amount|floatformat:2 }}
+                        </td>
+
+                        <td class="py-4 text-right pr-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                                Completed
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="py-4 pl-2 text-gray-600">2025-10-26</td>
+                        <td class="py-4 text-gray-900 font-medium">Loan Repayment from John Doe (ID 123)</td>
+                        <td class="py-4 text-right font-bold text-green-600">+₱500.00</td>
+                        <td class="py-4 text-right pr-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">Completed</span></td>
+                    </tr>
+                    <tr>
+                        <td class="py-4 pl-2 text-gray-600">2025-10-25</td>
+                        <td class="py-4 text-gray-900 font-medium">Funds Added via Bank Transfer</td>
+                        <td class="py-4 text-right font-bold text-green-600">+₱1,000.00</td>
+                        <td class="py-4 text-right pr-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">Completed</span></td>
+                    </tr>
+                    <tr>
+                        <td class="py-4 pl-2 text-gray-600">2025-10-24</td>
+                        <td class="py-4 text-gray-900 font-medium">Withdrawal Request to Gcash</td>
+                        <td class="py-4 text-right font-bold text-gray-900">-₱200.00</td>
+                        <td class="py-4 text-right pr-2"><span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold">Pending</span></td>
+                    </tr>
+                    <tr>
+                        <td class="py-4 pl-2 text-gray-600">2025-10-23</td>
+                        <td class="py-4 text-gray-900 font-medium">Platform Service Fee</td>
+                        <td class="py-4 text-right font-bold text-gray-900">-₱5.00</td>
+                        <td class="py-4 text-right pr-2"><span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">Completed</span></td>
+                    </tr>
+                    <tr>
+                        <td class="py-4 pl-2 text-gray-600">2025-10-21</td>
+                        <td class="py-4 text-gray-900 font-medium">Withdrawal Failed - Incorrect Account</td>
+                        <td class="py-4 text-right font-bold text-gray-900">-₱100.00</td>
+                        <td class="py-4 text-right pr-2"><span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold">Failed</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="add-funds-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-fade-in-up">
+        <button onclick="closeModal('add-funds-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Add Funds</h3>
+        <p class="text-sm text-gray-500 mb-6">Enter the amount you wish to add to your wallet.</p>
+        
+        <form method="POST" action="{% url 'add_funds' %}"> {% csrf_token %}
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Amount</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-3.5 text-gray-500 font-medium">₱</span>
+                    <input type="number" step="0.01" class="w-full pl-8 pr-4 py-3 bg-gray-100 border-transparent focus:bg-white focus:ring-2 focus:ring-brand-red rounded-lg transition-all font-medium text-gray-900" placeholder="500.00">
+                </div>
+            </div>
+            
+            <button type="submit" class="w-full bg-brand-red hover:bg-red-900 text-white font-bold py-3 rounded-lg transition-colors">
+                Confirm Add
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="withdraw-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 relative animate-fade-in-up">
+        <button onclick="closeModal('withdraw-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        
+        <h3 class="text-xl font-bold text-gray-900 mb-2">Withdraw Funds</h3>
+        <p class="text-sm text-gray-500 mb-6">Enter the amount you wish to withdraw from your wallet.</p>
+        
+        <form method="POST" action="#">
+            {% csrf_token %}
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Amount</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3.5 text-gray-500 font-medium">₱</span>
+                        <input type="number" step="0.01" class="w-full pl-8 pr-4 py-3 bg-gray-100 border-transparent focus:bg-white focus:ring-2 focus:ring-brand-red rounded-lg transition-all font-medium text-gray-900" placeholder="100.00">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Account</label>
+                    <input type="text" class="w-full px-4 py-3 bg-gray-100 border-transparent focus:bg-white focus:ring-2 focus:ring-brand-red rounded-lg transition-all font-medium text-gray-900" placeholder="Gcash 09123456789">
+                </div>
+            </div>
+            
+            <button type="submit" class="w-full bg-brand-red hover:bg-red-900 text-white font-bold py-3 rounded-lg transition-colors">
+                Confirm Withdraw
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+    // Close modal on outside click
+    window.onclick = function(event) {
+        if (event.target.classList.contains('fixed')) {
+            event.target.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

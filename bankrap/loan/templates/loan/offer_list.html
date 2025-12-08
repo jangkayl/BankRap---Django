@@ -1,10 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Loan Offers - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Loan Offers</h1>
+        <p class="text-gray-500">Track offers you have made to other students.</p>
+    </div>
+
+    <div class="flex space-x-2 mb-6 border-b border-gray-100 pb-1">
+        <button class="px-4 py-2 border-b-2 border-brand-red text-brand-red font-medium">My Offers (Sent)</button>
+        <button class="px-4 py-2 text-gray-500 hover:text-gray-900 font-medium transition-colors">Received</button>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Loan Request</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Offered Amount</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Interest Rate</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date Sent</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 text-sm">
+                    {% for offer in offers %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-gray-900">Request #{{ offer.loan_request.loan_id }}</div>
+                            <div class="text-xs text-gray-500">Student Loan</div>
+                        </td>
+                        <td class="px-6 py-4 font-bold text-brand-red">
+                            ₱{{ offer.offered_amount|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">
+                            {{ offer.offered_rate }}%
+                        </td>
+                        <td class="px-6 py-4 text-gray-500">
+                            {{ offer.offer_date|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            {% if offer.offer_status == 'ACCEPTED' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Accepted</span>
+                            {% elif offer.offer_status == 'PENDING' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">Pending</span>
+                            {% elif offer.offer_status == 'DECLINED' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">Declined</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            No offers found. <a href="{% url 'loan_list' %}" class="text-brand-red hover:underline">Browse requests</a> to make an offer.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

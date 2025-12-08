@@ -1,10 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Create Request - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-8">
+    
+    <div class="mb-8">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Submit a New Loan Request</h1>
+        <p class="text-gray-500">Fill out the form below to initiate your loan request. Provide accurate details to ensure a smooth process.</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        
+        <form method="POST" action="{% url 'loan_create' %}">
+            {% csrf_token %}
+            
+            <h2 class="text-lg font-bold text-gray-900 mb-1">Loan Details</h2>
+            <p class="text-sm text-gray-500 mb-6">Specify the amount, proposed interest rate, and term for your request.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Loan Amount (PHP)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-3 text-gray-500 font-medium">₱</span>
+                        <input type="number" name="amount" required step="0.01" min="500"
+                            class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all" 
+                            placeholder="e.g., 5000.00">
+                    </div>
+                    <p class="mt-2 text-xs text-gray-400">Enter the exact amount you wish to borrow.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Proposed Interest Rate (%)</label>
+                    <div class="relative mb-3">
+                        <input type="number" id="interest_input" name="interest_rate" value="8" min="1" max="20" step="0.1"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all text-right pr-8">
+                        <span class="absolute right-4 top-3 text-gray-500 font-medium">%</span>
+                    </div>
+                    <input type="range" id="interest_slider" min="1" max="20" value="8" step="0.5" 
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-red">
+                    <p class="mt-2 text-xs text-gray-400">Set a reasonable rate for lenders (typically 5-15%).</p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Purpose of Loan</label>
+                <textarea name="purpose" rows="4" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all placeholder-gray-400"
+                    placeholder="Describe why you need the loan (e.g., 'Tuition fees for upcoming semester', 'Textbook purchase', 'Project materials')."></textarea>
+                <p class="mt-2 text-xs text-gray-400">A clear purpose helps lenders understand your need.</p>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Term Duration</label>
+                <div class="relative">
+                    <select name="term" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-brand-red cursor-pointer bg-white">
+                        <option value="" disabled selected>Select a term duration</option>
+                        <option value="1_MONTHS">1 Month</option>
+                        <option value="2_MONTHS">2 Months</option>
+                        <option value="3_MONTHS">3 Months</option>
+                        <option value="6_MONTHS">6 Months</option>
+                        <option value="12_MONTHS">12 Months</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-400">Choose the repayment period that best suits you.</p>
+            </div>
+
+            <div class="flex items-center justify-end space-x-6 pt-4 border-t border-gray-50">
+                <a href="{% url 'dashboard' %}" class="text-sm font-bold text-gray-600 hover:text-gray-900">Cancel</a>
+                <button type="submit" class="px-8 py-3 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-md transform hover:-translate-y-0.5">
+                    Submit Request
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<script>
+    // Sync Slider and Input
+    const slider = document.getElementById('interest_slider');
+    const input = document.getElementById('interest_input');
+
+    slider.addEventListener('input', function() {
+        input.value = this.value;
+    });
+
+    input.addEventListener('input', function() {
+        slider.value = this.value;
+    });
+</script>
+{% endblock %}

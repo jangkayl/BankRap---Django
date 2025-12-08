@@ -4,164 +4,133 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>{% block title %}BankRap - Peer Lending{% endblock %}</title>
-
-    <meta name="description" content="BankRap is a secure and trusted peer-to-peer micro-lending platform exclusively for verified CIT-U students." />
+    <title>{% block title %}BankRap{% endblock %}</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="{% static 'styles.css' %}" />
+
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        /* CIT-U Red Theme */
+        body { font-family: 'Poppins', sans-serif; }
         .text-brand-red { color: #8B0000; }
         .bg-brand-red { background-color: #8B0000; }
         .hover\:bg-brand-red-dark:hover { background-color: #6d0000; }
-        .border-brand-red { border-color: #8B0000; }
+        .sidebar-link.active { background-color: #FEF2F2; color: #8B0000; border-right: 3px solid #8B0000; }
     </style>
-
-    {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+<body class="bg-gray-50 text-gray-800">
 
-    <header class="bg-white sticky top-0 z-50 py-4 shadow-sm border-b border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between">
-                <a href="{% url 'index' %}" class="flex items-center space-x-2 group">
-                    <div class="bg-brand-red p-1.5 rounded-lg group-hover:bg-red-900 transition-colors">
+    <div class="{% if user %}flex min-h-screen{% else %}flex flex-col min-h-screen{% endif %}">
+
+        {% if user %}
+            <aside class="w-64 bg-white border-r border-gray-200 fixed h-full z-30 flex flex-col">
+                <div class="p-6 border-b border-gray-100 flex items-center space-x-2">
+                    <div class="bg-brand-red p-1.5 rounded-lg">
                         <i data-lucide="handshake" class="h-6 w-6 text-white"></i>
                     </div>
-                    <span class="text-2xl font-bold text-brand-red group-hover:text-red-900 transition-colors">BankRap</span>
-                </a>
+                    <span class="text-2xl font-bold text-brand-red">BankRap</span>
+                </div>
 
-                <nav class="hidden md:flex items-center space-x-8">
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-brand-red font-medium transition-colors">Dashboard</a>
-                        <a href="{% url 'loan_list' %}" class="text-gray-600 hover:text-brand-red font-medium transition-colors">Loans</a>
-                        <a href="{% url 'wallet' %}" class="text-gray-600 hover:text-brand-red font-medium transition-colors">Wallet</a>
-
-                        <div class="flex items-center space-x-4 border-l pl-6 border-gray-200">
-                            <a href="{% url 'profile' %}" class="flex items-center space-x-2 text-gray-700 hover:text-brand-red">
-                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-brand-red font-bold">
-                                    {{ user.username|slice:":1"|upper }}
-                                </div>
-                                <span class="font-medium">{{ user.username }}</span>
+                <nav class="flex-1 overflow-y-auto py-4">
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="{% url 'dashboard' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                                <i data-lucide="layout-grid" class="w-5 h-5 mr-3"></i> Dashboard
                             </a>
-                            <a href="{% url 'logout' %}" class="text-sm text-gray-500 hover:text-red-600">
-                                <i data-lucide="log-out" class="w-5 h-5"></i>
+                        </li>
+                        <li>
+                            <a href="{% url 'profile' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                                <i data-lucide="user" class="w-5 h-5 mr-3"></i> Profile
                             </a>
-                        </div>
-                    {% else %}
-                        <a href="{% url 'index' %}#how-it-works" class="text-gray-600 hover:text-brand-red font-medium transition-colors">How it Works</a>
-                        <div class="flex items-center space-x-4 ml-4">
-                            <a href="{% url 'login' %}" class="text-gray-900 hover:text-brand-red font-medium transition-colors">
-                                Login
+                        </li>
+                        <li>
+                            <a href="{% url 'wallet' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'wallet' %}active{% endif %}">
+                                <i data-lucide="wallet" class="w-5 h-5 mr-3"></i> Wallet
                             </a>
-                            <a href="{% url 'register' %}" class="bg-brand-red hover:bg-brand-red-dark text-white px-5 py-2 rounded-lg font-medium transition-all shadow-md">
-                                Register
+                        </li>
+                        <li>
+                            <a href="{% url 'loan_list' %}"
+                               class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors
+                               {% if request.resolver_match.url_name == 'loan_list' or request.resolver_match.url_name == 'loan_create' %}active{% endif %}">
+                                <i data-lucide="landmark" class="w-5 h-5 mr-3"></i> Loan Requests
                             </a>
-                        </div>
-                    {% endif %}
+                        </li>
+                        <li>
+                            <a href="{% url 'offer_list' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'offer_list' %}active{% endif %}">
+                                <i data-lucide="handshake" class="w-5 h-5 mr-3"></i> Loan Offers
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors">
+                                <i data-lucide="calendar-clock" class="w-5 h-5 mr-3"></i> Repayments
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors">
+                                <i data-lucide="file-text" class="w-5 h-5 mr-3"></i> Transactions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors">
+                                <i data-lucide="star" class="w-5 h-5 mr-3"></i> Reviews
+                            </a>
+                        </li>
+                    </ul>
                 </nav>
 
-                <div class="md:hidden">
-                    <button class="text-gray-900 hover:text-brand-red">
-                        <i data-lucide="menu" class="h-7 w-7"></i>
-                    </button>
+                <div class="p-4 border-t border-gray-100">
+                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors">
+                        <i data-lucide="settings" class="w-4 h-4 mr-3"></i> Settings
+                    </a>
+                    <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors mt-1">
+                        <i data-lucide="log-out" class="w-4 h-4 mr-3"></i> Logout
+                    </a>
                 </div>
-            </div>
-        </div>
-    </header>
-
-    {% if messages %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        {% for message in messages %}
-            <div class="p-4 rounded-lg mb-4 flex items-center shadow-sm
-                {% if message.tags == 'error' %} bg-red-50 text-red-800 border border-red-200
-                {% elif message.tags == 'success' %} bg-green-50 text-green-800 border border-green-200
-                {% else %} bg-blue-50 text-blue-800 border border-blue-200 {% endif %}">
-
-                {% if message.tags == 'error' %} <i data-lucide="alert-circle" class="w-5 h-5 mr-3"></i>
-                {% elif message.tags == 'success' %} <i data-lucide="check-circle" class="w-5 h-5 mr-3"></i>
-                {% else %} <i data-lucide="info" class="w-5 h-5 mr-3"></i> {% endif %}
-
-                <span>{{ message }}</span>
-            </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <main class="flex-grow">
-        {% block content %}
-        {% endblock %}
-    </main>
-
-    <footer class="bg-white border-t border-gray-200 pt-16 pb-8 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-12 mb-12">
-                <div class="col-span-1">
-                    <div class="flex items-center space-x-2 mb-6">
+            </aside>
+        {% else %}
+            <header class="bg-white sticky top-0 z-50 py-4 shadow-sm">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+                    <a href="{% url 'index' %}" class="flex items-center space-x-2">
                         <div class="bg-brand-red p-1.5 rounded-lg">
-                            <i data-lucide="handshake" class="h-5 w-5 text-white"></i>
+                            <i data-lucide="handshake" class="h-6 w-6 text-white"></i>
                         </div>
-                        <span class="text-xl font-bold text-brand-red">BankRap</span>
-                    </div>
-                    <p class="text-gray-500 text-sm mb-6">
-                        A peer-to-peer micro-lending platform exclusively for verified CIT-U students.
-                    </p>
-                    <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-brand-red transition-colors"><i data-lucide="facebook" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-brand-red transition-colors"><i data-lucide="twitter" class="w-5 h-5"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-brand-red transition-colors"><i data-lucide="linkedin" class="w-5 h-5"></i></a>
+                        <span class="text-2xl font-bold text-brand-red">BankRap</span>
+                    </a>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="{% url 'login' %}" class="text-gray-900 hover:text-brand-red font-medium">Login</a>
+                        <a href="{% url 'register' %}" class="bg-brand-red hover:bg-red-900 text-white px-6 py-2.5 rounded-lg font-medium shadow-md">Register</a>
                     </div>
                 </div>
+            </header>
+        {% endif %}
 
-                <div>
-                    <h4 class="font-bold text-gray-900 mb-6">Platform</h4>
-                    <ul class="space-y-4 text-sm text-gray-500">
-                        <li><a href="#" class="hover:text-brand-red transition-colors">Find a Loan</a></li>
-                        <li><a href="#" class="hover:text-brand-red transition-colors">Start Lending</a></li>
-                        <li><a href="#" class="hover:text-brand-red transition-colors">Trust & Safety</a></li>
-                    </ul>
-                </div>
+        <main class="flex-1 {% if user %}ml-64 p-8{% else %}{% endif %}">
 
-                <div>
-                    <h4 class="font-bold text-gray-900 mb-6">Support</h4>
-                    <ul class="space-y-4 text-sm text-gray-500">
-                        <li><a href="#" class="hover:text-brand-red transition-colors">FAQ</a></li>
-                        <li><a href="#" class="hover:text-brand-red transition-colors">Contact Support</a></li>
-                        <li><a href="#" class="hover:text-brand-red transition-colors">Student Verification</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-gray-900 mb-6">Legal</h4>
-                    <ul class="space-y-4 text-sm text-gray-500">
-                        <li><a href="#" class="hover:text-brand-red transition-colors">Privacy Policy</a></li>
-                        <li><a href="#" class="hover:text-brand-red transition-colors">Terms of Service</a></li>
-                    </ul>
-                </div>
+            {% if messages %}
+            <div class="mb-6 space-y-2 max-w-7xl mx-auto {% if not user %}px-4{% endif %}">
+                {% for message in messages %}
+                    <div class="p-4 rounded-lg flex items-center shadow-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-100{% else %}bg-green-50 text-green-800 border border-green-100{% endif %}">
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
             </div>
+            {% endif %}
 
-            <div class="border-t border-gray-200 pt-8 text-center text-sm text-gray-400">
-                <p>&copy; 2025 CIT-U P2P Lend. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+            {% block content %}{% endblock %}
+        </main>
+
+        {% if not user %}
+            <footer class="bg-gray-50 border-t border-gray-200 pt-16 pb-8 mt-auto">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
+                    <p>&copy; 2025 CIT-U P2P Lend. All rights reserved.</p>
+                </div>
+            </footer>
+        {% endif %}
+    </div>
 
     <script>
         lucide.createIcons();
     </script>
-
-    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

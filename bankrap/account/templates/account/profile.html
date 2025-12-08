@@ -1,10 +1,138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Profile - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Profile</h1>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6 flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-8">
+        <div class="relative">
+            <div class="w-24 h-24 rounded-full bg-red-100 flex items-center justify-center text-3xl font-bold text-brand-red border-4 border-white shadow-sm">
+                {{ user.name|slice:":1" }}
+            </div>
+            <div class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-sm">
+                <i data-lucide="badge-check" class="w-6 h-6 text-blue-500 fill-current"></i>
+            </div>
+        </div>
+
+        <div class="flex-1">
+            <h2 class="text-2xl font-bold text-gray-900">{{ user.name }}</h2>
+            <p class="text-gray-500 text-sm mb-3">CIT-U Student ID: {{ user.user_id|stringformat:"05d" }}</p>
+            
+            <div class="flex flex-wrap gap-2 mb-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-brand-red border border-red-100">
+                    <i data-lucide="shield-check" class="w-3 h-3 mr-1"></i> Verified Student
+                </span>
+                
+                {% if user.type == 'B' or user.type == 'L' %} <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {% if user.type == 'B' %}Borrower{% else %}Lender{% endif %}
+                    </span>
+                {% endif %}
+            </div>
+
+            <a href="#" class="text-sm font-medium text-gray-600 hover:text-brand-red flex items-center transition-colors">
+                Edit Profile <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Trust & Reputation</h3>
+        
+        <div class="flex items-end space-x-2 mb-4">
+            <span class="text-4xl font-extrabold text-brand-red">4.8</span>
+            <span class="text-gray-400 mb-1">/ 5.0</span>
+            <div class="flex items-center mb-1.5 ml-2">
+                <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-current"></i>
+                <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-current"></i>
+                <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-current"></i>
+                <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-current"></i>
+                <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-current"></i>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-brand-red">
+                On-Time Payer
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-brand-red">
+                Reliable Lender
+            </span>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                Positive Feedback: 95%
+            </span>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <h3 class="text-lg font-bold text-gray-900 mb-6">Financial Details</h3>
+
+        <div class="mb-8">
+            <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Borrower Profile</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Verified Income</label>
+                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
+                        {% if user.type == 'B' and user.income %}
+                            Php {{ user.income|floatformat:2 }} / month
+                        {% else %}
+                             --
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Credit Score</label>
+                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
+                        {% if user.type == 'B' and user.credit_score %}
+                            Good ({{ user.credit_score }})
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Employment Status</label>
+                <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
+                    {% if user.type == 'B' and user.employment_status %}
+                        {{ user.employment_status }}
+                    {% else %}
+                        Student
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Lender Profile</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Available Funds for Lending</label>
+                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
+                        {% if user.type == 'L' and user.available_funds %}
+                            Php {{ user.available_funds|floatformat:2 }}
+                        {% else %}
+                            Php 0.00
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Minimum Investment Amount</label>
+                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
+                         {% if user.type == 'L' and user.min_investment_amount %}
+                            Php {{ user.min_investment_amount|floatformat:2 }}
+                        {% else %}
+                            Php 500.00
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

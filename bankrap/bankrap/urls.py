@@ -1,22 +1,24 @@
 from django.contrib import admin
 from django.urls import path
-from bankrap import views as global_views  # if index_view is here
-from account import views as account_views  # Import the new views we just made
+from bankrap import views as global_views
+from account import views as account_views
+from wallet import views as wallet_views
+from loan import views as loan_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # Global Pages (Home)
     path('', global_views.index_view, name='index'),
-
-    # Auth Pages (Handled by Account App)
     path('login/', account_views.login_view, name='login'),
     path('register/', account_views.register_view, name='register'),
     path('logout/', account_views.logout_view, name='logout'),
-
-    # App Features
     path('dashboard/', account_views.dashboard_view, name='dashboard'),
+    path('profile/', account_views.profile_view, name='profile'),
+    path('wallet/', wallet_views.wallet_view, name='wallet'),
+    path('wallet/add/', wallet_views.add_funds, name='add_funds'),
 
-    # Wallet (Placeholder pointing to dashboard for now, or create wallet_view)
-    path('wallet/', account_views.dashboard_view, name='wallet'),
+    # LOAN URLS
+    path('loans/', loan_views.loan_request_list, name='loan_list'),
+    path('loans/create/', loan_views.loan_request_create, name='loan_create'),
+    path('loans/<int:loan_id>/offer/', loan_views.loan_offer_create, name='loan_offer_create'),
+    path('offers/', loan_views.loan_offer_list, name='offer_list'),
 ]

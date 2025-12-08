@@ -10,7 +10,21 @@ def get_current_user(request):
     user_id = request.session.get('user_id')
     if user_id:
         try:
-            return User.objects.get(user_id=user_id)
+            # First, try to get the base user
+            user = User.objects.get(user_id=user_id)
+
+            # Now try to "downcast" to the specific profile to get extra fields
+            if user.type == 'B':
+                try:
+                    return BorrowerProfile.objects.get(user_id=user_id)
+                except BorrowerProfile.DoesNotExist:
+                    return user
+            elif user.type == 'L':
+                try:
+                    return LenderProfile.objects.get(user_id=user_id)
+                except LenderProfile.DoesNotExist:
+                    return user
+            return user
         except User.DoesNotExist:
             return None
     return None
@@ -21,28 +35,39 @@ def get_current_user(request):
 def dashboard_view(request):
     user = get_current_user(request)
 
-    # --- DEV MODE: BYPASS AUTH ---
-    # if not user:
-    #     messages.error(request, "Please log in to access the dashboard.")
-    #     return redirect('login')
-
-    # If no user is logged in, create a fake one for UI testing
+    # Mock user for dashboard if not logged in (For UI Testing)
     if not user:
         class MockUser:
             name = "Developer Mode"
 
             class MockWallet:
-                balance = 50000.00
+                balance = 25000.00
 
             wallet = MockWallet()
 
         user = MockUser()
-    # -----------------------------
 
-    context = {
-        'user': user,
-    }
-    return render(request, 'account/dashboard.html', context)
+    return render(request, 'account/dashboard.html', {'user': user})
+
+
+def profile_view(request):
+    user = get_current_user(request)
+
+    # Mock for UI testing if not logged in
+    if not user:
+        class MockUser:
+            user_id = 202100123
+            name = "Juan Dela Cruz"
+            type = 'B'
+            income = 15000.00
+            credit_score = 720
+            employment_status = "Part-time Student Assistant"
+            available_funds = 10000.00
+            min_investment_amount = 500.00
+
+        user = MockUser()
+
+    return render(request, 'account/profile.html', {'user': user})
 
 
 def login_view(request):
@@ -107,6 +132,7 @@ def logout_view(request):
     return redirect('login')
 
 
+# Keep class based view if needed for legacy/admin
 class AccountView(View):
     template_name = 'account.html'
 
