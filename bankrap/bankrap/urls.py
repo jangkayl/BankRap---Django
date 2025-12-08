@@ -32,4 +32,8 @@ urlpatterns = [
 
     # NEW URL
     path('reviews/', review_views.reviews_view, name='reviews'),
+
+    path('messages/', account_views.messaging_view, name='messaging'),
+
+    path('settings/', account_views.settings_view, name='settings'),
 ]

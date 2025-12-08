@@ -76,11 +76,17 @@
                                 <i data-lucide="star" class="w-5 h-5 mr-3"></i> Reviews
                             </a>
                         </li>
+                        <li>
+                        <a href="{% url 'messaging' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'messaging' %}active{% endif %}">
+                            <i data-lucide="message-square" class="w-5 h-5 mr-3"></i> Messages
+                            <span class="ml-auto bg-red-100 text-brand-red text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+                        </a>
+                    </li>
                     </ul>
                 </nav>
 
                 <div class="p-4 border-t border-gray-100">
-                    <a href="#" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors">
+                    <a href="{% url 'settings' %}" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'settings' %}text-brand-red font-bold{% endif %}">
                         <i data-lucide="settings" class="w-4 h-4 mr-3"></i> Settings
                     </a>
                     <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors mt-1">

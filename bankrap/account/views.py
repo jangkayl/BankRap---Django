@@ -139,3 +139,93 @@ class AccountView(View):
     def get(self, request):
         accounts = User.objects.all()
         return render(request, self.template_name, {'accounts': accounts})
+
+
+
+def messaging_view(request):
+    # Mock data for sidebar conversations
+    conversations = [
+        {
+            'name': 'Maria Santos',
+            'last_message': 'Yes, that should be fine. I will prepare...',
+            'time': '2 min ago',
+            'unread': 2,
+            'online': True,
+            'active': True
+        },
+        {
+            'name': 'John Dela Cruz',
+            'last_message': 'Got it. Thanks!',
+            'time': '1 hr ago',
+            'unread': 0,
+            'online': False,
+            'active': False
+        },
+        {
+            'name': 'Sarah Gomez',
+            'last_message': 'I need to discuss the repayment sched...',
+            'time': 'Yesterday',
+            'unread': 1,
+            'online': False,
+            'active': False
+        },
+        {
+            'name': 'David Lee',
+            'last_message': 'The document has been uploaded.',
+            'time': '3 days ago',
+            'unread': 0,
+            'online': True,
+            'active': False
+        }
+    ]
+
+    # Get current user for header
+    user_id = request.session.get('user_id')
+    current_user = None
+    if user_id:
+        try:
+            current_user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            pass
+
+    if not current_user:
+        class MockUser:
+            name = "Developer Mode"
+
+        current_user = MockUser()
+
+    return render(request, 'account/messaging.html', {
+        'conversations': conversations,
+        'user': current_user
+    })
+
+
+
+
+def settings_view(request):
+    # 1. Get User
+    user_id = request.session.get('user_id')
+    current_user = None
+
+    if user_id:
+        try:
+            current_user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            pass
+
+    # Mock user for UI dev
+    if not current_user:
+        class MockUser:
+            name = "Juan Dela Cruz"
+            email = "juan.doe@cit.edu"
+
+        current_user = MockUser()
+
+    # 2. Handle POST (Mock Save)
+    if request.method == 'POST':
+        # In a real app, you would validate passwords, update email, and save preferences models here.
+        # For now, we just simulate a success.
+        messages.success(request, "Settings updated successfully!")
+        return redirect('settings')
+
+    return render(request, 'account/settings.html', {'user': current_user})

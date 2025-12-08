@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Settings - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto pb-12">
+
+    <h1 class="text-2xl font-bold text-gray-900 mb-8">Settings</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-1">Change Password</h2>
+            <p class="text-sm text-gray-500 mb-6">Update your account password to enhance security.</p>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                    <input type="password" name="current_password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all" placeholder="Enter current password">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                    <input type="password" name="new_password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all" placeholder="Enter new password">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                    <input type="password" name="confirm_password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all" placeholder="Confirm new password">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-1">Change Email</h2>
+            <p class="text-sm text-gray-500 mb-6">Update your registered email address for account communication.</p>
+
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Current Email</label>
+                    <input type="email" value="{{ user.email }}" disabled class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">New Email</label>
+                    <input type="email" name="new_email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all" placeholder="Enter new email address">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-1">Notification Preferences</h2>
+            <p class="text-sm text-gray-500 mb-6">Manage how you receive alerts and updates from CIT-U P2P Lend.</p>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm font-medium text-gray-700">Email Notifications</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="notify_email" checked class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm font-medium text-gray-700">SMS Notifications</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="notify_sms" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm font-medium text-gray-700">New Loan Offer Alerts</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="notify_offers" checked class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm font-medium text-gray-700">Repayment Reminders</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="notify_repay" checked class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-1">Privacy & Security</h2>
+            <p class="text-sm text-gray-500 mb-6">Configure your privacy settings and enhance account security.</p>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm font-medium text-gray-700">Allow Data Sharing</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="privacy_share" checked class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <span class="text-sm font-medium text-gray-700">Two-Factor Authentication (2FA)</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="security_2fa" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-red"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-4">
+            <button type="button" class="px-6 py-2.5 text-gray-700 font-bold hover:text-gray-900 transition-colors">Cancel</button>
+            <button type="submit" class="px-8 py-2.5 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-sm">
+                Save Changes
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

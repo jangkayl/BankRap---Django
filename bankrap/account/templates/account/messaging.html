@@ -1,10 +1,121 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Messages - BankRap{% endblock %}
+
+{% block content %}
+<div class="h-[calc(100vh-8rem)] flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    
+    <div class="w-1/3 border-r border-gray-100 flex flex-col bg-white">
+        <div class="p-4 border-b border-gray-100">
+            <div class="relative">
+                <i data-lucide="search" class="absolute left-3 top-3 h-4 w-4 text-gray-400"></i>
+                <input type="text" placeholder="Search conversations..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-transparent rounded-lg text-sm focus:bg-white focus:border-brand-red focus:ring-1 focus:ring-brand-red focus:outline-none transition-all">
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+            {% for chat in conversations %}
+            <div class="p-4 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 {% if chat.active %}bg-red-50/50 border-l-4 border-l-brand-red{% endif %}">
+                <div class="flex items-start space-x-3">
+                    <div class="relative">
+                        <img src="https://ui-avatars.com/api/?name={{ chat.name }}&background=random" class="w-10 h-10 rounded-full object-cover">
+                        {% if chat.online %}
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-baseline mb-1">
+                            <h3 class="text-sm font-bold text-gray-900 truncate">{{ chat.name }}</h3>
+                            <span class="text-xs text-gray-400">{{ chat.time }}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 truncate">{{ chat.last_message }}</p>
+                    </div>
+                    {% if chat.unread > 0 %}
+                    <div class="flex flex-col justify-center h-full ml-2">
+                        <span class="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-brand-red rounded-full">
+                            {{ chat.unread }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col bg-white">
+        
+        <div class="p-4 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <img src="https://ui-avatars.com/api/?name=Maria+Santos&background=random" class="w-10 h-10 rounded-full">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">Maria Santos</h3>
+                    <div class="flex items-center">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
+                        <span class="text-xs text-gray-500">Online</span>
+                    </div>
+                </div>
+            </div>
+            <button class="text-gray-400 hover:text-gray-600"><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
+            <div class="flex justify-center">
+                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">Today</span>
+            </div>
+
+            <div class="flex items-end space-x-3">
+                <img src="https://ui-avatars.com/api/?name=Maria+Santos&background=random" class="w-8 h-8 rounded-full mb-1">
+                <div class="flex flex-col space-y-1 items-start">
+                    <div class="bg-white border border-gray-100 px-4 py-3 rounded-2xl rounded-bl-none text-sm text-gray-700 shadow-sm max-w-md">
+                        Hi Alex, I saw your loan request. I think I can help you out.
+                    </div>
+                    <span class="text-xs text-gray-400 ml-1">10:00 AM</span>
+                </div>
+            </div>
+
+            <div class="flex items-end justify-end space-x-3">
+                <div class="flex flex-col space-y-1 items-end">
+                    <div class="bg-brand-red text-white px-4 py-3 rounded-2xl rounded-br-none text-sm shadow-sm max-w-md">
+                        That would be great Maria! What are your terms?
+                    </div>
+                    <span class="text-xs text-gray-400 mr-1">10:05 AM</span>
+                </div>
+            </div>
+
+            <div class="flex items-end space-x-3">
+                <img src="https://ui-avatars.com/api/?name=Maria+Santos&background=random" class="w-8 h-8 rounded-full mb-1">
+                <div class="flex flex-col space-y-1 items-start">
+                    <div class="bg-white border border-gray-100 px-4 py-3 rounded-2xl rounded-bl-none text-sm text-gray-700 shadow-sm max-w-md">
+                        I can offer you 5% interest over 3 months.
+                    </div>
+                    <span class="text-xs text-gray-400 ml-1">10:10 AM</span>
+                </div>
+            </div>
+
+            <div class="flex items-end justify-end space-x-3">
+                <div class="flex flex-col space-y-1 items-end">
+                    <div class="bg-brand-red text-white px-4 py-3 rounded-2xl rounded-br-none text-sm shadow-sm max-w-md">
+                        That sounds reasonable. Is there anything else I need to provide?
+                    </div>
+                    <span class="text-xs text-gray-400 mr-1">10:15 AM</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 bg-white border-t border-gray-100">
+            <form class="flex items-center space-x-3">
+                <button type="button" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="paperclip" class="w-5 h-5"></i>
+                </button>
+                <input type="text" placeholder="Type your message here..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red transition-all">
+                <button type="submit" class="bg-brand-red hover:bg-red-900 text-white p-3 rounded-xl transition-colors shadow-md">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
