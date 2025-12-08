@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.db.utils import OperationalError, ProgrammingError
 from account.models import User, BorrowerProfile, LenderProfile
 from .models import LoanRequest, LoanOffer
+from django.shortcuts import get_object_or_404
 
 
 # ==========================================
@@ -160,3 +161,37 @@ def loan_offer_list(request):
         ]
 
     return render(request, 'loan/offer_list.html', {'offers': offers})
+
+
+# ==========================================
+# VIEW 5: Loan Detail Page
+# ==========================================
+def loan_detail(request, loan_id):
+    loan = None
+    try:
+        # Try to get real object
+        loan = get_object_or_404(LoanRequest, loan_id=loan_id)
+    except Exception:
+        # Fallback Mock Object for UI Dev if DB is empty/broken
+        from datetime import datetime
+        class MockUser:
+            name = "Alodia Gosiengfiao"
+
+        class MockLoan:
+            def __init__(self, id):
+                self.loan_id = id
+                self.amount = 2500.00
+                self.interest_rate = 5
+                self.term_value = 6
+                self.term_unit = 'MONTHS'
+                self.status = 'APPROVED'
+                self.purpose = "Tuition Fee"
+                self.request_date = datetime.now()
+                self.borrower_profile = MockUser()
+
+            def get_term_unit_display(self):
+                return "Months"
+
+        loan = MockLoan(loan_id)
+
+    return render(request, 'loan/loan_detail.html', {'loan': loan})

@@ -32,18 +32,28 @@
                     {% for offer in offers %}
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4">
-                            <div class="font-medium text-gray-900">Request #{{ offer.loan_request.loan_id }}</div>
-                            <div class="text-xs text-gray-500">Student Loan</div>
+                            <a href="{% url 'loan_detail' offer.loan_request.loan_id %}" class="group block">
+                                <div class="font-medium text-gray-900 group-hover:text-brand-red transition-colors">
+                                    Request #{{ offer.loan_request.loan_id }}
+                                </div>
+                                <div class="text-xs text-gray-500 group-hover:text-red-800 transition-colors">
+                                    Student Loan
+                                </div>
+                            </a>
                         </td>
+
                         <td class="px-6 py-4 font-bold text-brand-red">
                             ₱{{ offer.offered_amount|floatformat:2 }}
                         </td>
+
                         <td class="px-6 py-4 text-gray-600">
                             {{ offer.offered_rate }}%
                         </td>
+
                         <td class="px-6 py-4 text-gray-500">
                             {{ offer.offer_date|date:"M d, Y" }}
                         </td>
+
                         <td class="px-6 py-4 text-right">
                             {% if offer.offer_status == 'ACCEPTED' %}
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Accepted</span>
