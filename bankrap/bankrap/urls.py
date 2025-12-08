@@ -9,7 +9,6 @@ from review import views as review_views  # Import review views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # ... existing paths ...
     path('', global_views.index_view, name='index'),
     path('login/', account_views.login_view, name='login'),
     path('register/', account_views.register_view, name='register'),
@@ -36,4 +35,6 @@ urlpatterns = [
     path('messages/', account_views.messaging_view, name='messaging'),
 
     path('settings/', account_views.settings_view, name='settings'),
+
+    path('notifications/', account_views.notifications_view, name='notifications'),
 ]

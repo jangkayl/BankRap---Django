@@ -1,10 +1,152 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Notifications - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto pb-12">
+    
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Notifications</h1>
+        <button class="text-sm font-bold text-gray-500 hover:text-brand-red transition-colors border border-gray-200 px-4 py-2 rounded-lg bg-white">
+            Mark All as Read
+        </button>
+    </div>
+
+    <div class="flex space-x-2 mb-8 bg-gray-50 p-1.5 rounded-lg inline-flex">
+        <button class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-brand-red shadow-sm">All</button>
+        <button class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900">Unread</button>
+        <button class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900">Loan Actions</button>
+        <button class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900">Verifications</button>
+        <button class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900">Messages</button>
+    </div>
+
+    <div class="space-y-4">
+        
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-all hover:shadow-md">
+            <div class="mt-1 flex-shrink-0">
+                <div class="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
+                    <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-900">Loan Request Approved!</h3>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-xs font-medium text-gray-500 hover:text-gray-900">Mark as Read</button>
+                        <a href="#" class="flex items-center text-xs font-bold text-gray-700 hover:text-brand-red">
+                            View Loan Details <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-1 mb-2 max-w-2xl">
+                    Your loan request for PHP 10,000 has been approved by a lender. Funds will be disbursed to your wallet shortly.
+                </p>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs text-gray-400">5 minutes ago</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-brand-red">New</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-all hover:shadow-md">
+            <div class="mt-1 flex-shrink-0">
+                <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+                    <i data-lucide="handshake" class="w-5 h-5 text-brand-red"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-900">New Loan Offer Received</h3>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-xs font-medium text-gray-500 hover:text-gray-900">Mark as Read</button>
+                        <a href="#" class="flex items-center text-xs font-bold text-gray-700 hover:text-brand-red">
+                            View Offer <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-1 mb-2 max-w-2xl">
+                    A new offer has been placed on your PHP 5,000 loan request. Review the terms to accept or decline.
+                </p>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs text-gray-400">25 minutes ago</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-brand-red">New</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-all hover:shadow-md">
+            <div class="mt-1 flex-shrink-0">
+                <div class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center">
+                    <i data-lucide="calendar-clock" class="w-5 h-5 text-orange-600"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-900">Upcoming Repayment Due</h3>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-xs font-medium text-gray-500 hover:text-gray-900">Mark as Read</button>
+                        <a href="#" class="flex items-center text-xs font-bold text-gray-700 hover:text-brand-red">
+                            View Repayments <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-1 mb-2 max-w-2xl">
+                    A repayment of PHP 1,250 for your loan with ID #CITULN001 is due in 3 days. Please ensure sufficient funds in your wallet.
+                </p>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs text-gray-400">1 hour ago</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700">Action Required</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-all hover:shadow-md">
+            <div class="mt-1 flex-shrink-0">
+                <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+                    <i data-lucide="badge-check" class="w-5 h-5 text-blue-600"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-900">Verification Successful!</h3>
+                </div>
+                <p class="text-sm text-gray-500 mt-1 mb-2 max-w-2xl">
+                    Your student verification process has been successfully completed. You can now fully access all platform features.
+                </p>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs text-gray-400">Yesterday</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">Info</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-all hover:shadow-md">
+            <div class="mt-1 flex-shrink-0">
+                <div class="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center">
+                    <i data-lucide="mail" class="w-5 h-5 text-gray-600"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-gray-900">New Message from Lender</h3>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-xs font-medium text-gray-500 hover:text-gray-900">Mark as Read</button>
+                        <a href="#" class="flex items-center text-xs font-bold text-gray-700 hover:text-brand-red">
+                            Go to Chat <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-1 mb-2 max-w-2xl">
+                    You have a new message from a lender regarding loan request #CITULN002. Respond promptly to facilitate the process.
+                </p>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs text-gray-400">2 days ago</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600">New</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

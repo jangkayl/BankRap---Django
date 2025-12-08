@@ -229,3 +229,26 @@ def settings_view(request):
         return redirect('settings')
 
     return render(request, 'account/settings.html', {'user': current_user})
+
+
+
+def notifications_view(request):
+    # This view just renders the static template for the prototype.
+    # In a real app, you would fetch UserNotification objects here.
+
+    # Check session to ensure sidebar loads correctly
+    user_id = request.session.get('user_id')
+    current_user = None
+    if user_id:
+        try:
+            current_user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            pass
+
+    if not current_user:
+        class MockUser:
+            name = "Developer Mode"
+
+        current_user = MockUser()
+
+    return render(request, 'account/notifications.html', {'user': current_user})
