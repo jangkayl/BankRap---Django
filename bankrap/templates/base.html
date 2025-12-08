@@ -21,9 +21,11 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <div class="{% if user %}flex min-h-screen{% else %}flex flex-col min-h-screen{% endif %}">
+    {% with route=request.resolver_match.url_name %}
 
-        {% if user %}
+    <div class="{% if user and route != 'login' and route != 'register' and route != 'index' %}flex min-h-screen{% else %}flex flex-col min-h-screen{% endif %}">
+
+        {% if user and route != 'login' and route != 'register' and route != 'index' %}
             <aside class="w-64 bg-white border-r border-gray-200 fixed h-full z-30 flex flex-col">
                 <div class="p-6 border-b border-gray-100 flex items-center space-x-2">
                     <div class="bg-brand-red p-1.5 rounded-lg">
@@ -35,64 +37,60 @@
                 <nav class="flex-1 overflow-y-auto py-4">
                     <ul class="space-y-1">
                         <li>
-                            <a href="{% url 'dashboard' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <a href="{% url 'dashboard' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'dashboard' %}active{% endif %}">
                                 <i data-lucide="layout-grid" class="w-5 h-5 mr-3"></i> Dashboard
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'profile' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                            <a href="{% url 'profile' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'profile' %}active{% endif %}">
                                 <i data-lucide="user" class="w-5 h-5 mr-3"></i> Profile
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'wallet' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'wallet' %}active{% endif %}">
+                            <a href="{% url 'wallet' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'wallet' %}active{% endif %}">
                                 <i data-lucide="wallet" class="w-5 h-5 mr-3"></i> Wallet
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'loan_list' %}"
-                               class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors
-                               {% if request.resolver_match.url_name == 'loan_list' or request.resolver_match.url_name == 'loan_create' %}active{% endif %}">
+                            <a href="{% url 'messaging' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'messaging' %}active{% endif %}">
+                                <i data-lucide="message-square" class="w-5 h-5 mr-3"></i> Messages
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'notifications' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'notifications' %}active{% endif %}">
+                                <i data-lucide="bell" class="w-5 h-5 mr-3"></i> Notifications
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'loan_list' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'loan_list' or route == 'loan_create' %}active{% endif %}">
                                 <i data-lucide="landmark" class="w-5 h-5 mr-3"></i> Loan Requests
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'offer_list' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'offer_list' %}active{% endif %}">
+                            <a href="{% url 'offer_list' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'offer_list' %}active{% endif %}">
                                 <i data-lucide="handshake" class="w-5 h-5 mr-3"></i> Loan Offers
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'repayment_schedule' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'repayment_schedule' %}active{% endif %}">
+                            <a href="{% url 'repayment_schedule' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'repayment_schedule' %}active{% endif %}">
                                 <i data-lucide="calendar-clock" class="w-5 h-5 mr-3"></i> Repayments
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'transaction_history' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'transaction_history' %}active{% endif %}">
+                            <a href="{% url 'transaction_history' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'transaction_history' %}active{% endif %}">
                                 <i data-lucide="file-text" class="w-5 h-5 mr-3"></i> Transactions
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'reviews' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'reviews' %}active{% endif %}">
+                            <a href="{% url 'reviews' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'reviews' %}active{% endif %}">
                                 <i data-lucide="star" class="w-5 h-5 mr-3"></i> Reviews
                             </a>
                         </li>
-                        <li>
-                            <a href="{% url 'notifications' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
-                                <i data-lucide="bell" class="w-5 h-5 mr-3"></i> Notifications
-                                <span class="ml-auto bg-red-100 text-brand-red text-xs font-bold px-2 py-0.5 rounded-full">4</span>
-                            </a>
-                        </li>
-                        <li>
-                        <a href="{% url 'messaging' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'messaging' %}active{% endif %}">
-                            <i data-lucide="message-square" class="w-5 h-5 mr-3"></i> Messages
-                            <span class="ml-auto bg-red-100 text-brand-red text-xs font-bold px-2 py-0.5 rounded-full">3</span>
-                        </a>
-                    </li>
                     </ul>
                 </nav>
 
                 <div class="p-4 border-t border-gray-100">
-                    <a href="{% url 'settings' %}" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'settings' %}text-brand-red font-bold{% endif %}">
+                    <a href="{% url 'settings' %}" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors {% if route == 'settings' %}text-brand-red font-bold{% endif %}">
                         <i data-lucide="settings" class="w-4 h-4 mr-3"></i> Settings
                     </a>
                     <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-brand-red transition-colors mt-1">
@@ -117,10 +115,34 @@
             </header>
         {% endif %}
 
-        <main class="flex-1 {% if user %}ml-64 p-8{% else %}{% endif %}">
+        <main class="flex-1 {% if user and route != 'login' and route != 'register' and route != 'index' %}ml-64 p-8{% else %}{% endif %}">
+
+            {% if user and route != 'login' and route != 'register' and route != 'index' %}
+                <div class="flex items-center justify-between mb-8">
+                    <div class="lg:hidden flex items-center space-x-2">
+                        <div class="bg-brand-red p-1 rounded-lg">
+                            <i data-lucide="handshake" class="h-5 w-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold text-brand-red">BankRap</span>
+                    </div>
+
+                    <div class="flex items-center justify-end w-full space-x-6">
+                        <a href="{% url 'notifications' %}" class="relative text-gray-500 hover:text-brand-red transition-colors group">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-red-500 transform translate-x-1/4 -translate-y-1/4"></span>
+                        </a>
+
+                        <a href="{% url 'profile' %}" class="flex items-center space-x-2 text-gray-700 hover:text-brand-red lg:hidden">
+                            <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-brand-red font-bold text-xs">
+                                {{ user.name|slice:":1" }}
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
 
             {% if messages %}
-            <div class="mb-6 space-y-2 max-w-7xl mx-auto {% if not user %}px-4{% endif %}">
+            <div class="mb-6 space-y-2 max-w-7xl mx-auto {% if not user or route == 'login' or route == 'register' or route == 'index' %}px-4{% endif %}">
                 {% for message in messages %}
                     <div class="p-4 rounded-lg flex items-center shadow-sm {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-100{% else %}bg-green-50 text-green-800 border border-green-100{% endif %}">
                         <span>{{ message }}</span>
@@ -132,7 +154,7 @@
             {% block content %}{% endblock %}
         </main>
 
-        {% if not user %}
+        {% if not user or route == 'login' or route == 'register' or route == 'index' %}
             <footer class="bg-gray-50 border-t border-gray-200 pt-16 pb-8 mt-auto">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-400">
                     <p>&copy; 2025 CIT-U P2P Lend. All rights reserved.</p>
@@ -140,6 +162,8 @@
             </footer>
         {% endif %}
     </div>
+
+    {% endwith %}
 
     <script>
         lucide.createIcons();
