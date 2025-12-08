@@ -1,10 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Reviews - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Reviews & Ratings</h1>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Leave a Review</h2>
+            
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Rate your recent loan experience:</label>
+                    <div class="flex items-center space-x-1">
+                        {% for i in "12345" %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="rating" value="{{ i }}" class="hidden peer">
+                            <i data-lucide="star" class="w-8 h-8 text-gray-300 peer-checked:text-yellow-400 hover:text-yellow-400 fill-current transition-colors"></i>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Your comments:</label>
+                    <textarea name="comment" rows="4" class="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-brand-red focus:ring-2 focus:ring-brand-red focus:outline-none transition-all resize-none text-sm" placeholder="Share your thoughts on the loan experience, communication, and professionalism."></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-4">
+                    <button type="button" class="px-6 py-2.5 text-gray-600 font-medium hover:text-gray-900 transition-colors">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-sm">
+                        Submit Review
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-6">Your Overall Trust Score</h2>
+            
+            <div class="text-center mb-8">
+                <div class="flex justify-center items-center space-x-1 mb-2">
+                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
+                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
+                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
+                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
+                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
+                </div>
+                <p class="text-gray-500 font-medium">88 Reviews</p>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex items-center text-sm">
+                    <span class="w-8 font-medium text-gray-600">5 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
+                    <span class="w-8 text-right text-gray-400 mr-3">65</span>
+                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-brand-red rounded-full" style="width: 74%"></div>
+                    </div>
+                    <span class="w-10 text-right text-gray-500 font-medium">74%</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <span class="w-8 font-medium text-gray-600">4 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
+                    <span class="w-8 text-right text-gray-400 mr-3">18</span>
+                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-brand-red rounded-full" style="width: 20%"></div>
+                    </div>
+                    <span class="w-10 text-right text-gray-500 font-medium">20%</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <span class="w-8 font-medium text-gray-600">3 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
+                    <span class="w-8 text-right text-gray-400 mr-3">3</span>
+                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-brand-red rounded-full" style="width: 3%"></div>
+                    </div>
+                    <span class="w-10 text-right text-gray-500 font-medium">3%</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <span class="w-8 font-medium text-gray-600">2 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
+                    <span class="w-8 text-right text-gray-400 mr-3">2</span>
+                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-brand-red rounded-full" style="width: 2%"></div>
+                    </div>
+                    <span class="w-10 text-right text-gray-500 font-medium">2%</span>
+                </div>
+                <div class="flex items-center text-sm">
+                    <span class="w-8 font-medium text-gray-600">1 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
+                    <span class="w-8 text-right text-gray-400 mr-3">0</span>
+                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-brand-red rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span class="w-10 text-right text-gray-500 font-medium">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Past Reviews</h2>
+        
+        <div class="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg inline-flex mb-8">
+            <a href="?tab=received" class="px-6 py-2 rounded-md text-sm font-bold transition-all {% if active_tab == 'received' %}bg-brand-red text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                Reviews Received
+            </a>
+            <a href="?tab=given" class="px-6 py-2 rounded-md text-sm font-bold transition-all {% if active_tab == 'given' %}bg-brand-red text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                Reviews Given
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {% for review in reviews %}
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+                            <img src="https://ui-avatars.com/api/?name={{ review.reviewer_name }}&background=random" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">{{ review.reviewer_name }}</h4>
+                            <p class="text-xs text-gray-500">{{ review.date }}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-0.5">
+                        {% for i in "12345"|make_list %}
+                            <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= review.rating %}text-yellow-400 fill-current{% else %}text-gray-200{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                    "{{ review.comment }}"
+                </p>
+                
+                <div class="text-xs font-medium text-gray-400">
+                    Loan ID: <span class="text-gray-600">#{{ review.loan_id }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-2 text-center py-12 text-gray-500 bg-white rounded-xl border border-dashed border-gray-200">
+                No reviews found in this category.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
