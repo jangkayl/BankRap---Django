@@ -57,11 +57,6 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{% url 'notifications' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'notifications' %}active{% endif %}">
-                                <i data-lucide="bell" class="w-5 h-5 mr-3"></i> Notifications
-                            </a>
-                        </li>
-                        <li>
                             <a href="{% url 'loan_list' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if route == 'loan_list' or route == 'loan_create' %}active{% endif %}">
                                 <i data-lucide="landmark" class="w-5 h-5 mr-3"></i> Loan Requests
                             </a>
