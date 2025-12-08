@@ -62,7 +62,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors">
+                            <a href="{% url 'repayment_schedule' %}" class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-brand-red transition-colors {% if request.resolver_match.url_name == 'repayment_schedule' %}active{% endif %}">
                                 <i data-lucide="calendar-clock" class="w-5 h-5 mr-3"></i> Repayments
                             </a>
                         </li>

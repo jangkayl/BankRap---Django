@@ -195,3 +195,13 @@ def loan_detail(request, loan_id):
         loan = MockLoan(loan_id)
 
     return render(request, 'loan/loan_detail.html', {'loan': loan})
+
+
+# ==========================================
+# VIEW 6: Repayment Schedule
+# ==========================================
+def repayment_schedule(request):
+    # This view normally fetches installments linked to a specific active loan.
+    # For the prototype, we are just rendering the static template to match the UI design.
+
+    return render(request, 'loan/repayment_schedule.html')

@@ -1,10 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}Repayment Schedule - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Repayment Schedule</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 font-medium mb-1">Total Amount Due</p>
+                <h3 class="text-3xl font-extrabold text-brand-red">$750.00</h3>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 font-medium mb-1">Total Amount Paid</p>
+                <h3 class="text-3xl font-extrabold text-green-600">$750.00</h3>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 font-medium mb-1">Next Payment Due</p>
+                <h3 class="text-2xl font-bold text-gray-900">Apr 15, 2024</h3>
+                <p class="text-xs text-red-600 mt-1 font-medium">$250.00 on Apr 15, 2024</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Due Date</p>
+                    <p class="font-bold text-gray-900">Apr 15, 2024</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Amount Due</p>
+                    <p class="font-bold text-gray-900">$250.00</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs text-gray-500 mr-2">Status</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-800">Pending</span>
+                </div>
+            </div>
+            <button class="px-6 py-2 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg text-sm transition-colors shadow-sm">
+                Pay Now
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Due Date</p>
+                    <p class="font-bold text-gray-900">Mar 15, 2024</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Amount Due</p>
+                    <p class="font-bold text-gray-900">$250.00</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs text-gray-500 mr-2">Status</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-800">Paid</span>
+                </div>
+            </div>
+            <button disabled class="px-6 py-2 bg-gray-100 text-gray-400 font-bold rounded-lg text-sm cursor-not-allowed">
+                Paid
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Due Date</p>
+                    <p class="font-bold text-gray-900">Feb 15, 2024</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Amount Due</p>
+                    <p class="font-bold text-gray-900">$250.00</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs text-gray-500 mr-2">Status</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-800">Paid</span>
+                </div>
+            </div>
+            <button disabled class="px-6 py-2 bg-gray-100 text-gray-400 font-bold rounded-lg text-sm cursor-not-allowed">
+                Paid
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Due Date</p>
+                    <p class="font-bold text-gray-900">Jan 15, 2024</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Amount Due</p>
+                    <p class="font-bold text-gray-900">$250.00</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs text-gray-500 mr-2">Status</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-800">Paid</span>
+                </div>
+            </div>
+            <button disabled class="px-6 py-2 bg-gray-100 text-gray-400 font-bold rounded-lg text-sm cursor-not-allowed">
+                Paid
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 opacity-75">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Due Date</p>
+                    <p class="font-bold text-gray-900">May 15, 2024</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Amount Due</p>
+                    <p class="font-bold text-gray-900">$250.00</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs text-gray-500 mr-2">Status</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">Upcoming</span>
+                </div>
+            </div>
+            <button disabled class="px-6 py-2 bg-white border border-gray-200 text-gray-400 font-medium rounded-lg text-sm cursor-not-allowed">
+                Upcoming
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 opacity-75">
+            <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Due Date</p>
+                    <p class="font-bold text-gray-900">Jun 15, 2024</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Amount Due</p>
+                    <p class="font-bold text-gray-900">$250.00</p>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xs text-gray-500 mr-2">Status</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">Upcoming</span>
+                </div>
+            </div>
+            <button disabled class="px-6 py-2 bg-white border border-gray-200 text-gray-400 font-medium rounded-lg text-sm cursor-not-allowed">
+                Upcoming
+            </button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
