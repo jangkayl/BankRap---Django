@@ -1,32 +1,22 @@
-"""
-URL configuration for bankrap project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
-from django.urls import path, include
-from . import views
+from django.urls import path
+from bankrap import views as global_views  # if index_view is here
+from account import views as account_views  # Import the new views we just made
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    path('', views.index_view, name='index'),
-    path('login/', views.login_view, name='login'),
+    # Global Pages (Home)
+    path('', global_views.index_view, name='index'),
 
-    path('review/', include('review.urls')),
-    path('transaction/', include('transaction.urls')),
-    path('account/', include('account.urls')),
-    path('loan/', include('loan.urls')),
-    path('wallet/', include('wallet.urls')),
+    # Auth Pages (Handled by Account App)
+    path('login/', account_views.login_view, name='login'),
+    path('register/', account_views.register_view, name='register'),
+    path('logout/', account_views.logout_view, name='logout'),
+
+    # App Features
+    path('dashboard/', account_views.dashboard_view, name='dashboard'),
+
+    # Wallet (Placeholder pointing to dashboard for now, or create wallet_view)
+    path('wallet/', account_views.dashboard_view, name='wallet'),
 ]
