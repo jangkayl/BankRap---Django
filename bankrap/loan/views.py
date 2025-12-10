@@ -1,207 +1,172 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.utils import OperationalError, ProgrammingError
 from account.models import User, BorrowerProfile, LenderProfile
+from wallet.models import Wallet  # Import Wallet model
 from .models import LoanRequest, LoanOffer
-from django.shortcuts import get_object_or_404
 
 
-# ==========================================
-# VIEW 1: List All Loan Requests
-# ==========================================
-def loan_request_list(request):
-    loans = []
-    try:
-        loans = LoanRequest.objects.all().order_by('-request_date')
-    except (OperationalError, ProgrammingError):
-        loans = []
-
-    # --- MOCK DATA (Loads if DB is empty) ---
-    if not loans:
-        class MockLoan:
-            def __init__(self, id, amount, interest, term_val, term_unit, status):
-                self.loan_id = id
-                self.amount = amount
-                self.interest_rate = interest
-                self.term_value = term_val
-                self.term_unit = 'MONTHS'
-                self.status = status
-
-            def get_term_unit_display(self):
-                return "Months"
-
-        loans = [
-            MockLoan(1, 15000, 5, 3, 'MONTHS', 'APPROVED'),
-            MockLoan(2, 20000, 6, 6, 'MONTHS', 'PENDING'),
-            MockLoan(3, 10000, 4.5, 2, 'MONTHS', 'REPAID'),
-            MockLoan(4, 25000, 5.5, 9, 'MONTHS', 'REJECTED'),
-            MockLoan(5, 18000, 5.2, 4, 'MONTHS', 'APPROVED'),
-            MockLoan(6, 12000, 4.8, 3, 'MONTHS', 'PENDING'),
-        ]
-
-    return render(request, 'loan/request_list.html', {'loans': loans})
-
-
-# ==========================================
-# VIEW 2: Create New Loan Request
-# ==========================================
-def loan_request_create(request):
-    if request.method == 'POST':
-        user_id = request.session.get('user_id')
-        if not user_id:
-            messages.error(request, "You must be logged in.")
-            return redirect('login')
-
+# --- Helper ---
+def get_current_user(request):
+    user_id = request.session.get('user_id')
+    if user_id:
         try:
-            try:
-                borrower = BorrowerProfile.objects.get(user_id=user_id)
-            except BorrowerProfile.DoesNotExist:
-                user = User.objects.get(user_id=user_id)
-                borrower = user
+            user = User.objects.get(user_id=user_id)
+            if user.type == 'B':
+                return BorrowerProfile.objects.get(user_id=user_id)
+            elif user.type == 'L':
+                return LenderProfile.objects.get(user_id=user_id)
+            return user
+        except Exception:
+            return None
+    return None
 
-            amount = request.POST.get('amount')
-            interest = request.POST.get('interest_rate')
-            purpose = request.POST.get('purpose')
-            term_raw = request.POST.get('term')
 
-            if term_raw:
-                term_val, term_unit = term_raw.split('_')
-            else:
-                term_val, term_unit = 1, 'MONTHS'
+# --- Marketplace Views (Lender Focused) ---
 
+def loan_marketplace(request):
+    """
+    Main entry point for 'Loans'.
+    - Lenders see the Marketplace (List of requests).
+    - Borrowers are redirected to 'My Requests'.
+    """
+    user = get_current_user(request)
+    if not user: return redirect('login')
+
+    # 1. Strict Separation Logic
+    if user.type == 'B':
+        return redirect('my_loan_requests')
+
+    # 2. Lender View: Show all PENDING requests
+    loans = LoanRequest.objects.filter(status='PENDING').order_by('-request_date')
+
+    # 3. Fetch Wallet for Available Funds Display
+    wallet = None
+    if user.type == 'L':
+        # Use get_or_create to be safe, though register handles creation
+        wallet, _ = Wallet.objects.get_or_create(user=user)
+
+    return render(request, 'loan/marketplace.html', {
+        'loans': loans,
+        'user': user,
+        'wallet': wallet  # Pass wallet to template
+    })
+
+
+def loan_detail(request, loan_id):
+    """
+    Detailed view of a loan.
+    - Lenders see 'Make Offer'.
+    - Borrowers see 'View Offers' (if it's theirs).
+    """
+    user = get_current_user(request)
+    if not user: return redirect('login')
+
+    loan = get_object_or_404(LoanRequest, pk=loan_id)
+
+    # Check for existing offer from this lender
+    existing_offer = None
+    if user.type == 'L':
+        existing_offer = LoanOffer.objects.filter(loan_request=loan, lender=user).first()
+
+    return render(request, 'loan/loan_detail.html', {
+        'loan': loan,
+        'user': user,
+        'existing_offer': existing_offer
+    })
+
+
+# --- Borrower Views ---
+
+def my_loan_requests(request):
+    """
+    Borrower's dashboard for their own requests.
+    """
+    user = get_current_user(request)
+    if not user: return redirect('login')
+
+    if user.type == 'L':
+        return redirect('loan_marketplace')
+
+    # Show ONLY this user's requests
+    my_loans = LoanRequest.objects.filter(borrower=user).order_by('-request_date')
+
+    return render(request, 'loan/my_requests.html', {
+        'loans': my_loans,
+        'user': user
+    })
+
+
+def create_loan_request(request):
+    # Mapping for urls.py which might call 'loan_request_create'
+    return loan_request_create(request)
+
+
+def loan_request_create(request):
+    user = get_current_user(request)
+    if not user: return redirect('login')
+
+    if user.type != 'B':
+        messages.error(request, "Only borrowers can create loan requests.")
+        return redirect('loan_marketplace')
+
+    if request.method == 'POST':
+        try:
             LoanRequest.objects.create(
-                borrower_profile=borrower,
-                amount=amount,
-                interest_rate=interest,
-                purpose=purpose,
-                term_value=term_val,
-                term_unit=term_unit,
+                borrower=user,
+                amount=request.POST.get('amount'),
+                interest_rate=request.POST.get('interest_rate'),
+                term=request.POST.get('term'),
+                purpose=request.POST.get('purpose'),
                 status='PENDING'
             )
-
-            messages.success(request, "Loan request submitted successfully!")
-            return redirect('loan_list')
-
+            messages.success(request, "Loan request posted successfully!")
+            return redirect('my_loan_requests')
         except Exception as e:
             messages.error(request, f"Error: {e}")
-            return redirect('loan_list')
 
-    return render(request, 'loan/request_create.html')
+    return render(request, 'loan/request_create.html', {'user': user})
 
 
-# ==========================================
-# VIEW 3: Create Loan Offer
-# ==========================================
-def loan_offer_create(request, loan_id):
+# --- Offer Logic ---
+
+def create_offer(request, loan_id):
+    user = get_current_user(request)
+    if not user or user.type != 'L': return redirect('login')
+
+    loan = get_object_or_404(LoanRequest, pk=loan_id)
+
     if request.method == 'POST':
-        user_id = request.session.get('user_id')
-        if not user_id:
-            messages.error(request, "Please log in.")
-            return redirect('login')
+        LoanOffer.objects.create(
+            loan_request=loan,
+            lender=user,
+            offered_amount=request.POST.get('amount'),
+            offered_rate=request.POST.get('interest_rate'),
+            message=request.POST.get('message'),
+            status='PENDING'
+        )
+        messages.success(request, "Offer sent!")
+        return redirect('loan_marketplace')
 
-        try:
-            loan_request_obj = LoanRequest.objects.get(loan_id=loan_id)
-
-            try:
-                lender = LenderProfile.objects.get(user_id=user_id)
-            except LenderProfile.DoesNotExist:
-                lender = User.objects.get(user_id=user_id)
-
-            amount = request.POST.get('amount')
-            rate = request.POST.get('interest_rate')
-
-            LoanOffer.objects.create(
-                loan_request=loan_request_obj,
-                lender_profile=lender,
-                offered_amount=amount,
-                offered_rate=rate,
-                offer_status='PENDING'
-            )
-
-            messages.success(request, "Loan offer sent successfully!")
-            return redirect('loan_list')
-
-        except Exception as e:
-            messages.error(request, f"Error: {e}")
-            return redirect('loan_list')
-
-    return render(request, 'loan/offer_create.html')
+    return render(request, 'loan/offer_create.html', {'loan': loan, 'user': user})
 
 
-# ==========================================
-# VIEW 4: List Loan Offers
-# ==========================================
-def loan_offer_list(request):
-    offers = []
-
-    # Try to fetch real data
-    try:
-        offers = LoanOffer.objects.all().order_by('-offer_date')
-    except (OperationalError, ProgrammingError):
-        offers = []
-
-    # --- MOCK DATA (If DB is empty) ---
-    if not offers:
-        from datetime import datetime
-        class MockReq:
-            loan_id = 101
-
-        class MockOffer:
-            def __init__(self, amount, rate, status, date_str):
-                self.loan_request = MockReq()
-                self.offered_amount = amount
-                self.offered_rate = rate
-                self.offer_status = status
-                self.offer_date = datetime.strptime(date_str, "%Y-%m-%d")
-
-        offers = [
-            MockOffer(5000, 5.0, 'ACCEPTED', '2025-11-20'),
-            MockOffer(3000, 6.5, 'PENDING', '2025-12-01'),
-            MockOffer(10000, 4.0, 'DECLINED', '2025-10-15'),
-        ]
-
-    return render(request, 'loan/offer_list.html', {'offers': offers})
+# Stub functions to satisfy urls.py imports if they exist there
+def loan_request_list(request): return loan_marketplace(request)
 
 
-# ==========================================
-# VIEW 5: Loan Detail Page
-# ==========================================
-def loan_detail(request, loan_id):
-    loan = None
-    try:
-        # Try to get real object
-        loan = get_object_or_404(LoanRequest, loan_id=loan_id)
-    except Exception:
-        # Fallback Mock Object for UI Dev if DB is empty/broken
-        from datetime import datetime
-        class MockUser:
-            name = "Alodia Gosiengfiao"
-
-        class MockLoan:
-            def __init__(self, id):
-                self.loan_id = id
-                self.amount = 2500.00
-                self.interest_rate = 5
-                self.term_value = 6
-                self.term_unit = 'MONTHS'
-                self.status = 'APPROVED'
-                self.purpose = "Tuition Fee"
-                self.request_date = datetime.now()
-                self.borrower_profile = MockUser()
-
-            def get_term_unit_display(self):
-                return "Months"
-
-        loan = MockLoan(loan_id)
-
-    return render(request, 'loan/loan_detail.html', {'loan': loan})
+def loan_offer_create(request, loan_id): return create_offer(request, loan_id)
 
 
-# ==========================================
-# VIEW 6: Repayment Schedule
-# ==========================================
+def loan_offer_list(request): return offer_list(request)
+
+
+def offer_list(request):
+    user = get_current_user(request)
+    if not user: return redirect('login')
+    offers = LoanOffer.objects.all()
+    return render(request, 'loan/offer_list.html', {'offers': offers, 'user': user})
+
+
 def repayment_schedule(request):
-    # This view normally fetches installments linked to a specific active loan.
-    # For the prototype, we are just rendering the static template to match the UI design.
-
-    return render(request, 'loan/repayment_schedule.html')
+    user = get_current_user(request)
+    return render(request, 'loan/repayment_schedule.html', {'user': user})

@@ -3,97 +3,110 @@
 
 {% block title %}Register - BankRap{% endblock %}
 
+{# 1. Hide the global messages from base.html #}
+{% block global_messages %}{% endblock %}
+
 {% block content %}
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-xl w-full bg-white rounded-xl shadow-lg p-8 sm:p-10 border border-gray-100">
-        
+
         <div class="text-center mb-8">
             <h2 class="text-3xl font-extrabold text-brand-red mb-2">Register for BankRap</h2>
             <p class="text-sm text-gray-500">Join the academic lending community.</p>
         </div>
 
+        {# 2. Display messages here inside the form card #}
+        {% if messages %}
+            <div class="mb-6 space-y-2">
+                {% for message in messages %}
+                    <div class="p-3 rounded-lg text-sm flex items-start shadow-sm border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-200{% else %}bg-green-50 text-green-700 border-green-200{% endif %}">
+                        <i data-lucide="{% if message.tags == 'error' %}alert-circle{% else %}check-circle{% endif %}" class="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <form class="space-y-5" action="{% url 'register' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div>
                 <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
-                <input id="name" name="name" type="text" required 
-                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" 
+                <input id="name" name="name" type="text" required
+                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                     placeholder="Juan Dela Cruz">
             </div>
 
             <div>
                 <label for="student_id" class="block text-sm font-semibold text-gray-700 mb-1">Student ID</label>
-                <input id="student_id" name="student_id" type="text" required 
-                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" 
-                    placeholder="12345-CITU">
+                <input id="student_id" name="student_id" type="text" required
+                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    placeholder="12-3123-123">
             </div>
 
             <div>
                 <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">CIT Email</label>
-                <input id="email" name="email" type="email" required 
-                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" 
+                <input id="email" name="email" type="email" required
+                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                     placeholder="juan.delacruz@cit.edu">
+            </div>
+
+            <!-- Added Address Field -->
+            <div>
+                <label for="address" class="block text-sm font-semibold text-gray-700 mb-1">Address</label>
+                <input id="address" name="address" type="text" required
+                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    placeholder="Cebu City">
+            </div>
+
+            <!-- Added Contact Number Field -->
+            <div>
+                <label for="contact_number" class="block text-sm font-semibold text-gray-700 mb-1">Contact Number</label>
+                <input id="contact_number" name="contact_number" type="text" required
+                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    placeholder="09123456789">
             </div>
 
             <div>
                 <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-                <input id="password" name="password" type="password" required 
-                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all" 
+                <input id="password" name="password" type="password" required
+                    class="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                     placeholder="••••••••">
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-3">Verification Method</label>
-                <div class="flex items-center space-x-6">
-                    <div class="flex items-center">
-                        <input id="verify_upload" name="verification_method" type="radio" value="upload" checked
-                            class="h-4 w-4 text-brand-red border-gray-300 focus:ring-red-500 cursor-pointer">
-                        <label for="verify_upload" class="ml-2 block text-sm text-gray-600 cursor-pointer">
-                            Upload School ID
-                        </label>
-                    </div>
-                    <div class="flex items-center">
-                        <input id="verify_email" name="verification_method" type="radio" value="email"
-                            class="h-4 w-4 text-brand-red border-gray-300 focus:ring-red-500 cursor-pointer">
-                        <label for="verify_email" class="ml-2 block text-sm text-gray-600 cursor-pointer">
-                            Email Verification
-                        </label>
-                    </div>
-                </div>
-            </div>
+            <!-- Removed Verification Method Radio Buttons -->
 
             <div>
                 <label for="school_id_file" class="block text-sm font-semibold text-gray-700 mb-1">Upload your School ID</label>
-                <input id="school_id_file" name="school_id_file" type="file" accept=".jpg,.png,.pdf"
+                <input id="school_id_file" name="school_id_file" type="file" accept=".jpg,.png,.pdf" required
                     class="block w-full text-sm text-gray-500
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border-0
                     file:text-sm file:font-semibold
                     file:bg-red-50 file:text-brand-red
                     hover:file:bg-red-100 transition-all cursor-pointer">
-                <p class="mt-2 text-xs text-gray-400">Accepted formats: JPG, PNG, PDF (max 5MB).</p>
+                <p class="mt-2 text-xs text-gray-400">Accepted formats: JPG, PNG, PDF (max 5MB). This is required for verification.</p>
             </div>
 
+            <!-- Role Selection (Changed to Radio Buttons) -->
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Select Your Role(s)</label>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Select Your Primary Role</label>
                 <div class="flex items-center space-x-6">
                     <div class="flex items-center">
-                        <input id="role_borrower" name="roles" type="checkbox" value="B" checked
-                            class="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-red-500 cursor-pointer">
+                        <input id="role_borrower" name="role" type="radio" value="B" checked
+                            class="h-4 w-4 text-brand-red border-gray-300 focus:ring-red-500 cursor-pointer">
                         <label for="role_borrower" class="ml-2 block text-sm text-gray-600 cursor-pointer">
                             Borrower
                         </label>
                     </div>
                     <div class="flex items-center">
-                        <input id="role_lender" name="roles" type="checkbox" value="L"
-                            class="h-4 w-4 text-brand-red border-gray-300 rounded focus:ring-red-500 cursor-pointer">
+                        <input id="role_lender" name="role" type="radio" value="L"
+                            class="h-4 w-4 text-brand-red border-gray-300 focus:ring-red-500 cursor-pointer">
                         <label for="role_lender" class="ml-2 block text-sm text-gray-600 cursor-pointer">
                             Lender
                         </label>
                     </div>
                 </div>
-                <p class="mt-1 text-xs text-gray-400">You can select one or both roles.</p>
             </div>
 
             <div class="pt-2">

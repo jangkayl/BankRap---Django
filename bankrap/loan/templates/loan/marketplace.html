@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Loan Marketplace - BankRap{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Loan Marketplace</h1>
+            <p class="text-gray-500 mt-1">Invest in student futures and earn competitive returns.</p>
+        </div>
+        <div class="bg-white px-5 py-2.5 rounded-xl shadow-sm border border-gray-100 flex items-center">
+            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center mr-3">
+                <i data-lucide="wallet" class="w-5 h-5 text-green-600"></i>
+            </div>
+            <div>
+                <p class="text-xs text-gray-500 font-bold uppercase">Available Funds</p>
+                <!-- UPDATED: Using wallet.balance instead of user.available_funds -->
+                <p class="text-lg font-bold text-gray-900">₱{{ wallet.balance|floatformat:2|default:"0.00" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan Cards Grid -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for loan in loans %}
+        <div class="group bg-white rounded-2xl border border-gray-200 hover:border-brand-red/30 hover:shadow-xl hover:shadow-red-500/5 transition-all duration-300 flex flex-col relative overflow-hidden">
+
+            <!-- Top Color Bar (Visual Interest) -->
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-red to-red-400"></div>
+
+            <div class="p-6 flex-1">
+                <!-- User Header -->
+                <div class="flex justify-between items-start mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-lg font-bold text-gray-700 shadow-sm">
+                            {{ loan.borrower.name|slice:":1" }}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm leading-tight">{{ loan.borrower.name }}</h4>
+                            <div class="flex items-center mt-1">
+                                <span class="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center">
+                                    <i data-lucide="star" class="w-3 h-3 fill-current mr-1"></i> 4.8
+                                </span>
+                                <span class="mx-2 text-gray-300">|</span>
+                                <span class="text-xs text-gray-500">Student</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- FIX: Using get_term_display -->
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg border border-gray-200">
+                        {{ loan.get_term_display }}
+                    </span>
+                </div>
+
+                <!-- Main Loan Info -->
+                <div class="mb-6 text-center bg-gray-50/50 rounded-xl p-4 border border-gray-50">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Requesting</p>
+                    <h3 class="text-3xl font-extrabold text-gray-900 mb-2">₱{{ loan.amount|floatformat:0 }}</h3>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        <i data-lucide="trending-up" class="w-3 h-3 mr-1.5"></i> {{ loan.interest_rate }}% Return
+                    </span>
+                </div>
+
+                <!-- Purpose -->
+                <div class="mb-4">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Purpose</p>
+                    <p class="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                        "{{ loan.purpose }}"
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Footer -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50/30">
+                <a href="{% url 'loan_detail' loan.loan_id %}" class="flex items-center justify-center w-full py-3 bg-white border border-gray-300 hover:border-brand-red hover:bg-brand-red hover:text-green-600 text-gray-700 font-bold rounded-xl transition-all group-hover:shadow-md">
+                    View Details & Offer <i data-lucide="arrow-right" class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-3 text-center py-20">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="inbox" class="w-10 h-10 text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">No Requests Available</h3>
+            <p class="text-gray-500 mt-2">There are currently no open loan requests. Check back later!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

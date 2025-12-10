@@ -7,103 +7,160 @@
 <div class="max-w-5xl mx-auto">
     
     <div class="flex items-center justify-between mb-6">
-        <a href="{% url 'loan_list' %}" class="flex items-center text-sm text-gray-500 hover:text-brand-red transition-colors">
-            <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Back to Loans
+        <a href="{% url 'loan_list' %}" class="flex items-center text-sm font-medium text-gray-500 hover:text-brand-red transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Marketplace
         </a>
-
-        <div class="flex space-x-3">
-            <button class="px-5 py-2 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg text-sm transition-colors shadow-sm">
-                Mark as Paid
-            </button>
-            <button class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg text-sm transition-colors">
-                View Timeline
-            </button>
-        </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-6 border-b border-gray-50 pb-4">Loan Details</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-y-8 gap-x-4 mb-8">
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Loan ID</label>
-                <p class="text-sm font-bold text-gray-900">CITU-LND-{{ loan.loan_id|stringformat:"05d" }}</p>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Amount</label>
-                <p class="text-sm font-bold text-gray-900">₱ {{ loan.amount|floatformat:2 }}</p>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Interest Rate</label>
-                <p class="text-sm font-bold text-gray-900">{{ loan.interest_rate }}%</p>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                {% if loan.status == 'APPROVED' %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Approved</span>
-                {% elif loan.status == 'PENDING' %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">Pending</span>
-                {% elif loan.status == 'REPAID' %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">Repaid</span>
-                {% else %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">{{ loan.status|title }}</span>
-                {% endif %}
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Term</label>
-                <p class="text-sm font-bold text-gray-900">{{ loan.term_value }} {{ loan.get_term_unit_display }}</p>
-            </div>
-            <div class="md:col-span-3">
-                <label class="block text-xs font-medium text-gray-500 mb-1">Purpose</label>
-                <p class="text-sm font-bold text-gray-900">{{ loan.purpose }}</p>
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Request Date</label>
-                <p class="text-sm font-bold text-gray-900">{{ loan.request_date|date:"Y-m-d" }}</p>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Due Date</label>
-                <p class="text-sm font-bold text-gray-900">2025-04-26</p> 
-            </div>
-        </div>
-
-        <div>
-            <label class="block text-xs font-medium text-gray-500 mb-2">Description</label>
-            <p class="text-sm text-gray-600 leading-relaxed">
-                Funds needed to cover the remaining balance of the current semester's tuition fees. Repayment will commence upon securing part-time employment next month, with a commitment to consistent monthly payments.
-            </p>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h2 class="text-lg font-bold text-gray-900 mb-6 border-b border-gray-50 pb-4">Participants</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 text-center">
-            
-            <div class="flex flex-col items-center">
-                <div class="w-16 h-16 rounded-full bg-gray-200 mb-3 overflow-hidden">
-                    <img src="https://ui-avatars.com/api/?name={{ loan.borrower_profile.name }}&background=random" alt="Borrower" class="w-full h-full object-cover">
+    <!-- Loan Info Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+        <div class="p-8 border-b border-gray-100 bg-gray-50/30">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="flex items-center space-x-3 mb-2">
+                        <span class="px-2.5 py-1 bg-gray-200 text-gray-700 text-xs font-bold uppercase rounded">Request #{{ loan.loan_id }}</span>
+                        {% if loan.status == 'PENDING' %}
+                            <span class="px-2.5 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold uppercase rounded">Open for Offers</span>
+                        {% else %}
+                            <span class="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-bold uppercase rounded">{{ loan.status }}</span>
+                        {% endif %}
+                    </div>
+                    <h1 class="text-4xl font-extrabold text-gray-900 mb-2">₱{{ loan.amount|floatformat:2 }}</h1>
+                    <div class="flex items-center text-gray-500 text-sm">
+                        <span>Requested by</span>
+                        <span class="font-bold text-gray-900 ml-1 flex items-center">
+                            {{ loan.borrower.name }}
+                            <i data-lucide="badge-check" class="w-4 h-4 text-blue-500 ml-1"></i>
+                        </span>
+                    </div>
                 </div>
-                <h3 class="font-bold text-gray-900">{{ loan.borrower_profile.name|default:"Borrower Name" }}</h3>
-                <span class="text-xs text-gray-500 mb-3">Borrower</span>
-                <a href="#" class="text-xs font-bold text-brand-red hover:underline">View Profile</a>
-            </div>
 
-            <div class="flex flex-col items-center border-t md:border-t-0 md:border-l border-gray-100 pt-6 md:pt-0">
-                <div class="w-16 h-16 rounded-full bg-gray-200 mb-3 overflow-hidden">
-                    <img src="https://ui-avatars.com/api/?name=Lender&background=0D9488&color=fff" alt="Lender" class="w-full h-full object-cover">
+                <div class="text-right bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">Proposed Return</p>
+                    <p class="text-2xl font-bold text-green-600">{{ loan.interest_rate }}%</p>
                 </div>
-                <h3 class="font-bold text-gray-900">
-                    {% if loan.status == 'APPROVED' %}John Doe{% else %}--{% endif %}
-                </h3>
-                <span class="text-xs text-gray-500 mb-3">Lender</span>
-                <a href="#" class="text-xs font-bold text-brand-red hover:underline">View Profile</a>
+            </div>
+        </div>
+
+        <div class="p-8">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">Duration</p>
+                    <!-- FIX: Using get_term_display -->
+                    <p class="text-lg font-bold text-gray-900">{{ loan.get_term_display }}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">Request Date</p>
+                    <p class="text-lg font-bold text-gray-900">{{ loan.request_date|date:"M d, Y" }}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <p class="text-xs text-gray-500 font-bold uppercase mb-1">Risk Score</p>
+                    <p class="text-lg font-bold text-gray-900 flex items-center">
+                        4.8 <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current ml-1"></i>
+                    </p>
+                </div>
             </div>
 
+            <div>
+                <h3 class="text-sm font-bold text-gray-900 uppercase mb-3">Loan Purpose</h3>
+                <p class="text-gray-700 leading-relaxed text-sm bg-white p-0">
+                    {{ loan.purpose }}
+                </p>
+            </div>
         </div>
     </div>
+
+    <!-- Conditional Section -->
+    {% if user.type == 'L' %}
+        <!-- LENDER VIEW -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <i data-lucide="send" class="w-5 h-5 mr-2 text-brand-red"></i> Make an Offer
+            </h3>
+
+            {% if existing_offer %}
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-800 font-bold mb-1">Offer Submitted</p>
+                        <p class="text-blue-600 text-sm">You offered <b>₱{{ existing_offer.offered_amount }}</b> at <b>{{ existing_offer.offered_rate }}%</b> interest.</p>
+                    </div>
+                    <span class="px-3 py-1 bg-white text-blue-700 text-xs font-bold rounded shadow-sm uppercase">{{ existing_offer.status }}</span>
+                </div>
+            {% else %}
+                <form action="{% url 'loan_offer_create' loan.loan_id %}" method="POST" class="space-y-6">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Your Offer Amount (PHP)</label>
+                            <input type="number" name="amount" value="{{ loan.amount }}" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Interest Rate (%)</label>
+                            <input type="number" name="interest_rate" value="{{ loan.interest_rate }}" step="0.1" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all font-medium">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Message to Borrower (Optional)</label>
+                        <textarea name="message" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all text-sm" placeholder="e.g. I can fund this immediately."></textarea>
+                    </div>
+                    <button type="submit" class="w-full py-4 bg-brand-red hover:bg-red-900 text-white font-bold rounded-xl transition-all shadow-md transform hover:-translate-y-0.5">
+                        Submit Offer
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+    {% elif user.type == 'B' and user.user_id == loan.borrower.user_id %}
+        <!-- BORROWER VIEW -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Received Offers</h3>
+                <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold">{{ loan.offers.count }} Offers</span>
+            </div>
+
+            <div class="space-y-4">
+                {% for offer in loan.offers.all %}
+                <div class="border border-gray-200 rounded-xl p-5 hover:border-brand-red/50 transition-colors bg-gray-50/50">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-600 shadow-sm">
+                                {{ offer.lender.name|slice:":1" }}
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-900">
+                                    <span class="font-bold">{{ offer.lender.name }}</span> offered <span class="font-bold text-green-700 text-lg ml-1">₱{{ offer.offered_amount }}</span>
+                                </p>
+                                <p class="text-xs text-gray-500">Interest: {{ offer.offered_rate }}% • {{ offer.offer_date|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
+                            {% if offer.status == 'PENDING' %}
+                                <button class="flex-1 md:flex-none px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                                    Accept
+                                </button>
+                                <button class="flex-1 md:flex-none px-5 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold rounded-lg transition-colors">
+                                    Decline
+                                </button>
+                            {% else %}
+                                <span class="px-4 py-2 bg-gray-100 text-gray-600 font-bold rounded-lg text-sm uppercase tracking-wide">{{ offer.status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if offer.message %}
+                        <div class="mt-3 pl-14">
+                            <p class="text-xs text-gray-500 italic bg-white p-2 rounded border border-gray-100 inline-block">"{{ offer.message }}"</p>
+                        </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-400 italic">
+                    No offers received yet.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
 
 </div>
 {% endblock %}
