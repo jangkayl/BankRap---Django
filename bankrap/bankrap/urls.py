@@ -35,6 +35,9 @@ urlpatterns = [
     path('loans/<int:loan_id>/', loan_views.loan_detail, name='loan_detail'),
     path('loans/<int:loan_id>/offer/', loan_views.create_offer, name='loan_offer_create'),
 
+    path('offers/<int:offer_id>/accept/', loan_views.accept_offer, name='accept_offer'),
+    path('offers/<int:offer_id>/decline/', loan_views.decline_offer, name='decline_offer'),
+
     path('offers/', loan_views.loan_offer_list, name='offer_list'),
     path('repayments/', loan_views.repayment_schedule, name='repayment_schedule'),
     path('transactions/', transaction_views.transaction_history, name='transaction_history'),

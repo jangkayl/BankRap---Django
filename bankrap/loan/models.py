@@ -10,7 +10,6 @@ class LoanRequest(models.Model):
         ('REJECTED', 'Rejected'),
     )
 
-    # UPDATED: New terms from 7 days to 5 months
     TERM_CHOICES = (
         ('7_DAYS', '7 Days'),
         ('15_DAYS', '15 Days'),
@@ -19,6 +18,8 @@ class LoanRequest(models.Model):
         ('3_MONTHS', '3 Months'),
         ('4_MONTHS', '4 Months'),
         ('5_MONTHS', '5 Months'),
+        ('6_MONTHS', '6 Months'),
+        ('12_MONTHS', '12 Months'),
     )
 
     loan_id = models.AutoField(primary_key=True)
@@ -36,17 +37,13 @@ class LoanRequest(models.Model):
 
     @property
     def term_value(self):
-        """Returns the numeric value of the term"""
         try:
             return int(self.term.split('_')[0])
         except:
             return 0
 
     @property
-    def term_unit(self):
-        """Returns 'Days' or 'Months'"""
-        if 'DAY' in self.term:
-            return "Days"
+    def get_term_unit_display(self):
         return "Months"
 
 
@@ -69,3 +66,27 @@ class LoanOffer(models.Model):
 
     def __str__(self):
         return f"Offer by {self.lender.name} for Request #{self.loan_request.loan_id}"
+
+
+class ActiveLoan(models.Model):
+    STATUS_CHOICES = (
+        ('ACTIVE', 'Active'),
+        ('PAID', 'Paid'),
+        ('DEFAULTED', 'Defaulted'),
+    )
+
+    active_loan_id = models.AutoField(primary_key=True)
+    loan_request = models.OneToOneField(LoanRequest, on_delete=models.CASCADE, related_name='active_loan')
+    lender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='investments')
+    borrower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='liabilities')
+
+    principal_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    total_repayment = models.DecimalField(max_digits=12, decimal_places=2)
+
+    start_date = models.DateField(auto_now_add=True)
+    due_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
+
+    def __str__(self):
+        return f"Active Loan #{self.active_loan_id} ({self.borrower.name})"

@@ -4,51 +4,136 @@
 {% block title %}Create Offer - BankRap{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-8">
-    
+<div class="max-w-6xl mx-auto py-8">
+
     <div class="mb-8">
-        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Create Loan Offer</h1>
-        <p class="text-gray-500">Fill out the details below to make an offer on a loan request. Ensure your offer is competitive and fair.</p>
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Make an Offer</h1>
+        <p class="text-gray-500">Review the request details and submit your competitive offer.</p>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        
-        <h2 class="text-xl font-bold text-gray-900 mb-6">Your Offer Details</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Side: Loan Request Details -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 tracking-wider">Request Details</h3>
 
-        <form method="POST"> {% csrf_token %}
-            
-            <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Amount to Lend (PHP)</label>
-                <div class="relative">
-                    <span class="absolute left-4 top-3 text-gray-500 font-medium">₱</span>
-                    <input type="number" name="amount" required step="0.01" 
-                        class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all" 
-                        placeholder="e.g., 5000">
+                <div class="mb-6 text-center">
+                    <div class="w-16 h-16 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-xl font-bold text-gray-700 mx-auto mb-3">
+                        {{ loan.borrower.name|slice:":1" }}
+                    </div>
+                    <h2 class="text-lg font-bold text-gray-900">{{ loan.borrower.name }}</h2>
+                    <div class="flex justify-center items-center mt-1 text-sm text-gray-500">
+                        <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current mr-1"></i> 4.8 Rating
+                    </div>
+                </div>
+
+                <div class="space-y-4 border-t border-gray-100 pt-4">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 text-sm">Requested Amount</span>
+                        <span class="font-bold text-gray-900">₱{{ loan.amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 text-sm">Proposed Interest</span>
+                        <span class="font-bold text-green-600">{{ loan.interest_rate }}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500 text-sm">Term</span>
+                        <span class="font-bold text-gray-900">{{ loan.get_term_display }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Purpose</p>
+                    <p class="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg italic">
+                        "{{ loan.purpose }}"
+                    </p>
                 </div>
             </div>
+        </div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Offered Interest Rate (per annum)</label>
-                <div class="relative">
-                    <input type="number" name="interest_rate" required step="0.1" 
-                        class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all" 
-                        placeholder="e.g., 5-10">
-                    <span class="absolute right-4 top-3 text-gray-500 font-medium">%</span>
-                </div>
+        <!-- Right Side: Offer Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i data-lucide="send" class="w-5 h-5 mr-2 text-brand-red"></i> Your Offer Terms
+                </h2>
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Offer Amount (PHP)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3.5 text-gray-500 font-medium">₱</span>
+                                <input type="number" id="offer_amount" name="amount" value="{{ loan.amount }}" step="0.01" required
+                                    class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all font-medium text-gray-900">
+                            </div>
+                            <p class="text-xs text-gray-400 mt-2">Funds will be held from your wallet immediately.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Interest Rate (%)</label>
+                            <div class="relative">
+                                <input type="number" id="offer_interest" name="interest_rate" value="{{ loan.interest_rate }}" step="0.1" required
+                                    class="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent transition-all font-medium text-gray-900">
+                                <span class="absolute right-4 top-3.5 text-gray-500 font-medium">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculator / Summary Box -->
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3 text-blue-600">
+                                <i data-lucide="calculator" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-blue-800 uppercase">Total Repayment</p>
+                                <p class="text-xs text-blue-600">Principal + Interest</p>
+                            </div>
+                        </div>
+                        <div class="text-2xl font-extrabold text-blue-900" id="total_repayment_display">
+                            ₱0.00
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Message (Optional)</label>
+                        <textarea name="message" rows="4"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-red transition-all placeholder-gray-400"
+                            placeholder="Add a note to the borrower (e.g. 'I can fund this immediately if you accept today.')"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end space-x-4 pt-4 border-t border-gray-50">
+                        <a href="{% url 'loan_detail' loan.loan_id %}" class="px-6 py-3 text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">Cancel</a>
+                        <button type="submit" class="px-8 py-3 bg-brand-red hover:bg-red-900 text-white font-bold rounded-xl transition-colors shadow-md transform hover:-translate-y-0.5 flex items-center">
+                            Submit Offer <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
+                        </button>
+                    </div>
+
+                </form>
             </div>
-
-            <div class="mb-8">
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Optional Terms Message</label>
-                <textarea name="message" rows="4"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all placeholder-gray-400"
-                    placeholder="Any specific conditions or notes for the borrower (e.g., early repayment clause)"></textarea>
-            </div>
-
-            <button type="submit" class="w-full py-4 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-md transform hover:-translate-y-0.5">
-                Submit Offer
-            </button>
-
-        </form>
+        </div>
     </div>
 </div>
+
+<script>
+    const amountInput = document.getElementById('offer_amount');
+    const interestInput = document.getElementById('offer_interest');
+    const display = document.getElementById('total_repayment_display');
+
+    function calculate() {
+        const principal = parseFloat(amountInput.value) || 0;
+        const rate = parseFloat(interestInput.value) || 0;
+        const total = principal * (1 + (rate / 100));
+        display.innerText = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    amountInput.addEventListener('input', calculate);
+    interestInput.addEventListener('input', calculate);
+
+    // Init
+    calculate();
+</script>
 {% endblock %}

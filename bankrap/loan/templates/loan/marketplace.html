@@ -17,7 +17,6 @@
             </div>
             <div>
                 <p class="text-xs text-gray-500 font-bold uppercase">Available Funds</p>
-                <!-- UPDATED: Using wallet.balance instead of user.available_funds -->
                 <p class="text-lg font-bold text-gray-900">₱{{ wallet.balance|floatformat:2|default:"0.00" }}</p>
             </div>
         </div>
@@ -28,11 +27,9 @@
         {% for loan in loans %}
         <div class="group bg-white rounded-2xl border border-gray-200 hover:border-brand-red/30 hover:shadow-xl hover:shadow-red-500/5 transition-all duration-300 flex flex-col relative overflow-hidden">
 
-            <!-- Top Color Bar (Visual Interest) -->
             <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-red to-red-400"></div>
 
             <div class="p-6 flex-1">
-                <!-- User Header -->
                 <div class="flex justify-between items-start mb-6">
                     <div class="flex items-center space-x-3">
                         <div class="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-lg font-bold text-gray-700 shadow-sm">
@@ -49,13 +46,12 @@
                             </div>
                         </div>
                     </div>
-                    <!-- FIX: Using get_term_display -->
+                    <!-- FIX: Using get_term_display for human readable format -->
                     <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg border border-gray-200">
                         {{ loan.get_term_display }}
                     </span>
                 </div>
 
-                <!-- Main Loan Info -->
                 <div class="mb-6 text-center bg-gray-50/50 rounded-xl p-4 border border-gray-50">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Requesting</p>
                     <h3 class="text-3xl font-extrabold text-gray-900 mb-2">₱{{ loan.amount|floatformat:0 }}</h3>
@@ -64,7 +60,6 @@
                     </span>
                 </div>
 
-                <!-- Purpose -->
                 <div class="mb-4">
                     <p class="text-xs font-bold text-gray-400 uppercase mb-2">Purpose</p>
                     <p class="text-sm text-gray-600 leading-relaxed line-clamp-2">
@@ -73,9 +68,8 @@
                 </div>
             </div>
 
-            <!-- Action Footer -->
             <div class="p-4 border-t border-gray-100 bg-gray-50/30">
-                <a href="{% url 'loan_detail' loan.loan_id %}" class="flex items-center justify-center w-full py-3 bg-white border border-gray-300 hover:border-brand-red hover:bg-brand-red hover:text-green-600 text-gray-700 font-bold rounded-xl transition-all group-hover:shadow-md">
+                <a href="{% url 'loan_detail' loan.loan_id %}" class="flex items-center justify-center w-full py-3 bg-white border border-gray-300 hover:border-brand-red hover:bg-green-600 hover:text-white text-gray-700 font-bold rounded-xl transition-all group-hover:shadow-md">
                     View Details & Offer <i data-lucide="arrow-right" class="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1"></i>
                 </a>
             </div>
