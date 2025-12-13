@@ -18,6 +18,7 @@ urlpatterns = [
 
     path('dashboard/', account_views.dashboard_view, name='dashboard'),
     path('profile/', account_views.profile_view, name='profile'),
+    path('profile/<int:user_id>/', account_views.public_profile_view, name='public_profile'),
 
     path('wallet/', wallet_views.wallet_view, name='wallet'),
     path('wallet/add/', wallet_views.add_funds, name='add_funds'),

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction as db_transaction
 from django.utils import timezone
+from django.db.models import Sum
 from datetime import timedelta
 from decimal import Decimal
 from account.models import User, BorrowerProfile, LenderProfile
@@ -339,7 +340,6 @@ def pay_loan(request, active_loan_id):
                 borrower_wallet.withdraw(repayment_amount)
                 lender_wallet.deposit(repayment_amount)
 
-                # UPDATED: Use specific types LOAN_PAY and LOAN_REP
                 WalletTransaction.objects.create(
                     wallet=borrower_wallet,
                     amount=repayment_amount,
@@ -365,6 +365,7 @@ def pay_loan(request, active_loan_id):
 
                 active_loan.status = 'PAID'
                 active_loan.save()
+
                 active_loan.loan_request.status = 'REPAID'
                 active_loan.loan_request.save()
 
@@ -413,8 +414,20 @@ def repayment_schedule(request):
 
     active_count = active_loans.filter(status='ACTIVE').count()
 
+    # Calculate Stats
+    total_due = active_loans.filter(status='ACTIVE').aggregate(Sum('total_repayment'))['total_repayment__sum'] or 0
+    total_paid = active_loans.filter(status='PAID').aggregate(Sum('total_repayment'))['total_repayment__sum'] or 0
+
+    next_payment = active_loans.filter(status='ACTIVE').order_by('due_date').first()
+    next_amount = next_payment.total_repayment if next_payment else 0
+    next_date = next_payment.due_date if next_payment else None
+
     return render(request, 'loan/repayment_schedule.html', {
         'user': user,
         'active_loans': active_loans,
-        'active_count': active_count
+        'active_count': active_count,
+        'total_due': total_due,
+        'total_paid': total_paid,
+        'next_amount': next_amount,
+        'next_date': next_date
     })

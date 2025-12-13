@@ -1,11 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
 from django.db.models import Q, Avg
 from .models import User, BorrowerProfile, LenderProfile
 from wallet.models import Wallet
-# Import Review model to calculate score
 from review.models import ReviewAndRating
+from loan.models import LoanRequest
 
 
 # --- Helper Function ---
@@ -74,11 +74,8 @@ def profile_view(request):
         except Exception as e:
             messages.error(request, f"Error updating profile: {e}")
 
-    # --- Trust Score Calculation ---
-    # Fetch all reviews where this user is the 'reviewee'
+    # --- Trust Score Calculation for Own Profile ---
     reviews_received = ReviewAndRating.objects.filter(reviewee=user)
-
-    # Calculate average rating
     avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
     if avg_rating:
         avg_rating = round(avg_rating, 1)
@@ -94,6 +91,44 @@ def profile_view(request):
     }
 
     return render(request, 'account/profile.html', context)
+
+
+def public_profile_view(request, user_id):
+    """
+    Public view of a user's profile.
+    """
+    # 1. Get the current logged-in user (viewer)
+    viewer_id = request.session.get('user_id')
+    if not viewer_id:
+        return redirect('login')
+
+    # 2. Get the target user (profile owner)
+    target_user = get_object_or_404(User, pk=user_id)
+
+    # 3. Get Reviews & Score
+    reviews_received = ReviewAndRating.objects.filter(reviewee=target_user).order_by('-review_date')
+    avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
+    if avg_rating:
+        avg_rating = round(avg_rating, 1)
+    else:
+        avg_rating = 0.0
+    review_count = reviews_received.count()
+
+    # 4. Get Open Requests (Only if target is Borrower)
+    open_requests = []
+    if target_user.type == 'B':
+        open_requests = LoanRequest.objects.filter(borrower=target_user, status='PENDING').order_by('-request_date')
+
+    context = {
+        'profile_user': target_user,  # The user being viewed
+        'avg_rating': avg_rating,
+        'review_count': review_count,
+        'reviews': reviews_received,
+        'open_requests': open_requests,
+        'viewer_id': viewer_id
+    }
+
+    return render(request, 'account/public_profile.html', context)
 
 
 def login_view(request):
@@ -204,9 +239,57 @@ def settings_view(request):
     user = get_current_user(request)
     if not user:
         return redirect('login')
+
     if request.method == 'POST':
-        messages.success(request, "Settings updated successfully!")
+        # --- 1. Change Password Logic ---
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        password_changed = False
+        email_changed = False
+
+        try:
+            # Check Password
+            if current_password:
+                if user.password != current_password:
+                    messages.error(request, "Incorrect current password.")
+                elif new_password != confirm_password:
+                    messages.error(request, "New passwords do not match.")
+                elif not new_password:
+                    messages.error(request, "Please enter a new password.")
+                else:
+                    user.password = new_password
+                    password_changed = True
+
+            # --- 2. Change Email Logic ---
+            new_email = request.POST.get('new_email')
+            if new_email and new_email != user.email:
+                # Ensure email isn't taken by someone else
+                if User.objects.filter(email=new_email).exclude(user_id=user.user_id).exists():
+                    messages.error(request, "This email address is already in use.")
+                else:
+                    user.email = new_email
+                    email_changed = True
+
+            # --- Save Changes ---
+            if password_changed or email_changed:
+                user.save()
+                if password_changed:
+                    messages.success(request, "Password updated successfully.")
+                if email_changed:
+                    messages.success(request, "Email updated successfully.")
+            elif not current_password and not (new_email and new_email != user.email):
+                # No relevant fields filled for password/email change
+                # Only show "No changes" if nothing was attempted (i.e. empty form submit)
+                # But since we check if fields exist, maybe just pass if nothing happened
+                pass
+
+        except Exception as e:
+            messages.error(request, f"An error occurred: {e}")
+
         return redirect('settings')
+
     return render(request, 'account/settings.html', {'user': user})
 
 

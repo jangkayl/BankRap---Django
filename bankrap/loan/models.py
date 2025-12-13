@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Avg  # Import Avg
+from django.apps import apps  # Import apps to avoid circular dependency
 from account.models import User
 
 
@@ -44,7 +46,21 @@ class LoanRequest(models.Model):
 
     @property
     def get_term_unit_display(self):
-        return "Months"
+        return "Months"  # Simplified logic, or map based on TERM_CHOICES logic
+
+    # NEW: Dynamic Trust Score Calculation
+    @property
+    def borrower_trust_score(self):
+        # Get model dynamically to avoid circular import with review app
+        ReviewAndRating = apps.get_model('review', 'ReviewAndRating')
+
+        # Calculate average of all reviews received by this borrower
+        agg = ReviewAndRating.objects.filter(reviewee=self.borrower).aggregate(avg=Avg('rating'))
+
+        # Return formatted score or 0.0 if no reviews
+        if agg['avg']:
+            return round(agg['avg'], 1)
+        return 0.0
 
 
 class LoanOffer(models.Model):

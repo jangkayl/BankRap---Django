@@ -15,7 +15,6 @@
 
     <!-- Active Loan Alert -->
     {% for offer in offers %}
-        <!-- Update this check to exclude REPAID loans if you only want alerts for ongoing ones -->
         {% if offer.status == 'ACCEPTED' and offer.loan_request.status != 'REPAID' %}
         <div class="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
             <div class="flex items-center">
@@ -64,22 +63,26 @@
                         </td>
 
                         <td class="px-6 py-4">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 mr-2">
-                                    {% if user.type == 'L' %}
+                            <!-- CLICKABLE PROFILE LINK -->
+                            {% if user.type == 'L' %}
+                                <a href="{% url 'public_profile' offer.loan_request.borrower.user_id %}" class="flex items-center group/profile hover:opacity-80 transition-opacity">
+                                    <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 mr-2 group-hover/profile:bg-brand-red group-hover/profile:text-white transition-colors">
                                         {{ offer.loan_request.borrower.name|slice:":1" }}
-                                    {% else %}
-                                        {{ offer.lender.name|slice:":1" }}
-                                    {% endif %}
-                                </div>
-                                <span class="text-gray-700 font-medium">
-                                    {% if user.type == 'L' %}
+                                    </div>
+                                    <span class="text-gray-700 font-medium group-hover/profile:text-brand-red transition-colors">
                                         {{ offer.loan_request.borrower.name }}
-                                    {% else %}
+                                    </span>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'public_profile' offer.lender.user_id %}" class="flex items-center group/profile hover:opacity-80 transition-opacity">
+                                    <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 mr-2 group-hover/profile:bg-brand-red group-hover/profile:text-white transition-colors">
+                                        {{ offer.lender.name|slice:":1" }}
+                                    </div>
+                                    <span class="text-gray-700 font-medium group-hover/profile:text-brand-red transition-colors">
                                         {{ offer.lender.name }}
-                                    {% endif %}
-                                </span>
-                            </div>
+                                    </span>
+                                </a>
+                            {% endif %}
                         </td>
 
                         <td class="px-6 py-4 text-right font-bold text-gray-900">
@@ -92,7 +95,6 @@
 
                         <td class="px-6 py-4 text-center">
                             {% if offer.status == 'ACCEPTED' %}
-                                {# --- FIXED LOGIC HERE --- #}
                                 {% if offer.loan_request.status == 'REPAID' %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
                                         <i data-lucide="check-check" class="w-3 h-3 mr-1"></i> Paid
@@ -102,7 +104,6 @@
                                         <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Active
                                     </span>
                                 {% endif %}
-                                {# ------------------------ #}
                             {% elif offer.status == 'PENDING' %}
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-200">
                                     <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Pending

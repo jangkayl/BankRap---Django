@@ -24,7 +24,7 @@
             <p class="text-sm text-gray-500 font-medium">{{ review_count }} Reviews</p>
         </div>
 
-        <!-- Write Review CTA (Optional, can be hidden if only tied to transactions) -->
+        <!-- Write Review CTA -->
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col justify-center">
             <h2 class="text-xl font-bold text-gray-900 mb-2">Build Trust in the Community</h2>
             <p class="text-gray-500 mb-6 max-w-lg">Reviews help build a safer lending environment. You can leave reviews for completed loan transactions from your loan details page.</p>
@@ -57,18 +57,18 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center space-x-4">
-                        <!-- Profile Avatar (Initial) -->
-                        <div class="relative">
-                            <div class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-xl font-bold text-white shadow-sm">
-                                {% if active_tab == 'received' %}
+
+                        {# --- Determine who the 'other person' is based on tab --- #}
+                        {% if active_tab == 'received' %}
+                            {# Displaying REVIEWER info #}
+
+                            <!-- Clickable Avatar -->
+                            <a href="{% url 'public_profile' review.reviewer.user_id %}" class="relative group/avatar">
+                                <div class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-xl font-bold text-white shadow-sm group-hover/avatar:opacity-80 transition-opacity">
                                     {{ review.reviewer.name|slice:":1" }}
-                                {% else %}
-                                    {{ review.reviewee.name|slice:":1" }}
-                                {% endif %}
-                            </div>
-                            <!-- Small Role Badge -->
-                            <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
-                                {% if active_tab == 'received' %}
+                                </div>
+                                <!-- Small Role Badge -->
+                                <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
                                     {% if review.reviewer.type == 'L' %}
                                         <div class="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center" title="Lender">
                                             <i data-lucide="briefcase" class="w-2.5 h-2.5 text-green-700"></i>
@@ -78,8 +78,27 @@
                                             <i data-lucide="user" class="w-2.5 h-2.5 text-blue-700"></i>
                                         </div>
                                     {% endif %}
-                                {% else %}
-                                     {% if review.reviewee.type == 'L' %}
+                                </div>
+                            </a>
+
+                            <div>
+                                <a href="{% url 'public_profile' review.reviewer.user_id %}" class="hover:text-brand-red hover:underline transition-colors">
+                                    <h4 class="font-bold text-gray-900 text-lg">{{ review.reviewer.name }}</h4>
+                                </a>
+                                <p class="text-xs text-gray-400 font-medium">{{ review.review_date|date:"Y-m-d" }}</p>
+                            </div>
+
+                        {% else %}
+                            {# Displaying REVIEWEE info (Reviews Given) #}
+
+                            <!-- Clickable Avatar -->
+                            <a href="{% url 'public_profile' review.reviewee.user_id %}" class="relative group/avatar">
+                                <div class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-xl font-bold text-white shadow-sm group-hover/avatar:opacity-80 transition-opacity">
+                                    {{ review.reviewee.name|slice:":1" }}
+                                </div>
+                                <!-- Small Role Badge -->
+                                <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
+                                    {% if review.reviewee.type == 'L' %}
                                         <div class="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center" title="Lender">
                                             <i data-lucide="briefcase" class="w-2.5 h-2.5 text-green-700"></i>
                                         </div>
@@ -88,20 +107,17 @@
                                             <i data-lucide="user" class="w-2.5 h-2.5 text-blue-700"></i>
                                         </div>
                                     {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
+                                </div>
+                            </a>
 
-                        <div>
-                            <h4 class="font-bold text-gray-900 text-lg">
-                                {% if active_tab == 'received' %}
-                                    {{ review.reviewer.name }}
-                                {% else %}
-                                    {{ review.reviewee.name }}
-                                {% endif %}
-                            </h4>
-                            <p class="text-xs text-gray-400 font-medium">{{ review.review_date|date:"Y-m-d" }}</p>
-                        </div>
+                            <div>
+                                <a href="{% url 'public_profile' review.reviewee.user_id %}" class="hover:text-brand-red hover:underline transition-colors">
+                                    <h4 class="font-bold text-gray-900 text-lg">{{ review.reviewee.name }}</h4>
+                                </a>
+                                <p class="text-xs text-gray-400 font-medium">{{ review.review_date|date:"Y-m-d" }}</p>
+                            </div>
+                        {% endif %}
+
                     </div>
 
                     <!-- Stars -->

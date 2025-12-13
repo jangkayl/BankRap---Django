@@ -39,10 +39,11 @@
                     <h1 class="text-4xl font-extrabold text-gray-900 mb-2">₱{{ loan.amount|floatformat:2 }}</h1>
                     <div class="flex items-center text-gray-500 text-sm">
                         <span>Requested by</span>
-                        <span class="font-bold text-gray-900 ml-1 flex items-center">
+                        <!-- CLICKABLE PROFILE LINK -->
+                        <a href="{% url 'public_profile' loan.borrower.user_id %}" class="font-bold text-gray-900 ml-1 flex items-center hover:text-brand-red hover:underline transition-colors">
                             {{ loan.borrower.name }}
                             <i data-lucide="badge-check" class="w-4 h-4 text-blue-500 ml-1"></i>
-                        </span>
+                        </a>
                     </div>
                 </div>
 
@@ -66,7 +67,7 @@
                 <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <p class="text-xs text-gray-500 font-bold uppercase mb-1">Risk Score</p>
                     <p class="text-lg font-bold text-gray-900 flex items-center">
-                        4.8 <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current ml-1"></i>
+                        {{ borrower_rating|default:"0.0" }} <i data-lucide="star" class="w-4 h-4 text-yellow-400 fill-current ml-1"></i>
                     </p>
                 </div>
             </div>
@@ -134,6 +135,38 @@
     {% if user.type == 'L' and loan.status == 'PENDING' %}
         <!-- LENDER VIEW: Make Offer -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <!-- Offer History Section -->
+            {% if offer_history %}
+            <div class="mb-8">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Your Offer History</h3>
+                <div class="space-y-3">
+                    {% for offer in offer_history %}
+                    <div class="flex items-center justify-between p-4 rounded-lg border
+                        {% if offer.status == 'ACCEPTED' %}bg-green-50 border-green-200
+                        {% elif offer.status == 'DECLINED' %}bg-red-50 border-red-200
+                        {% else %}bg-gray-50 border-gray-200{% endif %}">
+
+                        <div>
+                            <p class="text-sm font-bold text-gray-900">
+                                ₱{{ offer.offered_amount|floatformat:2 }}
+                                <span class="font-normal text-gray-500">at {{ offer.offered_rate }}% interest</span>
+                            </p>
+                            <p class="text-xs text-gray-500">{{ offer.offer_date|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <span class="px-3 py-1 text-xs font-bold rounded-full uppercase
+                                {% if offer.status == 'ACCEPTED' %}bg-green-100 text-green-800
+                                {% elif offer.status == 'DECLINED' %}bg-red-100 text-red-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ offer.status }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
                 <i data-lucide="send" class="w-5 h-5 mr-2 text-brand-red"></i> Make an Offer
             </h3>
@@ -171,7 +204,7 @@
         </div>
 
     {% elif user.type == 'B' and user.user_id == loan.borrower.user_id %}
-        <!-- BORROWER VIEW: See Offers (Only relevant if pending) -->
+        <!-- BORROWER VIEW -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-xl font-bold text-gray-900">Received Offers</h3>
@@ -183,12 +216,18 @@
                 <div class="border border-gray-200 rounded-xl p-5 hover:border-brand-red/50 transition-colors bg-gray-50/50">
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                         <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-600 shadow-sm">
-                                {{ offer.lender.name|slice:":1" }}
-                            </div>
+                            <!-- CLICKABLE PROFILE LINK -->
+                            <a href="{% url 'public_profile' offer.lender.user_id %}" class="group/avatar">
+                                <div class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-600 shadow-sm group-hover/avatar:border-brand-red group-hover/avatar:text-brand-red transition-colors">
+                                    {{ offer.lender.name|slice:":1" }}
+                                </div>
+                            </a>
                             <div>
                                 <div class="flex items-center mb-1">
-                                    <h4 class="font-bold text-gray-900 text-lg mr-2">{{ offer.lender.name }}</h4>
+                                    <!-- CLICKABLE PROFILE LINK -->
+                                    <a href="{% url 'public_profile' offer.lender.user_id %}" class="font-bold text-gray-900 text-lg mr-2 hover:text-brand-red hover:underline transition-colors">
+                                        {{ offer.lender.name }}
+                                    </a>
                                     <span class="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Lender</span>
                                 </div>
                                 <div class="text-sm text-gray-600 space-y-1">
@@ -199,7 +238,6 @@
                                     </p>
                                 </div>
 
-                                <!-- CALCULATED REPAYMENT DISPLAY -->
                                 <div class="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                                     <p class="text-xs text-gray-500 font-bold uppercase mb-1">Estimated Repayment</p>
                                     <div class="flex items-baseline gap-1">
@@ -250,7 +288,7 @@
 
 </div>
 
-<!-- Accept/Decline Modals (Same as before) -->
+<!-- Accept/Decline Modals (Remaining same) -->
 <div id="accept-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 relative transform transition-all scale-100">
         <div class="text-center">
