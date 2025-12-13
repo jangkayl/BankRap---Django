@@ -37,17 +37,17 @@ urlpatterns = [
 
     path('offers/<int:offer_id>/accept/', loan_views.accept_offer, name='accept_offer'),
     path('offers/<int:offer_id>/decline/', loan_views.decline_offer, name='decline_offer'),
-
     path('offers/', loan_views.loan_offer_list, name='offer_list'),
+
     path('repayments/', loan_views.repayment_schedule, name='repayment_schedule'),
+    path('repayments/<int:active_loan_id>/pay/', loan_views.pay_loan, name='pay_loan'),
+
     path('transactions/', transaction_views.transaction_history, name='transaction_history'),
 
-    # NEW URL
     path('reviews/', review_views.reviews_view, name='reviews'),
+    path('reviews/create/<int:loan_id>/', review_views.create_review, name='create_review'),
 
     path('messages/', account_views.messaging_view, name='messaging'),
-
     path('settings/', account_views.settings_view, name='settings'),
-
     path('notifications/', account_views.notifications_view, name='notifications'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

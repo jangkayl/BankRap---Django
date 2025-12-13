@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.views import View
-from django.db.models import Q
+from django.db.models import Q, Avg
 from .models import User, BorrowerProfile, LenderProfile
 from wallet.models import Wallet
+# Import Review model to calculate score
+from review.models import ReviewAndRating
 
 
 # --- Helper Function ---
@@ -49,13 +51,20 @@ def profile_view(request):
             user.contact_number = request.POST.get('contact_number')
             user.email = request.POST.get('email')
 
-            # Note: We usually don't allow editing student_id here to prevent identity fraud
-
             if user.type == 'B':
-                user.income = request.POST.get('income') or 0
+                income_str = request.POST.get('income')
+                if income_str and income_str.strip():
+                    user.income = income_str
+                else:
+                    user.income = 0
                 user.employment_status = request.POST.get('employment_status')
+
             elif user.type == 'L':
-                user.min_investment_amount = request.POST.get('min_investment_amount') or 0
+                min_inv_str = request.POST.get('min_investment_amount')
+                if min_inv_str and min_inv_str.strip():
+                    user.min_investment_amount = min_inv_str
+                else:
+                    user.min_investment_amount = 0
                 user.investment_preference = request.POST.get('investment_preference')
 
             user.save()
@@ -65,7 +74,26 @@ def profile_view(request):
         except Exception as e:
             messages.error(request, f"Error updating profile: {e}")
 
-    return render(request, 'account/profile.html', {'user': user})
+    # --- Trust Score Calculation ---
+    # Fetch all reviews where this user is the 'reviewee'
+    reviews_received = ReviewAndRating.objects.filter(reviewee=user)
+
+    # Calculate average rating
+    avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
+    if avg_rating:
+        avg_rating = round(avg_rating, 1)
+    else:
+        avg_rating = 0.0
+
+    review_count = reviews_received.count()
+
+    context = {
+        'user': user,
+        'avg_rating': avg_rating,
+        'review_count': review_count,
+    }
+
+    return render(request, 'account/profile.html', context)
 
 
 def login_view(request):
@@ -74,16 +102,13 @@ def login_view(request):
         password = request.POST.get('password')
 
         try:
-            # Allow login with either Email OR Student ID
             user = User.objects.filter(Q(email=identity) | Q(student_id=identity), password=password).first()
-
             if user:
                 request.session['user_id'] = user.user_id
                 messages.success(request, f"Welcome back, {user.name}!")
                 return redirect('dashboard')
             else:
                 messages.error(request, "Invalid credentials.")
-
         except Exception as e:
             messages.error(request, f"Login Error: {e}")
 
@@ -92,7 +117,6 @@ def login_view(request):
 
 def register_view(request):
     if request.method == 'POST':
-        # 1. Capture all fields from the form
         name = request.POST.get('name')
         student_id = request.POST.get('student_id')
         email = request.POST.get('email')
@@ -103,7 +127,6 @@ def register_view(request):
         school_id_file = request.FILES.get('school_id_file')
 
         try:
-            # 2. Validation
             if User.objects.filter(email=email).exists():
                 messages.error(request, "Email already registered.")
                 return render(request, 'register.html')
@@ -114,7 +137,6 @@ def register_view(request):
 
             new_user = None
 
-            # 3. Create User with student_id included
             if role == 'L':
                 new_user = LenderProfile.objects.create(
                     name=name,
@@ -125,7 +147,7 @@ def register_view(request):
                     contact_number=contact,
                     type='L',
                     school_id_file=school_id_file,
-                    min_investment_amount=50.00
+                    min_investment_amount=500.00
                 )
             else:
                 new_user = BorrowerProfile.objects.create(

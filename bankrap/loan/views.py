@@ -113,7 +113,7 @@ def loan_request_create(request):
     return render(request, 'loan/request_create.html', {'user': user})
 
 
-# --- Offer Logic (UPDATED WITH FUND HOLDING) ---
+# --- Offer Logic ---
 
 def create_offer(request, loan_id):
     user = get_current_user(request)
@@ -123,30 +123,24 @@ def create_offer(request, loan_id):
 
     if request.method == 'POST':
         try:
-            # FIX: Convert to Decimal instead of float
             amount = Decimal(request.POST.get('amount'))
 
             with db_transaction.atomic():
-                # 1. Get Lender Wallet (Lock row)
                 wallet = Wallet.objects.select_for_update().get(user=user)
 
-                # 2. Check Balance
                 if wallet.balance < amount:
                     messages.error(request, "Insufficient funds to make this offer.")
                     return redirect('loan_detail', loan_id=loan.loan_id)
 
-                # 3. Deduct/Hold Funds
                 wallet.withdraw(amount)
 
-                # 4. Create Wallet Transaction (Escrow/Hold)
                 WalletTransaction.objects.create(
                     wallet=wallet,
                     amount=amount,
-                    transaction_type="WITHDRAW",
-                    reference_number=f"HOLD-OFFER-{loan.loan_id}"
+                    transaction_type="HOLD",
+                    reference_number=f"OFFER-{loan.loan_id}"
                 )
 
-                # 5. Create Offer
                 LoanOffer.objects.create(
                     loan_request=loan,
                     lender=user,
@@ -156,17 +150,17 @@ def create_offer(request, loan_id):
                     status='PENDING'
                 )
 
-            messages.success(request, f"Offer sent! ₱{amount} has been held from your wallet.")
+            messages.success(request, f"Offer sent! ₱{amount} has been put on hold.")
             return redirect('loan_marketplace')
 
         except Exception as e:
-            # Add specific error message for debugging if needed, but generic is fine for users
             messages.error(request, f"Error processing offer: {e}")
             return redirect('loan_detail', loan_id=loan.loan_id)
 
     return render(request, 'loan/offer_create.html', {'loan': loan, 'user': user})
 
-# --- ACCEPT / DECLINE LOGIC (UPDATED) ---
+
+# --- ACCEPT / DECLINE LOGIC ---
 
 def accept_offer(request, offer_id):
     user = get_current_user(request)
@@ -180,24 +174,23 @@ def accept_offer(request, offer_id):
         messages.error(request, "This offer is no longer valid.")
         return redirect('my_loan_requests')
 
+    if ActiveLoan.objects.filter(borrower=user, status='ACTIVE').exists():
+        messages.error(request, "You already have an active loan. Please repay it before accepting a new one.")
+        return redirect('my_loan_requests')
+
     try:
         with db_transaction.atomic():
-            # Funds are ALREADY deducted from lender (held).
-            # We just need to credit borrower and refund OTHER lenders.
-
-            # 1. Credit Borrower
             borrower_wallet = Wallet.objects.select_for_update().get(user=user)
             borrower_wallet.deposit(offer.offered_amount)
 
-            # 2. Record Borrower Deposit
+            # UPDATED: Use specific type LOAN_RCV
             WalletTransaction.objects.create(
                 wallet=borrower_wallet,
                 amount=offer.offered_amount,
-                transaction_type="DEPOSIT",
+                transaction_type="LOAN_RCV",
                 reference_number=f"LOAN-RECEIVED-{offer.loan_request.loan_id}"
             )
 
-            # 3. Record Loan History Transaction (Disbursement)
             Transaction.objects.create(
                 loan_request=offer.loan_request,
                 user=offer.lender,
@@ -208,13 +201,11 @@ def accept_offer(request, offer_id):
                 reference_number=f"LOAN-{offer.loan_request.loan_id}-DISB"
             )
 
-            # 4. Update Main Offer & Request
             offer.status = 'ACCEPTED'
             offer.save()
             offer.loan_request.status = 'FUNDED'
             offer.loan_request.save()
 
-            # 5. Create Active Loan
             days = 30
             if 'DAYS' in offer.loan_request.term:
                 try:
@@ -240,26 +231,38 @@ def accept_offer(request, offer_id):
                 due_date=due_date
             )
 
-            # 6. REFUND OTHER PENDING OFFERS
-            # Since we held funds for ALL pending offers, we must refund the losers.
             other_offers = LoanOffer.objects.filter(loan_request=offer.loan_request, status='PENDING').exclude(
                 pk=offer.offer_id)
 
             for other in other_offers:
-                # Refund logic
                 lender_refund_wallet = Wallet.objects.select_for_update().get(user=other.lender)
                 lender_refund_wallet.deposit(other.offered_amount)
 
-                # Record Refund
                 WalletTransaction.objects.create(
                     wallet=lender_refund_wallet,
                     amount=other.offered_amount,
-                    transaction_type="DEPOSIT",
+                    transaction_type="REFUND",
                     reference_number=f"REFUND-OFFER-{other.offer_id}"
                 )
-
                 other.status = 'DECLINED'
                 other.save()
+
+            # Cancel other pending requests
+            other_requests = LoanRequest.objects.filter(borrower=user, status='PENDING').exclude(
+                pk=offer.loan_request.loan_id)
+            for req in other_requests:
+                pending_offers_on_other = LoanOffer.objects.filter(loan_request=req, status='PENDING')
+                for pending in pending_offers_on_other:
+                    lender_ref_wallet = Wallet.objects.select_for_update().get(user=pending.lender)
+                    lender_ref_wallet.deposit(pending.offered_amount)
+                    WalletTransaction.objects.create(
+                        wallet=lender_ref_wallet, amount=pending.offered_amount, transaction_type="REFUND",
+                        reference_number=f"REFUND-CANCELLED-{req.loan_id}"
+                    )
+                    pending.status = 'DECLINED'
+                    pending.save()
+                req.status = 'REJECTED'
+                req.save()
 
             messages.success(request, f"Offer accepted! ₱{offer.offered_amount} added to wallet.")
             return redirect('wallet')
@@ -284,19 +287,16 @@ def decline_offer(request, offer_id):
 
     try:
         with db_transaction.atomic():
-            # 1. Refund Lender
             lender_wallet = Wallet.objects.select_for_update().get(user=offer.lender)
             lender_wallet.deposit(offer.offered_amount)
 
-            # 2. Record Refund
             WalletTransaction.objects.create(
                 wallet=lender_wallet,
                 amount=offer.offered_amount,
-                transaction_type="DEPOSIT",
+                transaction_type="REFUND",
                 reference_number=f"REFUND-DECLINED-{offer.offer_id}"
             )
 
-            # 3. Update Status
             offer.status = 'DECLINED'
             offer.save()
 
@@ -306,6 +306,76 @@ def decline_offer(request, offer_id):
     except Exception as e:
         messages.error(request, f"Error declining offer: {e}")
         return redirect('loan_detail', loan_id=offer.loan_request.loan_id)
+
+
+# --- REPAYMENT LOGIC ---
+
+def pay_loan(request, active_loan_id):
+    user = get_current_user(request)
+    if not user or user.type != 'B':
+        return redirect('login')
+
+    active_loan = get_object_or_404(ActiveLoan, pk=active_loan_id)
+
+    if active_loan.borrower.user_id != user.user_id:
+        messages.error(request, "Unauthorized action.")
+        return redirect('repayment_schedule')
+
+    if active_loan.status == 'PAID':
+        messages.warning(request, "This loan is already paid.")
+        return redirect('repayment_schedule')
+
+    if request.method == 'POST':
+        try:
+            with db_transaction.atomic():
+                borrower_wallet = Wallet.objects.select_for_update().get(user=user)
+                lender_wallet = Wallet.objects.select_for_update().get(user=active_loan.lender)
+                repayment_amount = active_loan.total_repayment
+
+                if borrower_wallet.balance < repayment_amount:
+                    messages.error(request, f"Insufficient funds. You need ₱{repayment_amount}.")
+                    return redirect('repayment_schedule')
+
+                borrower_wallet.withdraw(repayment_amount)
+                lender_wallet.deposit(repayment_amount)
+
+                # UPDATED: Use specific types LOAN_PAY and LOAN_REP
+                WalletTransaction.objects.create(
+                    wallet=borrower_wallet,
+                    amount=repayment_amount,
+                    transaction_type="LOAN_PAY",
+                    reference_number=f"REPAY-LOAN-{active_loan.loan_request.loan_id}"
+                )
+                WalletTransaction.objects.create(
+                    wallet=lender_wallet,
+                    amount=repayment_amount,
+                    transaction_type="LOAN_REP",
+                    reference_number=f"PAYMENT-RECVD-{active_loan.loan_request.loan_id}"
+                )
+
+                Transaction.objects.create(
+                    loan_request=active_loan.loan_request,
+                    user=user,
+                    amount=repayment_amount,
+                    transaction_data=f"Repayment from {user.name}",
+                    type='R',
+                    status='C',
+                    reference_number=f"LOAN-{active_loan.loan_request.loan_id}-REPAY"
+                )
+
+                active_loan.status = 'PAID'
+                active_loan.save()
+                active_loan.loan_request.status = 'REPAID'
+                active_loan.loan_request.save()
+
+                messages.success(request, f"Loan repaid successfully!")
+                return redirect('repayment_schedule')
+
+        except Exception as e:
+            messages.error(request, f"Repayment failed: {e}")
+            return redirect('repayment_schedule')
+
+    return redirect('repayment_schedule')
 
 
 # --- Stubs & Lists ---
@@ -341,4 +411,10 @@ def repayment_schedule(request):
     elif user.type == 'L':
         active_loans = ActiveLoan.objects.filter(lender=user).order_by('due_date')
 
-    return render(request, 'loan/repayment_schedule.html', {'user': user, 'active_loans': active_loans})
+    active_count = active_loans.filter(status='ACTIVE').count()
+
+    return render(request, 'loan/repayment_schedule.html', {
+        'user': user,
+        'active_loans': active_loans,
+        'active_count': active_count
+    })

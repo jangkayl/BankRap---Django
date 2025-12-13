@@ -25,10 +25,7 @@
 
         <div class="flex-1">
             <h2 class="text-2xl font-bold text-gray-900">{{ user.name }}</h2>
-
-            <!-- Student ID (Read-Only) -->
             <p class="text-gray-500 text-sm mb-1">CIT-U Student ID: {{ user.student_id|default:"N/A" }}</p>
-
             <p class="text-gray-500 text-sm mb-3">{{ user.address }} | {{ user.contact_number }}</p>
 
             <div class="flex flex-wrap gap-2 mb-4">
@@ -43,34 +40,71 @@
                 {% endif %}
             </div>
 
-            <!-- Edit Button triggers Modal -->
             <button onclick="openModal('edit-profile-modal')" class="text-sm font-medium text-gray-600 hover:text-brand-red flex items-center transition-colors">
                 Edit Profile <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
             </button>
         </div>
     </div>
 
-    <!-- Trust Score Section (Static for now) -->
+    <!-- Trust & Reputation Section (UPDATED & DYNAMIC) -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
-        <h3 class="text-lg font-bold text-gray-900 mb-4">Trust & Reputation</h3>
-
-        <div class="flex items-end space-x-2 mb-4">
-            <span class="text-4xl font-extrabold text-brand-red">4.8</span>
-            <span class="text-gray-400 mb-1">/ 5.0</span>
-            <div class="flex items-center mb-1.5 ml-2">
-                {% for i in "12345" %}
-                <i data-lucide="star" class="w-5 h-5 text-yellow-400 fill-current"></i>
-                {% endfor %}
-            </div>
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-gray-900">Trust & Reputation</h3>
+            <a href="{% url 'reviews' %}?tab=received" class="text-xs font-bold text-brand-red hover:underline flex items-center">
+                View All Reviews <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i>
+            </a>
         </div>
 
-        <div class="flex flex-wrap gap-3">
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-50 text-brand-red">On-Time Payer</span>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Positive Feedback: 95%</span>
+        <div class="flex flex-col md:flex-row items-center gap-8">
+            <!-- Score Box -->
+            <div class="flex flex-col items-center justify-center bg-gray-50 rounded-2xl p-6 min-w-[160px] border border-gray-100">
+                <div class="text-5xl font-extrabold text-gray-900 mb-2">{{ avg_rating }}</div>
+                <div class="flex space-x-1 text-yellow-400 mb-2">
+                     <!-- Dynamic stars display -->
+                     {% for i in "12345" %}
+                        <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= avg_rating|add:0 %}fill-current{% else %}text-gray-300{% endif %}"></i>
+                     {% endfor %}
+                </div>
+                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">{{ review_count }} Reviews</p>
+            </div>
+
+            <!-- Badges / Stats Grid -->
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <!-- Badge 1: Rating Status -->
+                <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                        <i data-lucide="award" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Reputation Level</p>
+                        <p class="font-bold text-gray-900">
+                            {% if avg_rating >= 4.5 %}Excellent
+                            {% elif avg_rating >= 3.5 %}Very Good
+                            {% elif avg_rating >= 2.5 %}Fair
+                            {% elif avg_rating > 0 %}Needs Improvement
+                            {% else %}New Member{% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Badge 2: Community Trust -->
+                 <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Community Status</p>
+                        <p class="font-bold text-gray-900">
+                             {% if review_count > 10 %}Verified Trusted
+                             {% elif review_count > 0 %}Active Member
+                             {% else %}Unverified{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Financial Details Section -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         <h3 class="text-lg font-bold text-gray-900 mb-6">Financial Details</h3>
 
@@ -111,15 +145,23 @@
             <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Lender Profile</h4>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Available Funds</label>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Available Funds for Lending</label>
                     <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
-                        Php {{ user.available_funds|floatformat:2|default:"0.00" }}
+                        {% if user.available_funds %}
+                            Php {{ user.available_funds|floatformat:2 }}
+                        {% else %}
+                            Php 0.00
+                        {% endif %}
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Min Investment</label>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Minimum Investment Amount</label>
                     <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
-                        Php {{ user.min_investment_amount|floatformat:2|default:"500.00" }}
+                         {% if user.min_investment_amount %}
+                            Php {{ user.min_investment_amount|floatformat:2 }}
+                        {% else %}
+                            Php 500.00
+                        {% endif %}
                     </div>
                 </div>
             </div>

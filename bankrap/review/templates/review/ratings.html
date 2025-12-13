@@ -10,142 +10,129 @@
         <h1 class="text-2xl font-bold text-gray-900">Reviews & Ratings</h1>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-        
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Leave a Review</h2>
-            
-            <form method="POST">
-                {% csrf_token %}
-                
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Rate your recent loan experience:</label>
-                    <div class="flex items-center space-x-1">
-                        {% for i in "12345" %}
-                        <label class="cursor-pointer">
-                            <input type="radio" name="rating" value="{{ i }}" class="hidden peer">
-                            <i data-lucide="star" class="w-8 h-8 text-gray-300 peer-checked:text-yellow-400 hover:text-yellow-400 fill-current transition-colors"></i>
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Your comments:</label>
-                    <textarea name="comment" rows="4" class="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:bg-white focus:border-brand-red focus:ring-2 focus:ring-brand-red focus:outline-none transition-all resize-none text-sm" placeholder="Share your thoughts on the loan experience, communication, and professionalism."></textarea>
-                </div>
-
-                <div class="flex justify-end space-x-4">
-                    <button type="button" class="px-6 py-2.5 text-gray-600 font-medium hover:text-gray-900 transition-colors">Cancel</button>
-                    <button type="submit" class="px-6 py-2.5 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-sm">
-                        Submit Review
-                    </button>
-                </div>
-            </form>
+    <!-- Stats & Write Review Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <!-- Trust Score Card -->
+        <div class="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col justify-center items-center text-center">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">Your Trust Score</h2>
+            <div class="text-5xl font-extrabold text-brand-red mb-2">{{ avg_rating|default:"0.0" }}</div>
+            <div class="flex items-center space-x-1 mb-2 text-yellow-400">
+                {% for i in "12345" %}
+                    <i data-lucide="star" class="w-5 h-5 {% if forloop.counter <= avg_rating|add:0 %}fill-current{% else %}text-gray-200{% endif %}"></i>
+                {% endfor %}
+            </div>
+            <p class="text-sm text-gray-500 font-medium">{{ review_count }} Reviews</p>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-            <h2 class="text-lg font-bold text-gray-900 mb-6">Your Overall Trust Score</h2>
-            
-            <div class="text-center mb-8">
-                <div class="flex justify-center items-center space-x-1 mb-2">
-                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
-                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
-                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
-                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
-                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 fill-current"></i>
-                </div>
-                <p class="text-gray-500 font-medium">88 Reviews</p>
-            </div>
-
-            <div class="space-y-3">
-                <div class="flex items-center text-sm">
-                    <span class="w-8 font-medium text-gray-600">5 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
-                    <span class="w-8 text-right text-gray-400 mr-3">65</span>
-                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-brand-red rounded-full" style="width: 74%"></div>
-                    </div>
-                    <span class="w-10 text-right text-gray-500 font-medium">74%</span>
-                </div>
-                <div class="flex items-center text-sm">
-                    <span class="w-8 font-medium text-gray-600">4 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
-                    <span class="w-8 text-right text-gray-400 mr-3">18</span>
-                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-brand-red rounded-full" style="width: 20%"></div>
-                    </div>
-                    <span class="w-10 text-right text-gray-500 font-medium">20%</span>
-                </div>
-                <div class="flex items-center text-sm">
-                    <span class="w-8 font-medium text-gray-600">3 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
-                    <span class="w-8 text-right text-gray-400 mr-3">3</span>
-                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-brand-red rounded-full" style="width: 3%"></div>
-                    </div>
-                    <span class="w-10 text-right text-gray-500 font-medium">3%</span>
-                </div>
-                <div class="flex items-center text-sm">
-                    <span class="w-8 font-medium text-gray-600">2 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
-                    <span class="w-8 text-right text-gray-400 mr-3">2</span>
-                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-brand-red rounded-full" style="width: 2%"></div>
-                    </div>
-                    <span class="w-10 text-right text-gray-500 font-medium">2%</span>
-                </div>
-                <div class="flex items-center text-sm">
-                    <span class="w-8 font-medium text-gray-600">1 <i data-lucide="star" class="inline w-3 h-3 mb-0.5"></i></span>
-                    <span class="w-8 text-right text-gray-400 mr-3">0</span>
-                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div class="h-full bg-brand-red rounded-full" style="width: 0%"></div>
-                    </div>
-                    <span class="w-10 text-right text-gray-500 font-medium">0%</span>
-                </div>
+        <!-- Write Review CTA (Optional, can be hidden if only tied to transactions) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col justify-center">
+            <h2 class="text-xl font-bold text-gray-900 mb-2">Build Trust in the Community</h2>
+            <p class="text-gray-500 mb-6 max-w-lg">Reviews help build a safer lending environment. You can leave reviews for completed loan transactions from your loan details page.</p>
+            <div>
+                 <a href="{% url 'repayment_schedule' %}" class="inline-flex items-center px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-lg transition-colors text-sm">
+                    View Completed Loans to Review
+                </a>
             </div>
         </div>
     </div>
 
     <div>
-        <h2 class="text-xl font-bold text-gray-900 mb-6">Past Reviews</h2>
-        
-        <div class="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg inline-flex mb-8">
-            <a href="?tab=received" class="px-6 py-2 rounded-md text-sm font-bold transition-all {% if active_tab == 'received' %}bg-brand-red text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Past Reviews</h2>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex space-x-1 bg-gray-100 p-1.5 rounded-xl inline-flex mb-8">
+            <a href="?tab=received" class="px-6 py-2 rounded-lg text-sm font-bold transition-all {% if active_tab == 'received' %}bg-brand-red text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-200{% endif %}">
                 Reviews Received
             </a>
-            <a href="?tab=given" class="px-6 py-2 rounded-md text-sm font-bold transition-all {% if active_tab == 'given' %}bg-brand-red text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+            <a href="?tab=given" class="px-6 py-2 rounded-lg text-sm font-bold transition-all {% if active_tab == 'given' %}bg-brand-red text-white shadow-sm{% else %}text-gray-500 hover:text-gray-900 hover:bg-gray-200{% endif %}">
                 Reviews Given
             </a>
         </div>
 
+        <!-- Review Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             {% for review in reviews %}
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
-                            <img src="https://ui-avatars.com/api/?name={{ review.reviewer_name }}&background=random" alt="Avatar" class="w-full h-full object-cover">
+                        <!-- Profile Avatar (Initial) -->
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-xl font-bold text-white shadow-sm">
+                                {% if active_tab == 'received' %}
+                                    {{ review.reviewer.name|slice:":1" }}
+                                {% else %}
+                                    {{ review.reviewee.name|slice:":1" }}
+                                {% endif %}
+                            </div>
+                            <!-- Small Role Badge -->
+                            <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-100">
+                                {% if active_tab == 'received' %}
+                                    {% if review.reviewer.type == 'L' %}
+                                        <div class="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center" title="Lender">
+                                            <i data-lucide="briefcase" class="w-2.5 h-2.5 text-green-700"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center" title="Borrower">
+                                            <i data-lucide="user" class="w-2.5 h-2.5 text-blue-700"></i>
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                     {% if review.reviewee.type == 'L' %}
+                                        <div class="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center" title="Lender">
+                                            <i data-lucide="briefcase" class="w-2.5 h-2.5 text-green-700"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center" title="Borrower">
+                                            <i data-lucide="user" class="w-2.5 h-2.5 text-blue-700"></i>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
                         </div>
+
                         <div>
-                            <h4 class="font-bold text-gray-900">{{ review.reviewer_name }}</h4>
-                            <p class="text-xs text-gray-500">{{ review.date }}</p>
+                            <h4 class="font-bold text-gray-900 text-lg">
+                                {% if active_tab == 'received' %}
+                                    {{ review.reviewer.name }}
+                                {% else %}
+                                    {{ review.reviewee.name }}
+                                {% endif %}
+                            </h4>
+                            <p class="text-xs text-gray-400 font-medium">{{ review.review_date|date:"Y-m-d" }}</p>
                         </div>
                     </div>
-                    <div class="flex space-x-0.5">
+
+                    <!-- Stars -->
+                    <div class="flex space-x-1">
                         {% for i in "12345"|make_list %}
                             <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= review.rating %}text-yellow-400 fill-current{% else %}text-gray-200{% endif %}"></i>
                         {% endfor %}
                     </div>
                 </div>
-                
-                <p class="text-gray-600 text-sm leading-relaxed mb-4">
+
+                <p class="text-gray-600 text-sm leading-relaxed mb-6">
                     "{{ review.comment }}"
                 </p>
-                
-                <div class="text-xs font-medium text-gray-400">
-                    Loan ID: <span class="text-gray-600">#{{ review.loan_id }}</span>
+
+                <div class="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wide">
+                    Loan ID: <span class="text-gray-800 ml-1">#{{ review.loan.loan_id|default:"N/A" }}</span>
                 </div>
             </div>
             {% empty %}
-            <div class="col-span-2 text-center py-12 text-gray-500 bg-white rounded-xl border border-dashed border-gray-200">
-                No reviews found in this category.
+            <div class="col-span-2 text-center py-16 bg-white rounded-xl border border-dashed border-gray-200">
+                <div class="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="star-off" class="w-8 h-8 text-gray-300"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">No Reviews Yet</h3>
+                <p class="text-gray-500 text-sm">
+                    {% if active_tab == 'received' %}
+                        You haven't received any reviews yet.
+                    {% else %}
+                        You haven't written any reviews yet.
+                    {% endif %}
+                </p>
             </div>
             {% endfor %}
         </div>

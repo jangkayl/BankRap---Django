@@ -33,6 +33,11 @@ class WalletTransaction(models.Model):
     TRANSACTION_TYPES = [
         ("DEPOSIT", "Deposit"),
         ("WITHDRAW", "Withdrawal"),
+        ("HOLD", "On Hold"),
+        ("REFUND", "Returned"),
+        ("LOAN_RCV", "Loan Received"),
+        ("LOAN_PAY", "Loan Payment"),
+        ("LOAN_REP", "Repayment Received"),
     ]
 
     transaction_id = models.AutoField(primary_key=True)

@@ -10,6 +10,13 @@
         <a href="{% url 'loan_list' %}" class="flex items-center text-sm font-medium text-gray-500 hover:text-brand-red transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Marketplace
         </a>
+
+        <!-- Write Review Button (Visible only if loan is REPAID) -->
+        {% if loan.status == 'REPAID' %}
+            <a href="{% url 'create_review' loan.loan_id %}" class="flex items-center px-5 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg text-sm transition-colors shadow-sm">
+                <i data-lucide="star" class="w-4 h-4 mr-2"></i> Write Review
+            </a>
+        {% endif %}
     </div>
 
     <!-- Loan Info Card -->
@@ -21,6 +28,10 @@
                         <span class="px-2.5 py-1 bg-gray-200 text-gray-700 text-xs font-bold uppercase rounded">Request #{{ loan.loan_id }}</span>
                         {% if loan.status == 'PENDING' %}
                             <span class="px-2.5 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold uppercase rounded">Open for Offers</span>
+                        {% elif loan.status == 'REPAID' %}
+                            <span class="px-2.5 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold uppercase rounded flex items-center">
+                                <i data-lucide="check-check" class="w-3 h-3 mr-1"></i> Fully Repaid
+                            </span>
                         {% else %}
                             <span class="px-2.5 py-1 bg-green-100 text-green-800 text-xs font-bold uppercase rounded">{{ loan.status }}</span>
                         {% endif %}
@@ -69,7 +80,7 @@
         </div>
     </div>
 
-    <!-- TRANSACTION HISTORY SECTION (NEW) -->
+    <!-- TRANSACTION HISTORY SECTION -->
     {% if loan_transactions %}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
         <div class="p-6 border-b border-gray-100 flex items-center">
@@ -119,48 +130,10 @@
     </div>
     {% endif %}
 
-    <!-- Conditional Section -->
-    {% if user.type == 'L' %}
-        <!-- LENDER VIEW -->
+    <!-- Conditional Section for Lender/Borrower Offers -->
+    {% if user.type == 'L' and loan.status == 'PENDING' %}
+        <!-- LENDER VIEW: Make Offer -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-
-            <!-- Offer History Section -->
-            {% if offer_history %}
-            <div class="mb-8">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Your Offer History</h3>
-                <div class="space-y-3">
-                    {% for offer in offer_history %}
-                    <div class="flex items-center justify-between p-4 rounded-lg border
-                        {% if offer.status == 'ACCEPTED' %}bg-green-50 border-green-200
-                        {% elif offer.status == 'DECLINED' %}bg-red-50 border-red-200
-                        {% else %}bg-gray-50 border-gray-200{% endif %}">
-
-                        <div>
-                            <p class="text-sm font-bold text-gray-900">
-                                ₱{{ offer.offered_amount|floatformat:2 }}
-                                <span class="font-normal text-gray-500">at {{ offer.offered_rate }}% interest</span>
-                            </p>
-                            <p class="text-xs text-gray-500">{{ offer.offer_date|date:"M d, Y H:i" }}</p>
-                            {% if offer.message %}
-                                <p class="text-xs text-gray-600 mt-1 italic">"{{ offer.message }}"</p>
-                            {% endif %}
-                        </div>
-
-                        <div>
-                            {% if offer.status == 'ACCEPTED' %}
-                                <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full uppercase">Accepted</span>
-                            {% elif offer.status == 'DECLINED' %}
-                                <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full uppercase">Declined</span>
-                            {% else %}
-                                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full uppercase">Pending</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
             <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
                 <i data-lucide="send" class="w-5 h-5 mr-2 text-brand-red"></i> Make an Offer
             </h3>
@@ -198,7 +171,7 @@
         </div>
 
     {% elif user.type == 'B' and user.user_id == loan.borrower.user_id %}
-        <!-- BORROWER VIEW (UPDATED SECTION) -->
+        <!-- BORROWER VIEW: See Offers (Only relevant if pending) -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-xl font-bold text-gray-900">Received Offers</h3>
@@ -207,16 +180,10 @@
 
             <div class="space-y-4">
                 {% for offer in received_offers %}
-                <div class="border border-gray-200 rounded-xl p-6 hover:border-brand-red/50 transition-colors bg-white shadow-sm relative overflow-hidden">
-
-                    {% if offer.status == 'PENDING' %}
-                        <div class="absolute top-0 right-0 w-2 h-full bg-brand-red"></div>
-                    {% endif %}
-
-                    <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-                        <!-- Lender Info & Offer Details -->
-                        <div class="flex items-start space-x-4">
-                            <div class="w-12 h-12 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center font-bold text-gray-600 shadow-sm flex-shrink-0">
+                <div class="border border-gray-200 rounded-xl p-5 hover:border-brand-red/50 transition-colors bg-gray-50/50">
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-600 shadow-sm">
                                 {{ offer.lender.name|slice:":1" }}
                             </div>
                             <div>
@@ -237,58 +204,44 @@
                                     <p class="text-xs text-gray-500 font-bold uppercase mb-1">Estimated Repayment</p>
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-brand-red font-extrabold text-lg" id="repay-amount-{{ offer.offer_id }}">
-                                            <!-- JS will calc or use simple math here -->
-                                            <!-- Simple calculation directly in template if Django math filters not available, but logic usually safer in view/JS -->
-                                            <!-- Using a script tag per item or global script is better for dynamic calculation -->
                                             Loading...
                                         </span>
                                         <span class="text-xs text-gray-400">Total</span>
                                     </div>
                                     <script>
-                                        // Simple inline calc for display
                                         (function(){
                                             const principal = {{ offer.offered_amount }};
                                             const rate = {{ offer.offered_rate }};
                                             const total = principal * (1 + (rate/100));
-                                            document.getElementById('repay-amount-{{ offer.offer_id }}').innerText = '₱' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+                                            document.getElementById('repay-amount-{{ offer.offer_id }}').innerText = '₱' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                                         })();
                                     </script>
                                 </div>
-
-                                {% if offer.message %}
-                                    <div class="mt-3 text-sm text-gray-500 italic flex items-start">
-                                        <i data-lucide="message-square" class="w-4 h-4 mr-2 mt-0.5 flex-shrink-0 text-gray-400"></i>
-                                        "{{ offer.message }}"
-                                    </div>
-                                {% endif %}
                             </div>
                         </div>
 
-                        <!-- Actions -->
-                        <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto mt-4 lg:mt-0">
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
                             {% if offer.status == 'PENDING' %}
-                                <!-- Open Accept Modal -->
-                                <button onclick="openAcceptModal('{{ offer.offer_id }}', '{{ offer.lender.name }}', '{{ offer.offered_amount }}')" class="w-full sm:w-auto px-6 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-colors shadow-md text-center flex items-center justify-center">
-                                    <i data-lucide="check" class="w-4 h-4 mr-2"></i> Accept Offer
+                                <button onclick="openAcceptModal('{{ offer.offer_id }}', '{{ offer.lender.name }}', '{{ offer.offered_amount }}')" class="flex-1 md:flex-none px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm text-center">
+                                    Accept
                                 </button>
-                                <!-- Open Decline Modal -->
-                                <button onclick="openDeclineModal('{{ offer.offer_id }}')" class="w-full sm:w-auto px-6 py-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold rounded-xl transition-colors text-center">
+                                <button onclick="openDeclineModal('{{ offer.offer_id }}')" class="flex-1 md:flex-none px-5 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-bold rounded-lg transition-colors text-center">
                                     Decline
                                 </button>
                             {% else %}
-                                <span class="px-5 py-2 bg-gray-100 text-gray-500 font-bold rounded-lg text-sm uppercase tracking-wide border border-gray-200">
-                                    {{ offer.status }}
-                                </span>
+                                <span class="px-4 py-2 bg-gray-100 text-gray-600 font-bold rounded-lg text-sm uppercase tracking-wide">{{ offer.status }}</span>
                             {% endif %}
                         </div>
                     </div>
+                    {% if offer.message %}
+                        <div class="mt-3 pl-14">
+                            <p class="text-xs text-gray-500 italic bg-white p-2 rounded border border-gray-100 inline-block">"{{ offer.message }}"</p>
+                        </div>
+                    {% endif %}
                 </div>
                 {% empty %}
-                <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                    <div class="mx-auto w-16 h-16 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm">
-                        <i data-lucide="inbox" class="w-8 h-8 text-gray-300"></i>
-                    </div>
-                    <p class="text-gray-500 font-medium">No offers received yet.</p>
+                <div class="text-center py-8 text-gray-400 italic">
+                    No offers received yet.
                 </div>
                 {% endfor %}
             </div>
@@ -297,7 +250,7 @@
 
 </div>
 
-<!-- Accept Offer Modal -->
+<!-- Accept/Decline Modals (Same as before) -->
 <div id="accept-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 relative transform transition-all scale-100">
         <div class="text-center">
@@ -325,7 +278,6 @@
     </div>
 </div>
 
-<!-- Decline Offer Modal -->
 <div id="decline-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 relative transform transition-all scale-100">
         <div class="text-center">
@@ -355,9 +307,6 @@
         document.getElementById('accept-lender').textContent = lenderName;
         document.getElementById('accept-amount').textContent = '₱' + parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 2});
 
-        // Update the link href dynamically
-        // Note: The URL pattern relies on 'offer_id' which is 0 in the dummy link below, we replace it
-        // A cleaner way is to construct the path manually since Django URL tags run on server side
         const baseUrl = "{% url 'accept_offer' 0 %}".replace('0', offerId);
         document.getElementById('confirm-accept-btn').href = baseUrl;
 
@@ -375,7 +324,6 @@
         document.getElementById(modalId).classList.add('hidden');
     }
 
-    // Close on outside click
     window.onclick = function(event) {
         if (event.target.classList.contains('fixed')) {
             event.target.classList.add('hidden');

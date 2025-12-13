@@ -1,133 +1,96 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.utils import OperationalError, ProgrammingError
 from account.models import User
+from loan.models import LoanRequest
 from .models import ReviewAndRating
 
 
-def reviews_view(request):
-    # 1. Get User from Session
+def get_current_user(request):
     user_id = request.session.get('user_id')
-    current_user = None
-
     if user_id:
         try:
-            current_user = User.objects.get(user_id=user_id)
+            return User.objects.get(user_id=user_id)
         except User.DoesNotExist:
-            pass
+            return None
+    return None
 
-    # --- MOCK USER FALLBACK (For UI Dev) ---
-    if not current_user:
-        class MockUser:
-            user_id = 1
-            name = "Developer Mode"
 
-        current_user = MockUser()
-        user_id = 1  # Explicit ID for mock
-    # ---------------------------------------
+def reviews_view(request):
+    user = get_current_user(request)
+    if not user: return redirect('login')
 
-    # 2. Handle Form Submission (POST)
-    if request.method == 'POST':
-        rating = request.POST.get('rating')
-        comment = request.POST.get('comment')
-
-        try:
-            # Find someone to review (mock logic for prototype)
-            reviewee = User.objects.exclude(user_id=user_id).first()
-
-            if not reviewee:
-                messages.success(request, "Review submitted! (No reviewee found in DB)")
-                return redirect('reviews')
-
-            if rating:
-                # Ensure we are using a real User instance for saving
-                if isinstance(current_user, User):
-                    ReviewAndRating.objects.create(
-                        reviewer=current_user,
-                        reviewee=reviewee,
-                        rating=int(rating),
-                        comment=comment,
-                        review_type='B2L'
-                    )
-                    messages.success(request, "Review submitted successfully!")
-                else:
-                    # Mock Mode: Just show success message
-                    messages.success(request, "Review submitted! (Mock Mode)")
-            else:
-                messages.error(request, "Please select a star rating.")
-
-        except Exception as e:
-            # Swallow DB errors for UI demo
-            messages.success(request, f"Review submitted! (Simulated, DB error: {e})")
-
-        return redirect('reviews')
-
-    # 3. Handle Data Fetching (GET)
+    # Fetch Reviews
     active_tab = request.GET.get('tab', 'received')
-    reviews_data = []
+    reviews = []
 
-    # Try fetching real data, fallback to mock if DB fails/empty or using MockUser
-    try:
-        # Only query DB if we have a real user ID and likely a real DB connection
-        if isinstance(current_user, User):
-            if active_tab == 'received':
-                db_reviews = ReviewAndRating.objects.filter(reviewee=current_user).order_by('-review_date')
-                for r in db_reviews:
-                    reviews_data.append({
-                        'reviewer_name': r.reviewer.name,
-                        'date': r.review_date,
-                        'rating': r.rating,
-                        'comment': r.comment,
-                        'loan_id': r.review_id
-                    })
-            else:
-                db_reviews = ReviewAndRating.objects.filter(reviewer=current_user).order_by('-review_date')
-                for r in db_reviews:
-                    reviews_data.append({
-                        'reviewer_name': f"To: {r.reviewee.name}",
-                        'date': r.review_date,
-                        'rating': r.rating,
-                        'comment': r.comment,
-                        'loan_id': r.review_id
-                    })
-    except (OperationalError, ProgrammingError, ValueError, TypeError):
-        reviews_data = []
+    if active_tab == 'received':
+        reviews = ReviewAndRating.objects.filter(reviewee=user).order_by('-review_date')
+    else:
+        reviews = ReviewAndRating.objects.filter(reviewer=user).order_by('-review_date')
 
-    # --- MOCK REVIEWS (If DB is empty or we are using MockUser) ---
-    if not reviews_data:
-        if active_tab == 'received':
-            reviews_data = [
-                {
-                    'reviewer_name': 'John Doe',
-                    'date': '2023-11-15',
-                    'rating': 5,
-                    'comment': 'Excellent borrower, repaid on time and communicated clearly throughout the loan term. Highly recommended!',
-                    'loan_id': '1001'
-                },
-                {
-                    'reviewer_name': 'Jane Smith',
-                    'date': '2023-10-28',
-                    'rating': 4,
-                    'comment': 'Good experience overall. Payment was punctual.',
-                    'loan_id': '1005'
-                }
-            ]
-        else:
-            reviews_data = [
-                {
-                    'reviewer_name': 'To: Alex Brown',
-                    'date': '2023-12-01',
-                    'rating': 5,
-                    'comment': 'Lender was very understanding with terms.',
-                    'loan_id': '1020'
-                }
-            ]
+    # Calculate Trust Score
+    received_all = ReviewAndRating.objects.filter(reviewee=user)
+    avg_rating = 0
+    if received_all.exists():
+        avg_rating = sum([r.rating for r in received_all]) / received_all.count()
 
-    context = {
+    return render(request, 'review/ratings.html', {
+        'user': user,
+        'reviews': reviews,
         'active_tab': active_tab,
-        'reviews': reviews_data,
-        'user': current_user,
-        'total_reviews': 88  # Static for UI match
-    }
+        'avg_rating': round(avg_rating, 1),
+        'review_count': received_all.count()
+    })
 
-    return render(request, 'review/ratings.html', context)
+
+def create_review(request, loan_id):
+    user = get_current_user(request)
+    if not user: return redirect('login')
+
+    loan = get_object_or_404(LoanRequest, pk=loan_id)
+
+    # 1. Check if review already exists
+    existing_review = ReviewAndRating.objects.filter(loan=loan, reviewer=user).first()
+    if existing_review:
+        messages.info(request, "You have already reviewed this transaction.")
+        return render(request, 'review/review_exists.html', {'loan': loan, 'review': existing_review})
+
+    # Determine Reviewee
+    reviewee = None
+    review_type = ''
+
+    if user.user_id == loan.borrower.user_id:
+        offer = loan.offers.filter(status='ACCEPTED').first()
+        if offer:
+            reviewee = offer.lender
+            review_type = 'B2L'
+    else:
+        # Assuming current user is the lender from the offers
+        offer = loan.offers.filter(lender=user, status='ACCEPTED').first()
+        if offer:
+            reviewee = loan.borrower
+            review_type = 'L2B'
+
+    if not reviewee:
+        messages.error(request, "Cannot determine review target or loan not valid for review.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        try:
+            rating = request.POST.get('rating')
+            comment = request.POST.get('comment')
+
+            ReviewAndRating.objects.create(
+                loan=loan,
+                reviewer=user,
+                reviewee=reviewee,
+                rating=rating,
+                comment=comment,
+                review_type=review_type
+            )
+            messages.success(request, "Review submitted successfully!")
+            return redirect('reviews')
+        except Exception as e:
+            messages.error(request, f"Error: {e}")
+
+    return render(request, 'review/create_review.html', {'loan': loan, 'reviewee': reviewee})
