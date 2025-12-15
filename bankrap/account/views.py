@@ -6,6 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
 from decimal import Decimal
+from django.views.decorators.http import require_POST
 
 from .models import User, BorrowerProfile, LenderProfile, Message, Notification
 from wallet.models import Wallet, WalletTransaction
@@ -799,18 +800,22 @@ def notifications_view(request):
     # Get filter from query parameters
     filter_type = request.GET.get('filter', 'all')
     mark_all = request.GET.get('mark_all', False)
+    delete_all_read = request.GET.get('delete_all_read', False)
 
     # Mark all as read if requested
     if mark_all:
-        # Import Notification model
-        from .models import Notification as NotifModel
-        NotifModel.objects.filter(user=user, is_read=False).update(is_read=True)
+        Notification.objects.filter(user=user, is_read=False).update(is_read=True)
         messages.success(request, "All notifications marked as read!")
         return redirect('notifications')
 
+    # Delete all read notifications if requested
+    if delete_all_read:
+        deleted_count, _ = Notification.objects.filter(user=user, is_read=True).delete()
+        messages.success(request, f"Deleted {deleted_count} read notifications!")
+        return redirect('notifications')
+
     # Get notifications for the current user
-    from .models import Notification as NotifModel
-    notifications = NotifModel.objects.filter(user=user)
+    notifications = Notification.objects.filter(user=user)
 
     # Apply filters
     if filter_type == 'unread':
@@ -827,14 +832,15 @@ def notifications_view(request):
     notifications = notifications.order_by('-created_at')
 
     # Get counts for filter tabs
-    all_count = NotifModel.objects.filter(user=user).count()
-    unread_count = NotifModel.objects.filter(user=user, is_read=False).count()
-    loan_actions_count = NotifModel.objects.filter(
+    all_count = Notification.objects.filter(user=user).count()
+    unread_count = Notification.objects.filter(user=user, is_read=False).count()
+    read_count = all_count - unread_count
+    loan_actions_count = Notification.objects.filter(
         user=user,
         notification_type__in=['LOAN_APPROVED', 'LOAN_OFFER', 'OFFER_ACCEPTED', 'LOAN_FUNDED', 'LOAN_REJECTED']
     ).count()
-    verifications_count = NotifModel.objects.filter(user=user, notification_type='VERIFICATION').count()
-    messages_count = NotifModel.objects.filter(user=user, notification_type='MESSAGE').count()
+    verifications_count = Notification.objects.filter(user=user, notification_type='VERIFICATION').count()
+    messages_count = Notification.objects.filter(user=user, notification_type='MESSAGE').count()
 
     context = {
         'user': user,
@@ -843,6 +849,7 @@ def notifications_view(request):
         'counts': {
             'all': all_count,
             'unread': unread_count,
+            'read': read_count,
             'loan_actions': loan_actions_count,
             'verifications': verifications_count,
             'messages': messages_count,
@@ -851,19 +858,88 @@ def notifications_view(request):
 
     return render(request, 'account/notifications.html', context)
 
+
+@require_POST
 def mark_notification_read(request, notification_id):
     user = get_current_user(request)
-    if not user:
-        return redirect('login')
 
-    from .models import Notification as NotifModel
+    # Check if this is an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if not user:
+        if is_ajax:
+            return JsonResponse({
+                'success': False,
+                'error': 'Authentication required',
+                'redirect': '/login/'
+            }, status=401)
+        else:
+            messages.error(request, "Please log in to continue.")
+            return redirect('login')
+
     try:
-        notification = NotifModel.objects.get(notification_id=notification_id, user=user)
+        notification = Notification.objects.get(notification_id=notification_id, user=user)
         notification.is_read = True
         notification.save()
-        messages.success(request, "Notification marked as read!")
-    except NotifModel.DoesNotExist:
-        messages.error(request, "Notification not found!")
 
-    return redirect('notifications')
+        if is_ajax:
+            return JsonResponse({'success': True})
+        else:
+            messages.success(request, "Notification marked as read!")
+            return redirect('notifications')
 
+    except Notification.DoesNotExist:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+        else:
+            messages.error(request, "Notification not found!")
+            return redirect('notifications')
+    except Exception as e:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        else:
+            messages.error(request, f"Error marking notification as read: {e}")
+            return redirect('notifications')
+
+@require_POST
+def delete_notification(request, notification_id):
+    user = get_current_user(request)
+
+    # Check if this is an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if not user:
+        if is_ajax:
+            # Return JSON for AJAX requests
+            return JsonResponse({
+                'success': False,
+                'error': 'Authentication required',
+                'redirect': '/login/'  # Tell frontend to redirect
+            }, status=401)
+        else:
+            # Redirect for normal requests
+            messages.error(request, "Please log in to continue.")
+            return redirect('login')
+
+    try:
+        notification = Notification.objects.get(notification_id=notification_id, user=user)
+        notification.delete()
+
+        if is_ajax:
+            return JsonResponse({'success': True})
+        else:
+            messages.success(request, "Notification deleted!")
+            return redirect('notifications')
+
+    except Notification.DoesNotExist:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+        else:
+            messages.error(request, "Notification not found!")
+            return redirect('notifications')
+    except Exception as e:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        else:
+            messages.error(request, f"Error deleting notification: {e}")
+            return redirect('notifications')

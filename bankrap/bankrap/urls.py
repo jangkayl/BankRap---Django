@@ -10,54 +10,59 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', global_views.index_view, name='index'),
-    path('login/', account_views.login_view, name='login'),
-    path('register/', account_views.register_view, name='register'),
-    path('logout/', account_views.logout_view, name='logout'),
+                  path('admin/', admin.site.urls),
+                  path('', global_views.index_view, name='index'),
+                  path('login/', account_views.login_view, name='login'),
+                  path('register/', account_views.register_view, name='register'),
+                  path('logout/', account_views.logout_view, name='logout'),
 
-    path('dashboard/', account_views.dashboard_view, name='dashboard'),
-    path('profile/', account_views.profile_view, name='profile'),
-    path('profile/<int:user_id>/', account_views.public_profile_view, name='public_profile'),
+                  path('dashboard/', account_views.dashboard_view, name='dashboard'),
+                  path('profile/', account_views.profile_view, name='profile'),
+                  path('profile/<int:user_id>/', account_views.public_profile_view, name='public_profile'),
 
-    path('wallet/', wallet_views.wallet_view, name='wallet'),
-    path('wallet/add/', wallet_views.add_funds, name='add_funds'),
-    path('wallet/withdraw/', wallet_views.withdraw_funds, name='withdraw_funds'),
+                  path('wallet/', wallet_views.wallet_view, name='wallet'),
+                  path('wallet/add/', wallet_views.add_funds, name='add_funds'),
+                  path('wallet/withdraw/', wallet_views.withdraw_funds, name='withdraw_funds'),
 
-    # Marketplace (Smart redirect for borrowers)
-    path('loans/', loan_views.loan_marketplace, name='loan_list'),
-    path('loans/market/', loan_views.loan_marketplace, name='loan_marketplace'),
+                  # Marketplace (Smart redirect for borrowers)
+                  path('loans/', loan_views.loan_marketplace, name='loan_list'),
+                  path('loans/market/', loan_views.loan_marketplace, name='loan_marketplace'),
 
-    # Borrower specific
-    path('loans/my-requests/', loan_views.my_loan_requests, name='my_loan_requests'),
-    path('loans/create/', loan_views.create_loan_request, name='loan_create'),
+                  # Borrower specific
+                  path('loans/my-requests/', loan_views.my_loan_requests, name='my_loan_requests'),
+                  path('loans/create/', loan_views.create_loan_request, name='loan_create'),
 
-    # Detail & Offers
-    path('loans/<int:loan_id>/', loan_views.loan_detail, name='loan_detail'),
-    path('loans/<int:loan_id>/offer/', loan_views.create_offer, name='loan_offer_create'),
+                  # Detail & Offers
+                  path('loans/<int:loan_id>/', loan_views.loan_detail, name='loan_detail'),
+                  path('loans/<int:loan_id>/offer/', loan_views.create_offer, name='loan_offer_create'),
 
-    path('offers/<int:offer_id>/accept/', loan_views.accept_offer, name='accept_offer'),
-    path('offers/<int:offer_id>/decline/', loan_views.decline_offer, name='decline_offer'),
-    path('offers/', loan_views.loan_offer_list, name='offer_list'),
+                  path('offers/<int:offer_id>/accept/', loan_views.accept_offer, name='accept_offer'),
+                  path('offers/<int:offer_id>/decline/', loan_views.decline_offer, name='decline_offer'),
+                  path('offers/', loan_views.loan_offer_list, name='offer_list'),
 
-    path('repayments/', loan_views.repayment_schedule, name='repayment_schedule'),
-    path('repayments/<int:active_loan_id>/pay/', loan_views.pay_loan, name='pay_loan'),
+                  path('repayments/', loan_views.repayment_schedule, name='repayment_schedule'),
+                  path('repayments/<int:active_loan_id>/pay/', loan_views.pay_loan, name='pay_loan'),
 
-    path('transactions/', transaction_views.transaction_history, name='transaction_history'),
+                  path('transactions/', transaction_views.transaction_history, name='transaction_history'),
 
-    # Reviews - Add all review URLs
-    path('reviews/', review_views.reviews_view, name='reviews'),
-    path('reviews/create/<int:loan_id>/', review_views.create_review, name='create_review'),
-    path('reviews/edit/<int:review_id>/', review_views.edit_review_view, name='edit_review'),
-    path('reviews/update/<int:review_id>/', review_views.update_review, name='update_review'),
-    path('reviews/delete/<int:review_id>/', review_views.delete_review, name='delete_review'),
+                  # Reviews - Add all review URLs
+                  path('reviews/', review_views.reviews_view, name='reviews'),
+                  path('reviews/create/<int:loan_id>/', review_views.create_review, name='create_review'),
+                  path('reviews/edit/<int:review_id>/', review_views.edit_review_view, name='edit_review'),
+                  path('reviews/update/<int:review_id>/', review_views.update_review, name='update_review'),
+                  path('reviews/delete/<int:review_id>/', review_views.delete_review, name='delete_review'),
 
-    # Messaging (Updated URLs)
-    path('messages/', account_views.messaging_view, name='messaging'),
-    path('messages/new-messages/', account_views.get_new_messages, name='get_new_messages'),
-    path('messages/start/<int:user_id>/', account_views.start_conversation, name='start_conversation'),
-    path('notifications/<int:notification_id>/read/', account_views.mark_notification_read, name='mark_notification_read'),
+                  # Account URLs (including notifications)
+                  path('messages/', account_views.messaging_view, name='messaging'),
+                  path('messages/new-messages/', account_views.get_new_messages, name='get_new_messages'),
+                  path('messages/start/<int:user_id>/', account_views.start_conversation, name='start_conversation'),
 
-    path('settings/', account_views.settings_view, name='settings'),
-    path('notifications/', account_views.notifications_view, name='notifications'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+                  # Add this line - it was missing!
+                  path('notifications/<int:notification_id>/delete/', account_views.delete_notification,
+                       name='delete_notification'),
+
+                  path('notifications/<int:notification_id>/read/', account_views.mark_notification_read,
+                       name='mark_notification_read'),
+                  path('settings/', account_views.settings_view, name='settings'),
+                  path('notifications/', account_views.notifications_view, name='notifications'),
+              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
