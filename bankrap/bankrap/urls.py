@@ -45,8 +45,12 @@ urlpatterns = [
 
     path('transactions/', transaction_views.transaction_history, name='transaction_history'),
 
+    # Reviews - Add all review URLs
     path('reviews/', review_views.reviews_view, name='reviews'),
     path('reviews/create/<int:loan_id>/', review_views.create_review, name='create_review'),
+    path('reviews/edit/<int:review_id>/', review_views.edit_review_view, name='edit_review'),
+    path('reviews/update/<int:review_id>/', review_views.update_review, name='update_review'),
+    path('reviews/delete/<int:review_id>/', review_views.delete_review, name='delete_review'),
 
     # Messaging (Updated URLs)
     path('messages/', account_views.messaging_view, name='messaging'),

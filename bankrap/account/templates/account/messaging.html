@@ -8,12 +8,20 @@
     let messagePollInterval;
     let lastMessageId = 0;
 
+    function scrollToBottom() {
+        const chatContainer = document.getElementById('chat-messages');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    }
+
     // Initialize lastMessageId from existing messages
     document.addEventListener('DOMContentLoaded', function() {
         const lastMessage = document.querySelector('.message-item:last-child');
         if (lastMessage) {
             lastMessageId = parseInt(lastMessage.dataset.messageId) || 0;
         }
+        scrollToBottom(); // Call it here after DOM is loaded
         startPolling();
     });
 
@@ -48,6 +56,8 @@
 
     function addMessageToChat(msg) {
         const chatContainer = document.getElementById('chat-messages');
+        if (!chatContainer) return;
+
         const isOwnMessage = msg.sender_id == {{ user.user_id }};
 
         const messageHtml = `
@@ -80,16 +90,19 @@
         chatContainer.insertAdjacentHTML('beforeend', messageHtml);
     }
 
-    function scrollToBottom() {
-        const chatContainer = document.getElementById('chat-messages');
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+    // Auto-resize textarea
+    function autoResize(textarea) {
+        if (!textarea) return;
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
     }
 
     // Auto-submit form with Enter key
     document.addEventListener('keydown', function(e) {
         if (e.target.name === 'content' && e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            document.getElementById('message-form').submit();
+            const form = document.getElementById('message-form');
+            if (form) form.submit();
         }
     });
 
@@ -97,6 +110,10 @@
     window.addEventListener('beforeunload', function() {
         if (messagePollInterval) clearInterval(messagePollInterval);
     });
+
+    // Make functions globally available
+    window.scrollToBottom = scrollToBottom;
+    window.autoResize = autoResize;
 </script>
 {% endblock %}
 
@@ -266,17 +283,4 @@
         {% endif %}
     </div>
 </div>
-
-<script>
-    // Auto-resize textarea
-    function autoResize(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
-    }
-
-    // Scroll to bottom on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        scrollToBottom();
-    });
-</script>
 {% endblock %}

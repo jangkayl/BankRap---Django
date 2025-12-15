@@ -1,8 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from account.models import User
 from loan.models import LoanRequest
 from .models import ReviewAndRating
+import json
 
 
 def get_current_user(request):
@@ -53,7 +56,11 @@ def create_review(request, loan_id):
     existing_review = ReviewAndRating.objects.filter(loan=loan, reviewer=user).first()
     if existing_review:
         messages.info(request, "You have already reviewed this transaction.")
-        return render(request, 'review/review_exists.html', {'loan': loan, 'review': existing_review})
+        return render(request, 'review/review_exists.html', {
+            'loan': loan,
+            'review': existing_review,
+            'can_edit': True  # User can edit their own review
+        })
 
     # Determine Reviewee
     reviewee = None
@@ -94,3 +101,91 @@ def create_review(request, loan_id):
             messages.error(request, f"Error: {e}")
 
     return render(request, 'review/create_review.html', {'loan': loan, 'reviewee': reviewee})
+
+
+@require_POST
+def update_review(request, review_id):
+    user = get_current_user(request)
+    if not user:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    review = get_object_or_404(ReviewAndRating, pk=review_id)
+
+    # Check if user owns this review
+    if review.reviewer != user:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        rating = data.get('rating')
+        comment = data.get('comment')
+
+        if rating and 1 <= int(rating) <= 5:
+            review.rating = rating
+        if comment:
+            review.comment = comment
+
+        review.save()
+        return JsonResponse({
+            'success': True,
+            'rating': review.rating,
+            'comment': review.comment,
+            'updated_date': review.review_date.strftime('%b %d, %Y')
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@require_POST
+def delete_review(request, review_id):
+    user = get_current_user(request)
+    if not user:
+        return JsonResponse({'success': False, 'error': 'Authentication required'}, status=401)
+
+    review = get_object_or_404(ReviewAndRating, pk=review_id)
+
+    # Check if user owns this review
+    if review.reviewer != user:
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        review.delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+def edit_review_view(request, review_id):
+    """View for editing a review (page)"""
+    user = get_current_user(request)
+    if not user: return redirect('login')
+
+    review = get_object_or_404(ReviewAndRating, pk=review_id)
+
+    # Check if user owns this review
+    if review.reviewer != user:
+        messages.error(request, "You don't have permission to edit this review.")
+        return redirect('reviews')
+
+    reviewee = review.reviewee
+    loan = review.loan
+
+    if request.method == 'POST':
+        try:
+            rating = request.POST.get('rating')
+            comment = request.POST.get('comment')
+
+            review.rating = rating
+            review.comment = comment
+            review.save()
+
+            messages.success(request, "Review updated successfully!")
+            return redirect('reviews')
+        except Exception as e:
+            messages.error(request, f"Error: {e}")
+
+    return render(request, 'review/edit_review.html', {
+        'review': review,
+        'reviewee': reviewee,
+        'loan': loan
+    })
