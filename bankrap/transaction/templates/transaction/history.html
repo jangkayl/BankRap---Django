@@ -5,33 +5,61 @@
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
-    
+
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900 mb-2">Transaction History</h1>
         <p class="text-gray-500">View all your financial disbursements and repayment activities within the CIT-U P2P Lend platform.</p>
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-        
-        <div class="relative w-full md:w-96">
+
+        <!-- Search Form -->
+        <form method="GET" action="{% url 'transaction_history' %}" class="relative w-full md:w-96">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i data-lucide="search" class="h-4 w-4 text-gray-400"></i>
             </div>
-            <input type="text" class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-red focus:border-brand-red sm:text-sm transition duration-150 ease-in-out" placeholder="Search transactions...">
-        </div>
+            <input type="text" name="search" value="{{ search_query|default:'' }}"
+                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-red focus:border-brand-red sm:text-sm transition duration-150 ease-in-out"
+                   placeholder="Search transactions...">
+            <input type="hidden" name="status" value="{{ current_status|default:'all' }}">
+            <input type="hidden" name="type" value="{{ current_type|default:'all' }}">
+        </form>
 
         <div class="flex flex-wrap gap-2">
+            <!-- Status Filter -->
             <div class="flex bg-gray-100 rounded-lg p-1">
-                <button class="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded shadow-sm">All Status</button>
-                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Completed</button>
-                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Pending</button>
-                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Failed</button>
+                <a href="?status=all&type={{ current_type|default:'all' }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1.5 {% if current_status == 'all' %}bg-brand-red text-white text-xs font-bold rounded shadow-sm{% else %}text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors{% endif %}">
+                    All Status
+                </a>
+                <a href="?status=completed&type={{ current_type|default:'all' }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1.5 {% if current_status == 'completed' %}bg-brand-red text-white text-xs font-bold rounded shadow-sm{% else %}text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors{% endif %}">
+                    Completed
+                </a>
+                <a href="?status=pending&type={{ current_type|default:'all' }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1.5 {% if current_status == 'pending' %}bg-brand-red text-white text-xs font-bold rounded shadow-sm{% else %}text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors{% endif %}">
+                    Pending
+                </a>
+                <a href="?status=failed&type={{ current_type|default:'all' }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1.5 {% if current_status == 'failed' %}bg-brand-red text-white text-xs font-bold rounded shadow-sm{% else %}text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors{% endif %}">
+                    Failed
+                </a>
             </div>
 
+            <!-- Type Filter -->
             <div class="flex bg-gray-100 rounded-lg p-1">
-                <button class="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded shadow-sm">All Types</button>
-                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Disbursement</button>
-                <button class="px-3 py-1.5 text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors">Repayment</button>
+                <a href="?status={{ current_status|default:'all' }}&type=all{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1.5 {% if current_type == 'all' %}bg-brand-red text-white text-xs font-bold rounded shadow-sm{% else %}text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors{% endif %}">
+                    All Types
+                </a>
+                <a href="?status={{ current_status|default:'all' }}&type=disbursement{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1.5 {% if current_type == 'disbursement' %}bg-brand-red text-white text-xs font-bold rounded shadow-sm{% else %}text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors{% endif %}">
+                    Disbursement
+                </a>
+                <a href="?status={{ current_status|default:'all' }}&type=repayment{% if search_query %}&search={{ search_query }}{% endif %}"
+                   class="px-3 py-1.5 {% if current_type == 'repayment' %}bg-brand-red text-white text-xs font-bold rounded shadow-sm{% else %}text-gray-600 hover:text-gray-900 text-xs font-medium transition-colors{% endif %}">
+                    Repayment
+                </a>
             </div>
         </div>
     </div>
@@ -53,24 +81,37 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 text-gray-600">
                             {{ tx.transaction_date|date:"Y-m-d" }}
+                            <span class="text-xs text-gray-400 block">{{ tx.transaction_date|date:"h:i A" }}</span>
                         </td>
-                        <td class="px-6 py-4 text-gray-900">
+                        <td class="px-6 py-4 text-gray-900 font-medium">
                             {{ tx.get_type_display }}
                         </td>
                         <td class="px-6 py-4 text-gray-600">
                             {{ tx.transaction_data }}
+                            {% if tx.loan_request %}
+                                <span class="text-xs text-gray-400 block">Loan #{{ tx.loan_request.loan_id }}</span>
+                            {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-right font-bold {% if tx.type == 'D' %}text-gray-900{% else %}text-gray-900{% endif %}">
-                            {% if tx.type == 'D' %}-{% else %}+{% endif %}₱{{ tx.amount|floatformat:2 }}
+                        <td class="px-6 py-4 text-right font-bold
+                            {% if tx.type == 'D' and user.type == 'L' or tx.type == 'R' and user.type == 'B' %}text-red-600
+                            {% else %}text-green-600{% endif %}">
+                            {% if tx.type == 'D' and user.type == 'L' or tx.type == 'R' and user.type == 'B' %}
+                                -₱{{ tx.amount|floatformat:2 }}
+                            {% else %}
+                                +₱{{ tx.amount|floatformat:2 }}
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4 text-right">
-                            {% if tx.status == 'C' %} <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                            {% if tx.status == 'C' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
                                     Completed
                                 </span>
-                            {% elif tx.status == 'P' %} <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">
+                            {% elif tx.status == 'P' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">
                                     Pending
                                 </span>
-                            {% elif tx.status == 'F' %} <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                            {% elif tx.status == 'F' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">
                                     Failed
                                 </span>
                             {% endif %}
@@ -79,35 +120,97 @@
                     {% empty %}
                     <tr>
                         <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                            No transactions found.
+                            <div class="flex flex-col items-center">
+                                <i data-lucide="inbox" class="w-12 h-12 text-gray-300 mb-4"></i>
+                                <p class="text-lg font-medium text-gray-700 mb-2">No transactions found</p>
+                                <p class="text-gray-500 text-sm">
+                                    {% if current_status != 'all' or current_type != 'all' or search_query %}
+                                        Try adjusting your filters or search terms
+                                    {% else %}
+                                        You don't have any transactions yet
+                                    {% endif %}
+                                </p>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        
+
+        {% if transactions.has_other_pages %}
         <div class="bg-white px-4 py-3 border-t border-gray-100 flex items-center justify-between sm:px-6">
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-end">
+            <div class="flex-1 flex justify-between sm:justify-end">
                 <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        <span class="sr-only">Previous</span>
-                        <i data-lucide="chevron-left" class="h-4 w-4"></i>
-                        <span class="ml-1">Previous</span>
-                    </a>
-                    <a href="#" aria-current="page" class="z-10 bg-red-50 border-brand-red text-brand-red relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                        1
-                    </a>
-                    <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                        2
-                    </a>
-                    <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                        <span class="mr-1">Next</span>
-                        <i data-lucide="chevron-right" class="h-4 w-4"></i>
-                    </a>
+                    {% if transactions.has_previous %}
+                        <a href="?page={{ transactions.previous_page_number }}&status={{ current_status|default:'all' }}&type={{ current_type|default:'all' }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                            <span class="ml-1">Previous</span>
+                        </a>
+                    {% else %}
+                        <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-50 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                            <span class="ml-1">Previous</span>
+                        </span>
+                    {% endif %}
+
+                    {% for num in transactions.paginator.page_range %}
+                        {% if transactions.number == num %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-brand-red bg-red-50 text-brand-red text-sm font-medium">
+                                {{ num }}
+                            </span>
+                        {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+                            <a href="?page={{ num }}&status={{ current_status|default:'all' }}&type={{ current_type|default:'all' }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                {{ num }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if transactions.has_next %}
+                        <a href="?page={{ transactions.next_page_number }}&status={{ current_status|default:'all' }}&type={{ current_type|default:'all' }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="mr-1">Next</span>
+                            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                        </a>
+                    {% else %}
+                        <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-50 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <span class="mr-1">Next</span>
+                            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                        </span>
+                    {% endif %}
                 </nav>
             </div>
         </div>
+        {% endif %}
     </div>
+
+    <!-- Clear Filters Button (shown when filters are active) -->
+    {% if current_status != 'all' or current_type != 'all' or search_query %}
+    <div class="mt-6 text-center">
+        <a href="{% url 'transaction_history' %}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-brand-red">
+            <i data-lucide="filter-x" class="w-4 h-4 mr-2"></i>
+            Clear All Filters
+        </a>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+    // Auto-submit search form on enter
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.querySelector('input[name="search"]');
+        const searchForm = document.querySelector('form[method="GET"]');
+
+        if (searchInput && searchForm) {
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchForm.submit();
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

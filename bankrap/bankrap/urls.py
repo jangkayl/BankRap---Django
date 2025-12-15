@@ -48,7 +48,12 @@ urlpatterns = [
     path('reviews/', review_views.reviews_view, name='reviews'),
     path('reviews/create/<int:loan_id>/', review_views.create_review, name='create_review'),
 
+    # Messaging (Updated URLs)
     path('messages/', account_views.messaging_view, name='messaging'),
+    path('messages/new-messages/', account_views.get_new_messages, name='get_new_messages'),
+    path('messages/start/<int:user_id>/', account_views.start_conversation, name='start_conversation'),
+    path('notifications/<int:notification_id>/read/', account_views.mark_notification_read, name='mark_notification_read'),
+
     path('settings/', account_views.settings_view, name='settings'),
     path('notifications/', account_views.notifications_view, name='notifications'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

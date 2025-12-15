@@ -5,37 +5,58 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto">
-    
+
     <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold text-gray-900">Loan Requests</h1>
-        <a href="#" class="px-6 py-2.5 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-sm">
+        <!-- FIXED: Dynamic link -->
+        <a href="{% url 'loan_create' %}" class="px-6 py-2.5 bg-brand-red hover:bg-red-900 text-white font-bold rounded-lg transition-colors shadow-sm">
             Create New Request
         </a>
     </div>
 
+    <!-- FIXED: Dynamic filter buttons -->
     <div class="flex space-x-2 mb-8 overflow-x-auto pb-2">
-        <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-lg transition-colors">All</button>
-        <button class="px-4 py-2 text-gray-500 hover:text-gray-900 font-medium transition-colors">Pending</button>
-        <button class="px-4 py-2 text-gray-500 hover:text-gray-900 font-medium transition-colors">Approved</button>
-        <button class="px-4 py-2 text-gray-500 hover:text-gray-900 font-medium transition-colors">Rejected</button>
-        <button class="px-4 py-2 text-gray-500 hover:text-gray-900 font-medium transition-colors">Repaid</button>
+        <a href="?status=all"
+           class="px-4 py-2 {% if current_filter == 'all' %}bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium{% else %}text-gray-500 hover:text-gray-900 font-medium{% endif %} rounded-lg transition-colors">
+            All
+        </a>
+        <a href="?status=PENDING"
+           class="px-4 py-2 {% if current_filter == 'PENDING' %}bg-yellow-100 hover:bg-yellow-200 text-yellow-900 font-medium{% else %}text-gray-500 hover:text-gray-900 font-medium{% endif %} rounded-lg transition-colors">
+            Pending
+        </a>
+        <a href="?status=FUNDED"
+           class="px-4 py-2 {% if current_filter == 'FUNDED' %}bg-green-100 hover:bg-green-200 text-green-900 font-medium{% else %}text-gray-500 hover:text-gray-900 font-medium{% endif %} rounded-lg transition-colors">
+            Funded
+        </a>
+        <a href="?status=REJECTED"
+           class="px-4 py-2 {% if current_filter == 'REJECTED' %}bg-red-100 hover:bg-red-200 text-red-900 font-medium{% else %}text-gray-500 hover:text-gray-900 font-medium{% endif %} rounded-lg transition-colors">
+            Rejected
+        </a>
+        <a href="?status=REPAID"
+           class="px-4 py-2 {% if current_filter == 'REPAID' %}bg-indigo-100 hover:bg-indigo-200 text-indigo-900 font-medium{% else %}text-gray-500 hover:text-gray-900 font-medium{% endif %} rounded-lg transition-colors">
+            Repaid
+        </a>
     </div>
 
     <div class="space-y-4">
         {% for loan in loans %}
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
-            
+
             <div>
                 <h3 class="text-xl font-bold text-brand-red mb-1">₱{{ loan.amount|floatformat:0 }}</h3>
                 <p class="text-sm text-gray-500 font-medium">
-                    {{ loan.interest_rate }}% interest • {{ loan.term_value }} {{ loan.get_term_unit_display }}
+                    {{ loan.interest_rate }}% interest • {{ loan.get_term_display }}
                 </p>
+                <!-- Added purpose and date -->
+                <p class="text-xs text-gray-400 mt-1">{{ loan.purpose|truncatechars:50 }}</p>
+                <p class="text-xs text-gray-400">{{ loan.request_date|date:"M d, Y" }}</p>
             </div>
 
             <div>
-                {% if loan.status == 'APPROVED' %}
+                <!-- FIXED: Correct status comparisons -->
+                {% if loan.status == 'FUNDED' %}
                     <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                        Approved
+                        Funded
                     </span>
                 {% elif loan.status == 'PENDING' %}
                     <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
@@ -54,8 +75,10 @@
 
         </div>
         {% empty %}
-        <div class="text-center py-12 text-gray-500">
-            No loan requests found.
+        <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <i data-lucide="inbox" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
+            <p class="text-lg font-medium text-gray-700 mb-2">No loan requests found</p>
+            <a href="{% url 'loan_create' %}" class="text-brand-red font-bold hover:underline">Create your first request →</a>
         </div>
         {% endfor %}
     </div>

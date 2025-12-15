@@ -4,11 +4,14 @@ from django.views import View
 from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-from .models import User, BorrowerProfile, LenderProfile, Notification as NotifModel
+from django.http import JsonResponse
+
+from .models import User, BorrowerProfile, LenderProfile, Message, Notification
 from wallet.models import Wallet, WalletTransaction
 from review.models import ReviewAndRating
 from loan.models import LoanRequest, LoanOffer, ActiveLoan
 from transaction.models import Transaction
+
 
 
 # --- Helper Function ---
@@ -584,12 +587,152 @@ def messaging_view(request):
     if not user:
         return redirect('login')
 
-    # Mock data
-    conversations = [
-        {'name': 'Maria Santos', 'last_message': 'Hello...', 'time': '2 min ago', 'unread': 2, 'online': True,
-         'active': True}]
-    return render(request, 'account/messaging.html', {'conversations': conversations, 'user': user})
+    # Get the conversation partner (from URL parameter or default)
+    partner_id = request.GET.get('with')
+    partner = None
+    active_chat_id = None
 
+    # Get all users the current user has messaged with
+    sent_to = User.objects.filter(
+        received_messages__sender=user
+    ).distinct()
+
+    received_from = User.objects.filter(
+        sent_messages__receiver=user
+    ).distinct()
+
+    # Combine and remove duplicates
+    all_partners = (sent_to | received_from).distinct()
+
+    # Format conversations for the sidebar
+    conversations = []
+    for partner_user in all_partners:
+        # Get last message in conversation
+        last_message = Message.objects.filter(
+            (Q(sender=user) & Q(receiver=partner_user)) |
+            (Q(sender=partner_user) & Q(receiver=user))
+        ).order_by('-created_at').first()
+
+        # Count unread messages from this partner
+        unread_count = Message.objects.filter(
+            sender=partner_user,
+            receiver=user,
+            is_read=False
+        ).count()
+
+        conversations.append({
+            'user_id': partner_user.user_id,
+            'name': partner_user.name,
+            'last_message': last_message.content[:50] + "..." if last_message else "No messages yet",
+            'time': last_message.created_at.strftime("%I:%M %p") if last_message else "",
+            'unread': unread_count,
+            'online': False,  # You'd need online status tracking
+            'active': str(partner_user.user_id) == partner_id
+        })
+
+    # Get messages with selected partner
+    messages_list = []
+    if partner_id:
+        try:
+            partner = User.objects.get(user_id=partner_id)
+            messages_list = Message.objects.filter(
+                (Q(sender=user) & Q(receiver=partner)) |
+                (Q(sender=partner) & Q(receiver=user))
+            ).order_by('created_at')
+
+            # Mark messages as read
+            Message.objects.filter(sender=partner, receiver=user, is_read=False).update(is_read=True)
+        except User.DoesNotExist:
+            messages_list = []
+
+    # Handle message sending
+    if request.method == 'POST' and partner:
+        content = request.POST.get('content', '').strip()
+        if content:
+            # Create the message
+            new_message = Message.objects.create(
+                sender=user,
+                receiver=partner,
+                content=content
+            )
+
+            # Create notification for the receiver
+            Notification.objects.create(
+                user=partner,
+                notification_type='MESSAGE',
+                title=f'New Message from {user.name}',
+                message=f'{content[:100]}...' if len(content) > 100 else content,
+                priority='MEDIUM'
+            )
+
+            messages.success(request, "Message sent!")
+            return redirect(f'{request.path}?with={partner.user_id}')
+        else:
+            messages.error(request, "Message cannot be empty")
+
+    return render(request, 'account/messaging.html', {
+        'user': user,
+        'conversations': conversations,
+        'partner': partner,
+        'messages': messages_list,
+        'active_chat_id': partner_id
+    })
+
+
+def get_new_messages(request):
+    """AJAX endpoint to get new messages"""
+    user = get_current_user(request)
+    if not user:
+        return JsonResponse({'error': 'Not authenticated'}, status=401)
+
+    partner_id = request.GET.get('partner_id')
+    last_message_id = request.GET.get('last_message_id', 0)
+
+    try:
+        partner = User.objects.get(user_id=partner_id)
+
+        # Get new messages
+        new_messages = Message.objects.filter(
+            (Q(sender=user) & Q(receiver=partner)) |
+            (Q(sender=partner) & Q(receiver=user)),
+            message_id__gt=last_message_id
+        ).order_by('created_at')
+
+        # Mark as read
+        Message.objects.filter(sender=partner, receiver=user, is_read=False).update(is_read=True)
+
+        messages_data = []
+        for msg in new_messages:
+            messages_data.append({
+                'id': msg.message_id,
+                'sender_id': msg.sender.user_id,
+                'content': msg.content,
+                'time': msg.created_at.strftime("%I:%M %p"),
+                'date': msg.created_at.strftime("%b %d")
+            })
+
+        return JsonResponse({
+            'success': True,
+            'messages': messages_data,
+            'has_new': len(messages_data) > 0
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+def start_conversation(request, user_id):
+    """Start a new conversation with a user"""
+    user = get_current_user(request)
+    if not user:
+        return redirect('login')
+
+    try:
+        partner = User.objects.get(user_id=user_id)
+        return redirect(f'/messages/?with={partner.user_id}')
+    except User.DoesNotExist:
+        messages.error(request, "User not found")
+        return redirect('dashboard')
 
 def settings_view(request):
     user = get_current_user(request)
@@ -724,3 +867,4 @@ def mark_notification_read(request, notification_id):
         messages.error(request, "Notification not found!")
 
     return redirect('notifications')
+

@@ -82,3 +82,48 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.notification_type} - {self.user.name} - {'Read' if self.is_read else 'Unread'}"
+
+
+class Message(models.Model):
+    message_id = models.AutoField(primary_key=True)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+
+    # Optional: Link to loan for context
+    loan_request = models.ForeignKey('loan.LoanRequest', on_delete=models.SET_NULL, null=True, blank=True)
+
+    content = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['sender', 'receiver', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.sender.name} → {self.receiver.name}: {self.content[:50]}"
+
+    def time_ago(self):
+        """Human readable time difference"""
+        from django.utils import timezone
+        now = timezone.now()
+        diff = now - self.created_at
+
+        if diff.days > 365:
+            years = diff.days // 365
+            return f"{years} year{'s' if years > 1 else ''} ago"
+        elif diff.days > 30:
+            months = diff.days // 30
+            return f"{months} month{'s' if months > 1 else ''} ago"
+        elif diff.days > 0:
+            return f"{diff.days} day{'s' if diff.days > 1 else ''} ago"
+        elif diff.seconds > 3600:
+            hours = diff.seconds // 3600
+            return f"{hours} hour{'s' if hours > 1 else ''} ago"
+        elif diff.seconds > 60:
+            minutes = diff.seconds // 60
+            return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+        else:
+            return "Just now"

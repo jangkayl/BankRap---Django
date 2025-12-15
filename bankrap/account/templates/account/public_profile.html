@@ -74,13 +74,14 @@
 
             <div class="flex gap-3">
                 {% if not is_own_profile %}
-                <button class="flex items-center px-4 py-2 bg-brand-red text-white text-sm font-bold rounded-xl hover:bg-red-900 transition-colors shadow-sm">
-                    <i data-lucide="message-square" class="w-4 h-4 mr-2"></i> Message
-                </button>
-                {% else %}
-                <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-colors">
-                    <i data-lucide="settings" class="w-4 h-4 mr-2"></i> Edit Profile
-                </a>
+                    <a href="{% url 'start_conversation' profile_user.user_id %}"
+                       class="flex items-center px-4 py-2 bg-brand-red text-white text-sm font-bold rounded-xl hover:bg-red-900 transition-colors shadow-sm">
+                        <i data-lucide="message-square" class="w-4 h-4 mr-2"></i> Message
+                    </a>
+                    {% else %}
+                    <a href="{% url 'profile' %}" class="flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                        <i data-lucide="settings" class="w-4 h-4 mr-2"></i> Edit Profile
+                    </a>
                 {% endif %}
             </div>
         </div>

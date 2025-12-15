@@ -1,7 +1,7 @@
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
-from account.models import User, BorrowerProfile, LenderProfile
+from account.models import User
 from .models import Transaction
-
 
 def get_current_user(request):
     user_id = request.session.get('user_id')
@@ -12,40 +12,50 @@ def get_current_user(request):
             return None
     return None
 
-
 def transaction_history(request):
     user = get_current_user(request)
     if not user:
         return redirect('login')
 
-    # Fetch transactions related to the user
-    # A user can be related via 'user' (initiator) OR indirectly if they are the borrower/lender
-    # Ideally, the Transaction model should have a direct link or we query based on involvement
-    # For now, let's assume 'user' field in Transaction tracks the person whose wallet was affected
-    # But wait, in accept_offer we created 2 transactions (one for lender, one for borrower)
-    # The 'user' field in Transaction model was: user = models.ForeignKey(User, ...)
-    # In accept_offer:
-    #   Lender TX: user=offer.lender
-    #   Borrower TX: user=offer.lender (Wait, I passed offer.lender to both! Let me check)
+    # Get filter parameters
+    status_filter = request.GET.get('status', 'all')
+    type_filter = request.GET.get('type', 'all')
+    search_query = request.GET.get('search', '')
+    page_number = request.GET.get('page', 1)
 
-    # Correction: In my previous response for loan/views.py accept_offer:
-    # Transaction.objects.create(..., user=offer.lender, ...) -> Correct for lender
-    # But for borrower, I didn't create a Transaction record in the Transaction model, only WalletTransaction.
-    # I should fix that if I want it to show up here.
+    # Base query
+    transactions = Transaction.objects.filter(user=user)
 
-    # Let's rely on the WalletTransaction model for the main wallet history page since it tracks all money movement.
-    # Or if you want the "Loan Transaction History" specifically, we use Transaction.
+    # Apply filters
+    if status_filter != 'all':
+        if status_filter == 'completed':
+            transactions = transactions.filter(status='C')
+        elif status_filter == 'pending':
+            transactions = transactions.filter(status='P')
+        elif status_filter == 'failed':
+            transactions = transactions.filter(status='F')
 
-    # Assuming we want the general wallet history + loan history mixed:
-    # Let's just fetch from WalletTransaction for the general history page as it's more complete for "Wallet" actions.
-    # BUT the user asked for "Transaction History in EACH LOAN".
+    if type_filter != 'all':
+        if type_filter == 'disbursement':
+            transactions = transactions.filter(type='D')
+        elif type_filter == 'repayment':
+            transactions = transactions.filter(type='R')
 
-    # For the main /transactions/ page, let's show ALL transactions for this user.
-    # Since I introduced the `Transaction` model specifically for Loans, let's use that.
+    if search_query:
+        transactions = transactions.filter(
+            transaction_data__icontains=search_query
+        )
 
-    transactions = Transaction.objects.filter(user=user).order_by('-transaction_date')
+    transactions = transactions.order_by('-transaction_date')
+
+    # Pagination
+    paginator = Paginator(transactions, 15)  # Show 15 transactions per page
+    page_obj = paginator.get_page(page_number)
 
     return render(request, 'transaction/history.html', {
         'user': user,
-        'transactions': transactions
+        'transactions': page_obj,  # Changed to page_obj
+        'current_status': status_filter,
+        'current_type': type_filter,
+        'search_query': search_query
     })
