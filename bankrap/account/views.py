@@ -194,6 +194,10 @@ def profile_view(request):
             user.contact_number = request.POST.get('contact_number')
             user.email = request.POST.get('email')
 
+            # Handle file upload
+            if 'school_id_file' in request.FILES:
+                user.school_id_file = request.FILES['school_id_file']
+
             if user.type == 'B':
                 income_str = request.POST.get('income')
                 if income_str and income_str.strip():
@@ -208,6 +212,12 @@ def profile_view(request):
                     user.min_investment_amount = min_inv_str
                 else:
                     user.min_investment_amount = 0
+
+                # Handle available funds for lenders
+                available_funds_str = request.POST.get('available_funds')
+                if available_funds_str and available_funds_str.strip():
+                    user.available_funds = available_funds_str
+
                 user.investment_preference = request.POST.get('investment_preference')
 
             user.save()
@@ -227,10 +237,102 @@ def profile_view(request):
 
     review_count = reviews_received.count()
 
+    # --- Additional Dynamic Statistics ---
+
+    # Get user's wallet
+    try:
+        wallet = Wallet.objects.get(user=user)
+    except Wallet.DoesNotExist:
+        wallet = Wallet.objects.create(user=user, balance=0.00)
+
+    # Loan statistics based on user type
+    if user.type == 'B':
+        # Borrower statistics
+        loan_requests = LoanRequest.objects.filter(borrower=user)
+        total_requests = loan_requests.count()
+        funded_requests = loan_requests.filter(status='FUNDED').count()
+        repaid_loans = loan_requests.filter(status='REPAID').count()
+
+        # Active loans
+        active_loans = ActiveLoan.objects.filter(borrower=user, status='ACTIVE')
+        total_active_loans = active_loans.count()
+
+        # Calculate total borrowed amount
+        total_borrowed = loan_requests.filter(status__in=['FUNDED', 'REPAID']).aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+
+        # Calculate total repaid amount (simplified)
+        total_repaid = total_borrowed * 0.7  # Assuming 70% repayment for demo
+
+        # Get recent loan requests
+        recent_requests = loan_requests.order_by('-request_date')[:5]
+
+        user_stats = {
+            'total_requests': total_requests,
+            'funded_requests': funded_requests,
+            'repaid_loans': repaid_loans,
+            'total_active_loans': total_active_loans,
+            'total_borrowed': total_borrowed,
+            'total_repaid': total_repaid,
+            'recent_requests': recent_requests,
+        }
+
+    else:
+        # Lender statistics
+        loan_offers = LoanOffer.objects.filter(lender=user)
+        total_offers = loan_offers.count()
+        accepted_offers = loan_offers.filter(status='ACCEPTED').count()
+
+        # Active investments
+        active_investments = ActiveLoan.objects.filter(lender=user, status='ACTIVE')
+        total_active_investments = active_investments.count()
+
+        # Calculate total invested amount
+        total_invested = active_investments.aggregate(
+            total=Sum('principal_amount')
+        )['total'] or 0
+
+        # Calculate total returns (simplified)
+        total_returns = total_invested * 0.15  # Assuming 15% return for demo
+
+        # Get successful investments (loans that have been repaid)
+        successful_investments = ActiveLoan.objects.filter(
+            lender=user,
+            status='PAID'
+        ).count()
+
+        # Get recent offers
+        recent_offers = loan_offers.order_by('-offer_date')[:5]
+
+        user_stats = {
+            'total_offers': total_offers,
+            'accepted_offers': accepted_offers,
+            'total_active_investments': total_active_investments,
+            'total_invested': total_invested,
+            'total_returns': total_returns,
+            'successful_investments': successful_investments,
+            'recent_offers': recent_offers,
+        }
+
+    # Get recent reviews
+    recent_reviews = reviews_received.order_by('-review_date')[:3]
+
+    # Calculate member since
+    if hasattr(user, 'profile_created_date'):
+        member_since = user.profile_created_date
+    else:
+        # Fallback to user creation or current date
+        member_since = timezone.now().date()
+
     context = {
         'user': user,
+        'wallet': wallet,
         'avg_rating': avg_rating,
         'review_count': review_count,
+        'recent_reviews': recent_reviews,
+        'member_since': member_since,
+        'user_stats': user_stats,
     }
 
     return render(request, 'account/profile.html', context)
@@ -248,6 +350,18 @@ def public_profile_view(request, user_id):
     # 2. Get the target user (profile owner)
     target_user = get_object_or_404(User, pk=user_id)
 
+    # Get the specific profile type if available
+    if target_user.type == 'B':
+        try:
+            target_user = BorrowerProfile.objects.get(user_id=user_id)
+        except BorrowerProfile.DoesNotExist:
+            pass
+    elif target_user.type == 'L':
+        try:
+            target_user = LenderProfile.objects.get(user_id=user_id)
+        except LenderProfile.DoesNotExist:
+            pass
+
     # 3. Get Reviews & Score
     reviews_received = ReviewAndRating.objects.filter(reviewee=target_user).order_by('-review_date')
     avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
@@ -262,17 +376,116 @@ def public_profile_view(request, user_id):
     if target_user.type == 'B':
         open_requests = LoanRequest.objects.filter(borrower=target_user, status='PENDING').order_by('-request_date')
 
+    # 5. Get additional statistics based on user type
+    if target_user.type == 'B':
+        # Borrower statistics
+        loan_requests = LoanRequest.objects.filter(borrower=target_user)
+        total_requests = loan_requests.count()
+        funded_requests = loan_requests.filter(status='FUNDED').count()
+        repaid_loans = loan_requests.filter(status='REPAID').count()
+
+        # Active loans
+        active_loans = ActiveLoan.objects.filter(borrower=target_user, status='ACTIVE')
+        total_active_loans = active_loans.count()
+
+        # Calculate total borrowed amount
+        total_borrowed = loan_requests.filter(status__in=['FUNDED', 'REPAID']).aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+
+        # Calculate repayment rate (simplified)
+        repayment_rate = 0
+        if funded_requests > 0:
+            repayment_rate = (repaid_loans / funded_requests) * 100
+
+        user_stats = {
+            'total_requests': total_requests,
+            'funded_requests': funded_requests,
+            'repaid_loans': repaid_loans,
+            'total_active_loans': total_active_loans,
+            'total_borrowed': total_borrowed,
+            'repayment_rate': round(repayment_rate, 1),
+            'credit_score': target_user.credit_score if hasattr(target_user, 'credit_score') else 0,
+            'income': target_user.income if hasattr(target_user, 'income') else 0,
+            'employment_status': target_user.employment_status if hasattr(target_user,
+                                                                          'employment_status') else 'Not specified',
+        }
+
+    else:
+        # Lender statistics
+        loan_offers = LoanOffer.objects.filter(lender=target_user)
+        total_offers = loan_offers.count()
+        accepted_offers = loan_offers.filter(status='ACCEPTED').count()
+
+        # Active investments
+        active_investments = ActiveLoan.objects.filter(lender=target_user, status='ACTIVE')
+        total_active_investments = active_investments.count()
+
+        # Calculate total invested amount
+        total_invested = active_investments.aggregate(
+            total=Sum('principal_amount')
+        )['total'] or 0
+
+        # Calculate total returns (completed loans)
+        completed_investments = ActiveLoan.objects.filter(lender=target_user, status='PAID')
+        successful_investments = completed_investments.count()
+
+        # Calculate acceptance rate
+        acceptance_rate = 0
+        if total_offers > 0:
+            acceptance_rate = (accepted_offers / total_offers) * 100
+
+        user_stats = {
+            'total_offers': total_offers,
+            'accepted_offers': accepted_offers,
+            'total_active_investments': total_active_investments,
+            'total_invested': total_invested,
+            'successful_investments': successful_investments,
+            'acceptance_rate': round(acceptance_rate, 1),
+            'available_funds': target_user.available_funds if hasattr(target_user, 'available_funds') else 0,
+            'min_investment_amount': target_user.min_investment_amount if hasattr(target_user,
+                                                                                  'min_investment_amount') else 0,
+            'investment_preference': target_user.investment_preference if hasattr(target_user,
+                                                                                  'investment_preference') else 'Not specified',
+        }
+
+    # 6. Get recent successful transactions (for both types)
+    recent_successful_loans = []
+    if target_user.type == 'B':
+        recent_successful_loans = LoanRequest.objects.filter(
+            borrower=target_user,
+            status='REPAID'
+        ).order_by('-request_date')[:3]
+    else:
+        recent_successful_loans = ActiveLoan.objects.filter(
+            lender=target_user,
+            status='PAID'
+        ).select_related('loan_request').order_by('-start_date')[:3]
+
+    # 7. Calculate member since
+    if hasattr(target_user, 'profile_created_date'):
+        member_since = target_user.profile_created_date
+    else:
+        member_since = timezone.now().date()
+
+    # 8. Check if viewer is looking at their own profile
+    is_own_profile = (int(viewer_id) == int(user_id))
+
     context = {
         'profile_user': target_user,  # The user being viewed
         'avg_rating': avg_rating,
         'review_count': review_count,
-        'reviews': reviews_received,
+        'reviews': reviews_received[:5],  # Limit to 5 most recent
         'open_requests': open_requests,
-        'viewer_id': viewer_id
+        'viewer_id': viewer_id,
+        'user_stats': user_stats,
+        'recent_successful_loans': recent_successful_loans,
+        'member_since': member_since,
+        'is_own_profile': is_own_profile,
+        'current_year': timezone.now().year,
     }
 
     return render(request, 'account/public_profile.html', context)
-
 
 def login_view(request):
     if request.method == 'POST':

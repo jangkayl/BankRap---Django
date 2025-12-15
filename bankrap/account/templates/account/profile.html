@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Profile - BankRap{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
+<div class="max-w-6xl mx-auto">
 
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Profile</h1>
 
@@ -13,7 +14,7 @@
         <div class="relative">
             <div class="w-24 h-24 rounded-full bg-red-100 flex items-center justify-center text-3xl font-bold text-brand-red border-4 border-white shadow-sm overflow-hidden">
                 {% if user.school_id_file %}
-                    {{ user.name|slice:":1" }}
+                    <img src="{{ user.school_id_file.url }}" alt="{{ user.name }}" class="w-full h-full object-cover">
                 {% else %}
                     {{ user.name|slice:":1" }}
                 {% endif %}
@@ -28,112 +29,324 @@
             <p class="text-gray-500 text-sm mb-1">CIT-U Student ID: {{ user.student_id|default:"N/A" }}</p>
             <p class="text-gray-500 text-sm mb-3">{{ user.address }} | {{ user.contact_number }}</p>
 
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="flex items-center text-sm text-gray-500">
+                    <i data-lucide="calendar" class="w-4 h-4 mr-1"></i>
+                    Member since {{ member_since|date:"M Y" }}
+                </div>
+                <div class="flex items-center text-sm text-gray-500">
+                    <i data-lucide="mail" class="w-4 h-4 mr-1"></i>
+                    {{ user.email }}
+                </div>
+            </div>
+
             <div class="flex flex-wrap gap-2 mb-4">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-brand-red border border-red-100">
-                    <i data-lucide="shield-check" class="w-3 h-3 mr-1"></i> Verified Student
+                    <i data-lucide="shield-check" class="w-3 h-3 mr-1"></i>
+                    {% if user.school_id_file %}Verified Student{% else %}Unverified{% endif %}
                 </span>
 
                 {% if user.type == 'B' %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Borrower</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <i data-lucide="user" class="w-3 h-3 mr-1"></i> Borrower
+                    </span>
                 {% elif user.type == 'L' %}
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Lender</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <i data-lucide="briefcase" class="w-3 h-3 mr-1"></i> Lender
+                    </span>
+                {% endif %}
+
+                {% if user.type == 'B' and user.credit_score %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if user.credit_score >= 700 %}bg-green-100 text-green-800
+                        {% elif user.credit_score >= 600 %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                        <i data-lucide="trending-up" class="w-3 h-3 mr-1"></i>
+                        Score: {{ user.credit_score }}
+                    </span>
                 {% endif %}
             </div>
 
             <button onclick="openModal('edit-profile-modal')" class="text-sm font-medium text-gray-600 hover:text-brand-red flex items-center transition-colors">
-                Edit Profile <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                <i data-lucide="edit" class="w-4 h-4 mr-2"></i> Edit Profile
             </button>
         </div>
     </div>
 
-    <!-- Trust & Reputation Section (UPDATED & DYNAMIC) -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
-        <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-bold text-gray-900">Trust & Reputation</h3>
-            <a href="{% url 'reviews' %}?tab=received" class="text-xs font-bold text-brand-red hover:underline flex items-center">
-                View All Reviews <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i>
-            </a>
-        </div>
-
-        <div class="flex flex-col md:flex-row items-center gap-8">
-            <!-- Score Box -->
-            <div class="flex flex-col items-center justify-center bg-gray-50 rounded-2xl p-6 min-w-[160px] border border-gray-100">
-                <div class="text-5xl font-extrabold text-gray-900 mb-2">{{ avg_rating }}</div>
-                <div class="flex space-x-1 text-yellow-400 mb-2">
-                     <!-- Dynamic stars display -->
-                     {% for i in "12345" %}
-                        <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= avg_rating|add:0 %}fill-current{% else %}text-gray-300{% endif %}"></i>
-                     {% endfor %}
-                </div>
-                <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">{{ review_count }} Reviews</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Trust & Reputation Section -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-gray-900">Trust & Reputation</h3>
+                <a href="{% url 'reviews' %}?tab=received" class="text-xs font-bold text-brand-red hover:underline flex items-center">
+                    View All Reviews <i data-lucide="arrow-right" class="w-3 h-3 ml-1"></i>
+                </a>
             </div>
 
-            <!-- Badges / Stats Grid -->
-            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                <!-- Badge 1: Rating Status -->
-                <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <i data-lucide="award" class="w-6 h-6"></i>
+            <div class="flex flex-col md:flex-row items-center gap-8">
+                <!-- Score Box -->
+                <div class="flex flex-col items-center justify-center bg-gray-50 rounded-2xl p-6 min-w-[160px] border border-gray-100">
+                    <div class="text-5xl font-extrabold text-gray-900 mb-2">{{ avg_rating|floatformat:1 }}</div>
+                    <div class="flex space-x-1 text-yellow-400 mb-2">
+                         <!-- Dynamic stars display -->
+                         {% for i in "12345" %}
+                            <i data-lucide="star" class="w-4 h-4 {% if forloop.counter <= avg_rating|add:0 %}fill-current{% else %}text-gray-300{% endif %}"></i>
+                         {% endfor %}
                     </div>
-                    <div>
-                        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Reputation Level</p>
-                        <p class="font-bold text-gray-900">
-                            {% if avg_rating >= 4.5 %}Excellent
-                            {% elif avg_rating >= 3.5 %}Very Good
-                            {% elif avg_rating >= 2.5 %}Fair
-                            {% elif avg_rating > 0 %}Needs Improvement
-                            {% else %}New Member{% endif %}
-                        </p>
-                    </div>
+                    <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">{{ review_count }} Review{{ review_count|pluralize }}</p>
                 </div>
 
-                <!-- Badge 2: Community Trust -->
-                 <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <i data-lucide="users" class="w-6 h-6"></i>
+                <!-- Badges / Stats Grid -->
+                <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                    <!-- Badge 1: Rating Status -->
+                    <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                            <i data-lucide="award" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Reputation Level</p>
+                            <p class="font-bold text-gray-900">
+                                {% if avg_rating >= 4.5 %}Excellent
+                                {% elif avg_rating >= 3.5 %}Very Good
+                                {% elif avg_rating >= 2.5 %}Fair
+                                {% elif avg_rating > 0 %}Needs Improvement
+                                {% else %}New Member{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Badge 2: Community Trust -->
+                     <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Community Status</p>
+                            <p class="font-bold text-gray-900">
+                                 {% if review_count > 10 %}Verified Trusted
+                                 {% elif review_count > 0 %}Active Member
+                                 {% else %}Unverified{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Badge 3: Recent Reviews -->
+                    <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                            <i data-lucide="message-square" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Recent Feedback</p>
+                            <p class="font-bold text-gray-900">
+                                {% if recent_reviews %} {{ recent_reviews|length }} New
+                                {% else %} No Recent{% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Badge 4: Member Duration -->
+                    <div class="flex items-center p-4 border border-gray-100 rounded-xl bg-gray-50/50">
+                        <div class="p-3 rounded-full bg-orange-100 text-orange-600 mr-4">
+                            <i data-lucide="clock" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Member Since</p>
+                            <p class="font-bold text-gray-900">{{ member_since|date:"M Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Reviews -->
+            {% if recent_reviews %}
+            <div class="mt-6 pt-6 border-t border-gray-100">
+                <h4 class="text-sm font-semibold text-gray-900 mb-4">Recent Reviews</h4>
+                <div class="space-y-4">
+                    {% for review in recent_reviews %}
+                    <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-sm font-bold text-brand-red">
+                                {{ review.reviewer.name|slice:":1" }}
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <p class="text-sm font-medium text-gray-900">{{ review.reviewer.name }}</p>
+                                <span class="text-xs text-gray-500">{{ review.review_date|timesince }} ago</span>
+                            </div>
+                            <div class="flex items-center space-x-1 mb-2">
+                                {% for i in "12345" %}
+                                    <i data-lucide="star" class="w-3 h-3 {% if forloop.counter <= review.rating %}fill-current text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="text-sm text-gray-600">{{ review.comment|truncatechars:150 }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Financial Stats Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-6">Financial Overview</h3>
+
+            <div class="space-y-6">
+                <!-- Wallet Balance -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm font-medium text-gray-600">Wallet Balance</p>
+                        <i data-lucide="wallet" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <p class="text-2xl font-bold text-brand-red">₱{{ wallet.balance|floatformat:2|intcomma }}</p>
+                    <a href="{% url 'wallet' %}" class="text-xs text-brand-red hover:underline mt-1 inline-block">
+                        Manage Wallet →
+                    </a>
+                </div>
+
+                {% if user.type == 'B' %}
+                <!-- Borrower Stats -->
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Total Borrowed</p>
+                        <p class="text-lg font-bold text-gray-900">₱{{ user_stats.total_borrowed|floatformat:2|intcomma }}</p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Community Status</p>
-                        <p class="font-bold text-gray-900">
-                             {% if review_count > 10 %}Verified Trusted
-                             {% elif review_count > 0 %}Active Member
-                             {% else %}Unverified{% endif %}
-                        </p>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Total Repaid</p>
+                        <p class="text-lg font-bold text-gray-900">₱{{ user_stats.total_repaid|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 mb-1">Loan Requests</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.total_requests }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 mb-1">Active Loans</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.total_active_loans }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Lender Stats -->
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Total Invested</p>
+                        <p class="text-lg font-bold text-gray-900">₱{{ user_stats.total_invested|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Total Returns</p>
+                        <p class="text-lg font-bold text-gray-900">₱{{ user_stats.total_returns|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 mb-1">Offers Made</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.total_offers }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 mb-1">Active Investments</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.total_active_investments }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Recent Activity -->
+                <div class="pt-4 border-t border-gray-100">
+                    <p class="text-sm font-medium text-gray-600 mb-3">Recent Activity</p>
+                    <div class="space-y-3">
+                        {% if user.type == 'B' and user_stats.recent_requests %}
+                            {% for request in user_stats.recent_requests|slice:":3" %}
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-700 truncate">Request #{{ request.loan_id }}</span>
+                                <span class="font-medium {% if request.status == 'FUNDED' %}text-green-600{% elif request.status == 'PENDING' %}text-yellow-600{% else %}text-gray-600{% endif %}">
+                                    {{ request.get_status_display }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% elif user.type == 'L' and user_stats.recent_offers %}
+                            {% for offer in user_stats.recent_offers|slice:":3" %}
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-700 truncate">Offer for #{{ offer.loan_request.loan_id }}</span>
+                                <span class="font-medium {% if offer.status == 'ACCEPTED' %}text-green-600{% elif offer.status == 'PENDING' %}text-yellow-600{% else %}text-gray-600{% endif %}">
+                                    {{ offer.get_status_display }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-sm text-gray-500">No recent activity</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Financial Details Section -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h3 class="text-lg font-bold text-gray-900 mb-6">Financial Details</h3>
+        <h3 class="text-lg font-bold text-gray-900 mb-6">Account Details</h3>
 
         <!-- Borrower View -->
         {% if user.type == 'B' %}
-        <div class="mb-8">
-            <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Borrower Profile</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Verified Income</label>
-                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
-                        {% if user.income %}
-                            Php {{ user.income|floatformat:2 }} / month
-                        {% else %}
-                             --
-                        {% endif %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Borrower Profile</h4>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Verified Monthly Income</label>
+                        <div class="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 text-base font-medium">
+                            {% if user.income %}
+                                ₱{{ user.income|floatformat:2|intcomma }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Credit Score</label>
-                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
-                        {{ user.credit_score|default:"N/A" }}
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Credit Score</label>
+                        <div class="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 text-base font-medium">
+                            {{ user.credit_score|default:"Not calculated" }}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Employment Status</label>
+                        <div class="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 text-base font-medium">
+                            {{ user.employment_status|default:"Student" }}
+                        </div>
                     </div>
                 </div>
             </div>
+
             <div>
-                <label class="block text-xs font-medium text-gray-500 mb-1">Employment Status</label>
-                <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
-                    {{ user.employment_status|default:"Student" }}
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Loan Performance</h4>
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.funded_requests }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Funded Loans</p>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.repaid_loans }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Repaid Loans</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-blue-50 rounded-lg border border-blue-100">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <i data-lucide="target" class="w-5 h-5 text-blue-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Repayment Rate</p>
+                                <p class="text-xs text-gray-500">
+                                    {% if user_stats.total_requests > 0 %}
+                                        {{ user_stats.repaid_loans|floatformat:0 }} of {{ user_stats.total_requests }} loans repaid
+                                    {% else %}
+                                        No loan history
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,27 +354,68 @@
 
         <!-- Lender View -->
         {% if user.type == 'L' %}
-        <div>
-            <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Lender Profile</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Available Funds for Lending</label>
-                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
-                        {% if user.available_funds %}
-                            Php {{ user.available_funds|floatformat:2 }}
-                        {% else %}
-                            Php 0.00
-                        {% endif %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Lender Profile</h4>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Available Funds for Lending</label>
+                        <div class="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 text-base font-medium">
+                            {% if user.available_funds %}
+                                ₱{{ user.available_funds|floatformat:2|intcomma }}
+                            {% else %}
+                                ₱0.00
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Minimum Investment Amount</label>
+                        <div class="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 text-base font-medium">
+                            {% if user.min_investment_amount %}
+                                ₱{{ user.min_investment_amount|floatformat:2|intcomma }}
+                            {% else %}
+                                ₱500.00
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Investment Preference</label>
+                        <div class="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 text-base font-medium">
+                            {{ user.investment_preference|default:"Not specified" }}
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Minimum Investment Amount</label>
-                    <div class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-gray-900 text-sm">
-                         {% if user.min_investment_amount %}
-                            Php {{ user.min_investment_amount|floatformat:2 }}
-                        {% else %}
-                            Php 500.00
-                        {% endif %}
+            </div>
+
+            <div>
+                <h4 class="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Investment Performance</h4>
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.accepted_offers }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Accepted Offers</p>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <p class="text-2xl font-bold text-gray-900">{{ user_stats.successful_investments }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Successful Investments</p>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg border border-green-100">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-green-100 rounded-lg">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Return on Investment</p>
+                                <p class="text-xs text-gray-500">
+                                    {% if user_stats.total_invested > 0 %}
+                                        Estimated returns: ₱{{ user_stats.total_returns|floatformat:2|intcomma }}
+                                    {% else %}
+                                        No investments yet
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -182,7 +436,7 @@
 
         <h3 class="text-xl font-bold text-gray-900 mb-6">Edit Profile</h3>
 
-        <form method="POST" action="{% url 'profile' %}">
+        <form method="POST" action="{% url 'profile' %}" enctype="multipart/form-data">
             {% csrf_token %}
 
             <!-- Common Fields -->
@@ -206,6 +460,19 @@
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Address</label>
                     <input type="text" name="address" value="{{ user.address }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all">
                 </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">School ID File (Optional Update)</label>
+                    <input type="file" name="school_id_file" accept=".jpg,.jpeg,.png,.pdf" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all">
+                    {% if user.school_id_file %}
+                    <p class="text-xs text-gray-500 mt-1">
+                        Current file:
+                        {% with filename=user.school_id_file.name %}
+                            {{ filename|slice:"-30:"|default:filename }}
+                        {% endwith %}
+                    </p>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- Borrower Specific Fields -->
@@ -216,7 +483,7 @@
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Monthly Income (Php)</label>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Monthly Income (₱)</label>
                         <input type="number" step="0.01" name="income" value="{{ user.income|default:'0' }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all">
                     </div>
                     <div>
@@ -241,10 +508,14 @@
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Min. Investment (Php)</label>
-                        <input type="number" step="0.01" name="min_investment_amount" value="{{ user.min_investment_amount|default:500 }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Available Funds (₱)</label>
+                        <input type="number" step="0.01" name="available_funds" value="{{ user.available_funds|default:0 }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all">
                     </div>
                     <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Min. Investment (₱)</label>
+                        <input type="number" step="0.01" name="min_investment_amount" value="{{ user.min_investment_amount|default:500 }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all">
+                    </div>
+                    <div class="md:col-span-2">
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Investment Preference</label>
                         <input type="text" name="investment_preference" value="{{ user.investment_preference }}" placeholder="e.g. Short term, Low risk" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red transition-all">
                     </div>
