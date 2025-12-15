@@ -9,7 +9,8 @@ from account.models import User, BorrowerProfile, LenderProfile
 from wallet.models import Wallet, WalletTransaction
 from transaction.models import Transaction
 from .models import LoanRequest, LoanOffer, ActiveLoan
-
+from review.models import ReviewAndRating
+from django.db.models import Avg
 
 # --- Helper ---
 def get_current_user(request):
@@ -122,6 +123,16 @@ def create_offer(request, loan_id):
 
     loan = get_object_or_404(LoanRequest, pk=loan_id)
 
+    # Calculate borrower's actual rating
+    borrower_rating = ReviewAndRating.objects.filter(
+        reviewee=loan.borrower
+    ).aggregate(Avg('rating'))['rating__avg']
+
+    if borrower_rating:
+        borrower_rating = round(borrower_rating, 1)
+    else:
+        borrower_rating = 0.0
+
     if request.method == 'POST':
         try:
             amount = Decimal(request.POST.get('amount'))
@@ -158,7 +169,7 @@ def create_offer(request, loan_id):
             messages.error(request, f"Error processing offer: {e}")
             return redirect('loan_detail', loan_id=loan.loan_id)
 
-    return render(request, 'loan/offer_create.html', {'loan': loan, 'user': user})
+    return render(request, 'loan/offer_create.html', {'loan': loan, 'user': user, 'borrower_rating': borrower_rating})
 
 
 # --- ACCEPT / DECLINE LOGIC ---
