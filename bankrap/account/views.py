@@ -5,14 +5,13 @@ from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
+from decimal import Decimal
 
 from .models import User, BorrowerProfile, LenderProfile, Message, Notification
 from wallet.models import Wallet, WalletTransaction
 from review.models import ReviewAndRating
 from loan.models import LoanRequest, LoanOffer, ActiveLoan
 from transaction.models import Transaction
-
-
 
 # --- Helper Function ---
 def get_current_user(request):
@@ -246,7 +245,7 @@ def profile_view(request):
     try:
         wallet = Wallet.objects.get(user=user)
     except Wallet.DoesNotExist:
-        wallet = Wallet.objects.create(user=user, balance=0.00)
+        wallet = Wallet.objects.create(user=user, balance=Decimal('0.00'))
 
     # Loan statistics based on user type
     if user.type == 'B':
@@ -261,12 +260,13 @@ def profile_view(request):
         total_active_loans = active_loans.count()
 
         # Calculate total borrowed amount
-        total_borrowed = loan_requests.filter(status__in=['FUNDED', 'REPAID']).aggregate(
+        total_borrowed_result = loan_requests.filter(status__in=['FUNDED', 'REPAID']).aggregate(
             total=Sum('amount')
-        )['total'] or 0
+        )
+        total_borrowed = total_borrowed_result['total'] or Decimal('0')
 
-        # Calculate total repaid amount (simplified)
-        total_repaid = total_borrowed * 0.7  # Assuming 70% repayment for demo
+        # Calculate total repaid amount (simplified) - FIXED: Use Decimal instead of float
+        total_repaid = total_borrowed * Decimal('0.7')  # Assuming 70% repayment for demo
 
         # Get recent loan requests
         recent_requests = loan_requests.order_by('-request_date')[:5]
@@ -292,12 +292,13 @@ def profile_view(request):
         total_active_investments = active_investments.count()
 
         # Calculate total invested amount
-        total_invested = active_investments.aggregate(
+        total_invested_result = active_investments.aggregate(
             total=Sum('principal_amount')
-        )['total'] or 0
+        )
+        total_invested = total_invested_result['total'] or Decimal('0')
 
-        # Calculate total returns (simplified)
-        total_returns = total_invested * 0.15  # Assuming 15% return for demo
+        # Calculate total returns (simplified) - FIXED: Use Decimal instead of float
+        total_returns = total_invested * Decimal('0.15')  # Assuming 15% return for demo
 
         # Get successful investments (loans that have been repaid)
         successful_investments = ActiveLoan.objects.filter(
@@ -339,7 +340,6 @@ def profile_view(request):
     }
 
     return render(request, 'account/profile.html', context)
-
 
 def public_profile_view(request, user_id):
     """
@@ -665,7 +665,6 @@ def messaging_view(request):
                 priority='MEDIUM'
             )
 
-            messages.success(request, "Message sent!")
             return redirect(f'{request.path}?with={partner.user_id}')
         else:
             messages.error(request, "Message cannot be empty")
