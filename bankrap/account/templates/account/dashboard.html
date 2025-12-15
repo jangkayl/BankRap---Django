@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Dashboard - BankRap{% endblock %}
 
@@ -20,7 +21,7 @@
 
             <div class="relative z-10">
                 <p class="text-sm font-medium text-gray-500 mb-1">Current Balance</p>
-                <h2 class="text-4xl font-extrabold text-brand-red mb-2">₱{{ user.wallet.balance|default:"0.00" }}</h2>
+                <h2 class="text-4xl font-extrabold text-brand-red mb-2">₱{{ wallet.balance|floatformat:2|intcomma }}</h2>
                 <p class="text-sm text-gray-400 mb-6">Available funds in your account</p>
 
                 <div class="flex space-x-4">
@@ -36,35 +37,44 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-gray-900">Recent Notifications</h3>
-                <span class="text-xs font-medium bg-red-100 text-brand-red px-2 py-1 rounded-full">New</span>
+                <h3 class="font-bold text-gray-900">Recent Activities</h3>
+                {% if recent_activities %}
+                <span class="text-xs font-medium bg-red-100 text-brand-red px-2 py-1 rounded-full">
+                    {{ recent_activities|length }} New
+                </span>
+                {% endif %}
             </div>
 
             <div class="space-y-4">
-                <div class="flex items-start space-x-3 pb-3 border-b border-gray-50">
-                    <div class="bg-green-100 p-1.5 rounded-full mt-0.5">
-                        <i data-lucide="check" class="w-3 h-3 text-green-600"></i>
+                {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                    <div class="flex items-start space-x-3 pb-3 border-b border-gray-50">
+                        <div class="{% if activity.icon == 'check' or activity.icon == 'check-circle' %}bg-green-100{% elif activity.icon == 'dollar-sign' %}bg-yellow-100{% else %}bg-blue-100{% endif %} p-1.5 rounded-full mt-0.5">
+                            {% if activity.icon == 'check' %}
+                                <i data-lucide="check" class="w-3 h-3 {% if activity.icon == 'check' %}text-green-600{% elif activity.icon == 'dollar-sign' %}text-yellow-600{% else %}text-blue-600{% endif %}"></i>
+                            {% elif activity.icon == 'check-circle' %}
+                                <i data-lucide="check-circle" class="w-3 h-3 {% if activity.icon == 'check' %}text-green-600{% elif activity.icon == 'dollar-sign' %}text-yellow-600{% else %}text-blue-600{% endif %}"></i>
+                            {% elif activity.icon == 'dollar-sign' %}
+                                <i data-lucide="dollar-sign" class="w-3 h-3 {% if activity.icon == 'check' %}text-green-600{% elif activity.icon == 'dollar-sign' %}text-yellow-600{% else %}text-blue-600{% endif %}"></i>
+                            {% else %}
+                                <i data-lucide="info" class="w-3 h-3 {% if activity.icon == 'check' %}text-green-600{% elif activity.icon == 'dollar-sign' %}text-yellow-600{% else %}text-blue-600{% endif %}"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-800 font-medium">{{ activity.title }}</p>
+                            <p class="text-xs text-gray-500">{{ activity.description }}</p>
+                        </div>
+                        <span class="text-xs text-gray-400 whitespace-nowrap">{{ activity.time }}</span>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-800 font-medium">Loan offer accepted</p>
-                        <p class="text-xs text-gray-500">Alex M. accepted your offer.</p>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-sm text-gray-500">No recent activities</p>
                     </div>
-                    <span class="text-xs text-gray-400 whitespace-nowrap">2h ago</span>
-                </div>
+                {% endif %}
 
-                <div class="flex items-start space-x-3 pb-3 border-b border-gray-50">
-                    <div class="bg-blue-100 p-1.5 rounded-full mt-0.5">
-                        <i data-lucide="info" class="w-3 h-3 text-blue-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-800 font-medium">New loan request</p>
-                        <p class="text-xs text-gray-500">Sarah P. is requesting ₱3,000.</p>
-                    </div>
-                    <span class="text-xs text-gray-400 whitespace-nowrap">5h ago</span>
-                </div>
-
-                <a href="#" class="block text-center text-sm text-brand-red hover:underline font-medium pt-2">
-                    View All Notifications →
+                <a href="{% url 'transaction_history' %}" class="block text-center text-sm text-brand-red hover:underline font-medium pt-2">
+                    View All Activities →
                 </a>
             </div>
         </div>
@@ -79,7 +89,7 @@
             </div>
             <h3 class="font-bold text-gray-900 mb-2">Create Loan Request</h3>
             <p class="text-sm text-gray-500 mb-6">Submit a new request for funds needed.</p>
-            <a href="#" class="block w-full bg-brand-red hover:bg-red-900 text-white py-2 rounded-lg font-medium transition-colors">
+            <a href="{% url 'loan_create' %}" class="block w-full bg-brand-red hover:bg-red-900 text-white py-2 rounded-lg font-medium transition-colors">
                 Get Started
             </a>
         </div>
@@ -90,7 +100,7 @@
             </div>
             <h3 class="font-bold text-gray-900 mb-2">Make Loan Offer</h3>
             <p class="text-sm text-gray-500 mb-6">Browse requests and offer to lend funds.</p>
-            <a href="#" class="block w-full bg-brand-red hover:bg-red-900 text-white py-2 rounded-lg font-medium transition-colors">
+            <a href="{% url 'loan_marketplace' %}" class="block w-full bg-brand-red hover:bg-red-900 text-white py-2 rounded-lg font-medium transition-colors">
                 Browse Requests
             </a>
         </div>
@@ -101,7 +111,7 @@
             </div>
             <h3 class="font-bold text-gray-900 mb-2">View Active Loans</h3>
             <p class="text-sm text-gray-500 mb-6">Monitor all ongoing loan activities.</p>
-            <a href="#" class="block w-full bg-brand-red hover:bg-red-900 text-white py-2 rounded-lg font-medium transition-colors">
+            <a href="{% url 'repayment_schedule' %}" class="block w-full bg-brand-red hover:bg-red-900 text-white py-2 rounded-lg font-medium transition-colors">
                 View Details
             </a>
         </div>
@@ -111,14 +121,27 @@
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div class="flex justify-between items-start mb-4">
                 <div>
-                    <p class="text-sm text-gray-500">Pending Requests</p>
-                    <h3 class="text-2xl font-bold text-gray-900">3 Requests</h3>
+                    <p class="text-sm text-gray-500">
+                        {% if user.type == 'B' %}
+                        Pending Requests
+                        {% else %}
+                        Pending Offers
+                        {% endif %}
+                    </p>
+                    <h3 class="text-2xl font-bold text-gray-900">
+                        {{ pending_requests_count }}
+                        {% if user.type == 'B' %}
+                        Requests
+                        {% else %}
+                        Offers
+                        {% endif %}
+                    </h3>
                 </div>
                 <i data-lucide="hourglass" class="w-5 h-5 text-gray-400"></i>
             </div>
             <div class="flex items-center justify-between mt-4">
-                <span class="text-sm font-medium text-brand-red">+₱15,000 Total</span>
-                <a href="#" class="text-sm text-gray-500 hover:text-brand-red flex items-center">
+                <span class="text-sm font-medium text-brand-red">₱{{ pending_requests_total|floatformat:2|intcomma }} Total</span>
+                <a href="{% if user.type == 'B' %}{% url 'my_loan_requests' %}{% else %}{% url 'offer_list' %}{% endif %}" class="text-sm text-gray-500 hover:text-brand-red flex items-center">
                     View <i data-lucide="arrow-up-right" class="w-3 h-3 ml-1"></i>
                 </a>
             </div>
@@ -127,14 +150,27 @@
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
             <div class="flex justify-between items-start mb-4">
                 <div>
-                    <p class="text-sm text-gray-500">Pending Offers</p>
-                    <h3 class="text-2xl font-bold text-gray-900">2 Offers</h3>
+                    <p class="text-sm text-gray-500">
+                        {% if user.type == 'B' %}
+                        Pending Offers
+                        {% else %}
+                        Received Offers
+                        {% endif %}
+                    </p>
+                    <h3 class="text-2xl font-bold text-gray-900">
+                        {{ offers_to_me }}
+                        {% if user.type == 'B' %}
+                        Offers
+                        {% else %}
+                        Received
+                        {% endif %}
+                    </h3>
                 </div>
                 <i data-lucide="help-circle" class="w-5 h-5 text-gray-400"></i>
             </div>
             <div class="flex items-center justify-between mt-4">
-                <span class="text-sm font-medium text-brand-red">+₱8,000 Total</span>
-                <a href="#" class="text-sm text-gray-500 hover:text-brand-red flex items-center">
+                <span class="text-sm font-medium text-brand-red">₱{{ offers_total|floatformat:2|intcomma }} Total</span>
+                <a href="{% url 'offer_list' %}" class="text-sm text-gray-500 hover:text-brand-red flex items-center">
                     View <i data-lucide="arrow-up-right" class="w-3 h-3 ml-1"></i>
                 </a>
             </div>
@@ -144,15 +180,108 @@
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-sm text-gray-500">Upcoming Repayments</p>
-                    <h3 class="text-2xl font-bold text-gray-900">5 Repayments</h3>
+                    <h3 class="text-2xl font-bold text-gray-900">
+                        {{ upcoming_repayments }}
+                        {% if upcoming_repayments == 1 %}Repayment{% else %}Repayments{% endif %}
+                    </h3>
                 </div>
                 <i data-lucide="clock" class="w-5 h-5 text-gray-400"></i>
             </div>
             <div class="flex items-center justify-between mt-4">
-                <span class="text-sm font-medium text-brand-red">₱3,500 Due Soon</span>
-                <a href="#" class="text-sm text-gray-500 hover:text-brand-red flex items-center">
+                <span class="text-sm font-medium text-brand-red">₱{{ due_soon_amount|floatformat:2|intcomma }} Due Soon</span>
+                <a href="{% url 'repayment_schedule' %}" class="text-sm text-gray-500 hover:text-brand-red flex items-center">
                     Schedule <i data-lucide="arrow-up-right" class="w-3 h-3 ml-1"></i>
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Statistics -->
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% if user.type == 'B' %}
+        <!-- Borrower specific stats -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-900">Your Credit Profile</h3>
+                <i data-lucide="trending-up" class="w-5 h-5 text-gray-400"></i>
+            </div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Credit Score</span>
+                    <span class="text-lg font-bold {% if user.credit_score >= 700 %}text-green-600{% elif user.credit_score >= 600 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ user.credit_score|default:0 }}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Monthly Income</span>
+                    <span class="text-lg font-bold text-gray-900">₱{{ user.income|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Employment Status</span>
+                    <span class="text-sm font-medium text-gray-900">{{ user.employment_status|default:"Not specified" }}</span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Lender specific stats -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-900">Investment Profile</h3>
+                <i data-lucide="pie-chart" class="w-5 h-5 text-gray-400"></i>
+            </div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Available Funds</span>
+                    <span class="text-lg font-bold text-brand-red">₱{{ user.available_funds|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Min Investment</span>
+                    <span class="text-lg font-bold text-gray-900">₱{{ user.min_investment_amount|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Investment Preference</span>
+                    <span class="text-sm font-medium text-gray-900">{{ user.investment_preference|default:"Not specified" }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-gray-900">Recent Transactions</h3>
+                <a href="{% url 'transaction_history' %}" class="text-sm text-brand-red hover:underline">View All</a>
+            </div>
+            <div class="space-y-3">
+                {% with transactions=wallet.transactions.all|slice:":3" %}
+                    {% if transactions %}
+                        {% for transaction in transactions %}
+                        <div class="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                            <div class="flex items-center">
+                                <div class="{% if transaction.transaction_type == 'DEPOSIT' or transaction.transaction_type == 'LOAN_RCV' or transaction.transaction_type == 'LOAN_REP' %}bg-green-100 text-green-600{% else %}bg-red-100 text-red-600{% endif %} p-1.5 rounded-full mr-3">
+                                    {% if transaction.transaction_type == 'DEPOSIT' %}
+                                        <i data-lucide="arrow-down-left" class="w-3 h-3"></i>
+                                    {% elif transaction.transaction_type == 'WITHDRAW' or transaction.transaction_type == 'LOAN_PAY' %}
+                                        <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                                    {% else %}
+                                        <i data-lucide="dollar-sign" class="w-3 h-3"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ transaction.get_transaction_type_display }}</p>
+                                    <p class="text-xs text-gray-500">{{ transaction.transaction_date|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            <span class="text-sm font-medium {% if transaction.transaction_type == 'DEPOSIT' or transaction.transaction_type == 'LOAN_RCV' or transaction.transaction_type == 'LOAN_REP' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if transaction.transaction_type == 'DEPOSIT' or transaction.transaction_type == 'LOAN_RCV' or transaction.transaction_type == 'LOAN_REP' %}+{% else %}-{% endif %}₱{{ transaction.amount|floatformat:2 }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-sm text-gray-500">No recent transactions</p>
+                        </div>
+                    {% endif %}
+                {% endwith %}
             </div>
         </div>
     </div>

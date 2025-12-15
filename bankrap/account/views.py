@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, Count, Sum
+from django.utils import timezone
+from datetime import timedelta
 from .models import User, BorrowerProfile, LenderProfile
-from wallet.models import Wallet
+from wallet.models import Wallet, WalletTransaction
 from review.models import ReviewAndRating
-from loan.models import LoanRequest
+from loan.models import LoanRequest, LoanOffer, ActiveLoan
+from transaction.models import Transaction
 
 
 # --- Helper Function ---
@@ -30,15 +33,155 @@ def get_current_user(request):
     return None
 
 
-# --- Views ---
-
+# --- Dashboard View ---
 def dashboard_view(request):
     user = get_current_user(request)
     if not user:
         return redirect('login')
-    return render(request, 'account/dashboard.html', {'user': user})
+
+    # Get user's wallet
+    try:
+        wallet = Wallet.objects.get(user=user)
+    except Wallet.DoesNotExist:
+        wallet = Wallet.objects.create(user=user, balance=0.00)
+
+    # Calculate statistics based on user type
+    if user.type == 'B':  # Borrower
+        # Get borrower's loan requests
+        loan_requests = LoanRequest.objects.filter(borrower=user)
+
+        # Count pending requests
+        pending_requests_count = loan_requests.filter(status='PENDING').count()
+
+        # Sum total amount of pending requests
+        pending_requests_total = loan_requests.filter(status='PENDING').aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+
+        # Get offers made to borrower's requests
+        offers_to_me = LoanOffer.objects.filter(
+            loan_request__borrower=user,
+            status='PENDING'
+        ).count()
+
+        # Sum total offered amount
+        offers_total = LoanOffer.objects.filter(
+            loan_request__borrower=user,
+            status='PENDING'
+        ).aggregate(
+            total=Sum('offered_amount')
+        )['total'] or 0
+
+        # Get active loans
+        active_loans = ActiveLoan.objects.filter(borrower=user, status='ACTIVE')
+
+        # Calculate upcoming repayments
+        upcoming_repayments = active_loans.count()
+
+        # Calculate total due soon (next 7 days)
+        due_date_threshold = timezone.now().date() + timedelta(days=7)
+        due_soon_amount = 0
+        for loan in active_loans:
+            if loan.due_date <= due_date_threshold:
+                # Calculate monthly payment for demonstration
+                # In real app, you'd have proper repayment calculation
+                due_soon_amount += loan.principal_amount / 12  # Simplified
+
+    else:  # Lender
+        # Get lender's offers
+        my_offers = LoanOffer.objects.filter(lender=user)
+
+        # Count pending offers
+        pending_requests_count = my_offers.filter(status='PENDING').count()
+
+        # Sum total offered amount
+        pending_requests_total = my_offers.filter(status='PENDING').aggregate(
+            total=Sum('offered_amount')
+        )['total'] or 0
+
+        # Get offers made to lender's loan requests (if any)
+        offers_to_me = LoanOffer.objects.filter(
+            loan_request__borrower=user,
+            status='PENDING'
+        ).count()  # Usually 0 for lenders
+
+        # Sum total offered amount to lender
+        offers_total = LoanOffer.objects.filter(
+            loan_request__borrower=user,
+            status='PENDING'
+        ).aggregate(
+            total=Sum('offered_amount')
+        )['total'] or 0
+
+        # Get active loans where lender is investor
+        active_loans = ActiveLoan.objects.filter(lender=user, status='ACTIVE')
+
+        # Calculate upcoming repayments (from borrower to lender)
+        upcoming_repayments = active_loans.count()
+
+        # Calculate total to receive soon (next 7 days)
+        due_date_threshold = timezone.now().date() + timedelta(days=7)
+        due_soon_amount = 0
+        for loan in active_loans:
+            if loan.due_date <= due_date_threshold:
+                # Calculate repayment to receive
+                due_soon_amount += loan.principal_amount / 12  # Simplified
+
+    # Get recent notifications (simplified - in real app, use Notification model)
+    # For now, we'll show recent activities
+    recent_activities = []
+
+    # Get recent transactions
+    recent_transactions = Transaction.objects.filter(user=user).order_by('-transaction_date')[:3]
+    for trans in recent_transactions:
+        recent_activities.append({
+            'type': 'transaction',
+            'title': f"{trans.get_type_display()} {'Completed' if trans.status == 'C' else trans.get_status_display()}",
+            'description': f"Amount: ₱{trans.amount}",
+            'time': 'Recently',
+            'icon': 'check' if trans.status == 'C' else 'info'
+        })
+
+    # Get recent loan status changes
+    if user.type == 'B':
+        recent_loans = LoanRequest.objects.filter(borrower=user).order_by('-request_date')[:2]
+        for loan in recent_loans:
+            if loan.status == 'FUNDED':
+                recent_activities.append({
+                    'type': 'loan',
+                    'title': 'Loan Funded',
+                    'description': f"Your loan request #{loan.loan_id} has been funded",
+                    'time': 'Recently',
+                    'icon': 'dollar-sign'
+                })
+    else:
+        recent_offers = LoanOffer.objects.filter(lender=user).order_by('-offer_date')[:2]
+        for offer in recent_offers:
+            if offer.status == 'ACCEPTED':
+                recent_activities.append({
+                    'type': 'offer',
+                    'title': 'Offer Accepted',
+                    'description': f"Your offer for loan #{offer.loan_request.loan_id} was accepted",
+                    'time': 'Recently',
+                    'icon': 'check-circle'
+                })
+
+    context = {
+        'user': user,
+        'wallet': wallet,
+        'pending_requests_count': pending_requests_count,
+        'pending_requests_total': pending_requests_total,
+        'offers_to_me': offers_to_me,
+        'offers_total': offers_total,
+        'upcoming_repayments': upcoming_repayments,
+        'due_soon_amount': due_soon_amount,
+        'recent_activities': recent_activities[:3],  # Limit to 3 most recent
+    }
+
+    return render(request, 'account/dashboard.html', context)
 
 
+# --- Other views remain the same ---
 def profile_view(request):
     user = get_current_user(request)
     if not user:
