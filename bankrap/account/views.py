@@ -4,7 +4,7 @@ from django.views import View
 from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-from .models import User, BorrowerProfile, LenderProfile
+from .models import User, BorrowerProfile, LenderProfile, Notification as NotifModel
 from wallet.models import Wallet, WalletTransaction
 from review.models import ReviewAndRating
 from loan.models import LoanRequest, LoanOffer, ActiveLoan
@@ -653,4 +653,74 @@ def notifications_view(request):
     user = get_current_user(request)
     if not user:
         return redirect('login')
-    return render(request, 'account/notifications.html', {'user': user})
+
+    # Get filter from query parameters
+    filter_type = request.GET.get('filter', 'all')
+    mark_all = request.GET.get('mark_all', False)
+
+    # Mark all as read if requested
+    if mark_all:
+        # Import Notification model
+        from .models import Notification as NotifModel
+        NotifModel.objects.filter(user=user, is_read=False).update(is_read=True)
+        messages.success(request, "All notifications marked as read!")
+        return redirect('notifications')
+
+    # Get notifications for the current user
+    from .models import Notification as NotifModel
+    notifications = NotifModel.objects.filter(user=user)
+
+    # Apply filters
+    if filter_type == 'unread':
+        notifications = notifications.filter(is_read=False)
+    elif filter_type == 'loan_actions':
+        notification_types = ['LOAN_APPROVED', 'LOAN_OFFER', 'OFFER_ACCEPTED', 'LOAN_FUNDED', 'LOAN_REJECTED']
+        notifications = notifications.filter(notification_type__in=notification_types)
+    elif filter_type == 'verifications':
+        notifications = notifications.filter(notification_type='VERIFICATION')
+    elif filter_type == 'messages':
+        notifications = notifications.filter(notification_type='MESSAGE')
+
+    # Order by creation date (newest first)
+    notifications = notifications.order_by('-created_at')
+
+    # Get counts for filter tabs
+    all_count = NotifModel.objects.filter(user=user).count()
+    unread_count = NotifModel.objects.filter(user=user, is_read=False).count()
+    loan_actions_count = NotifModel.objects.filter(
+        user=user,
+        notification_type__in=['LOAN_APPROVED', 'LOAN_OFFER', 'OFFER_ACCEPTED', 'LOAN_FUNDED', 'LOAN_REJECTED']
+    ).count()
+    verifications_count = NotifModel.objects.filter(user=user, notification_type='VERIFICATION').count()
+    messages_count = NotifModel.objects.filter(user=user, notification_type='MESSAGE').count()
+
+    context = {
+        'user': user,
+        'notifications': notifications,
+        'filter_type': filter_type,
+        'counts': {
+            'all': all_count,
+            'unread': unread_count,
+            'loan_actions': loan_actions_count,
+            'verifications': verifications_count,
+            'messages': messages_count,
+        }
+    }
+
+    return render(request, 'account/notifications.html', context)
+
+def mark_notification_read(request, notification_id):
+    user = get_current_user(request)
+    if not user:
+        return redirect('login')
+
+    from .models import Notification as NotifModel
+    try:
+        notification = NotifModel.objects.get(notification_id=notification_id, user=user)
+        notification.is_read = True
+        notification.save()
+        messages.success(request, "Notification marked as read!")
+    except NotifModel.DoesNotExist:
+        messages.error(request, "Notification not found!")
+
+    return redirect('notifications')
