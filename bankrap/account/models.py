@@ -39,50 +39,45 @@ class BorrowerProfile(User):
     def __str__(self):
         return f"Borrower: {self.name} | Credit Score: {self.credit_score}"
 
+
 class Notification(models.Model):
-    NOTIFICATION_TYPES = (
+    NOTIFICATION_TYPES = [
         ('LOAN_APPROVED', 'Loan Approved'),
         ('LOAN_OFFER', 'New Loan Offer'),
         ('REPAYMENT_DUE', 'Repayment Due'),
-        ('VERIFICATION', 'Verification'),
+        ('VERIFICATION', 'Verification Status'),
         ('MESSAGE', 'New Message'),
         ('OFFER_ACCEPTED', 'Offer Accepted'),
-        ('LOAN_FUNDED', 'Loan Funded'),
         ('LOAN_REJECTED', 'Loan Rejected'),
         ('REPAYMENT_MADE', 'Repayment Made'),
         ('WALLET', 'Wallet Transaction'),
-    )
+        ('SYSTEM', 'System Notification'),
+    ]
 
-    PRIORITY_CHOICES = (
+    PRIORITY_LEVELS = [
         ('HIGH', 'High'),
         ('MEDIUM', 'Medium'),
         ('LOW', 'Low'),
-    )
+    ]
 
     notification_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey('account.User', on_delete=models.CASCADE, related_name='notifications')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=255)
     message = models.TextField()
     is_read = models.BooleanField(default=False)
-    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='MEDIUM')
-
-    # Use string references instead of importing loan models
-    loan_request = models.ForeignKey('loan.LoanRequest', on_delete=models.SET_NULL, null=True, blank=True)
-    loan_offer = models.ForeignKey('loan.LoanOffer', on_delete=models.SET_NULL, null=True, blank=True)
-    active_loan = models.ForeignKey('loan.ActiveLoan', on_delete=models.SET_NULL, null=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
+    priority = models.CharField(max_length=10, choices=PRIORITY_LEVELS, default='MEDIUM')
+
+    # Add these new fields for click actions
+    action_url = models.CharField(max_length=255, blank=True, null=True)
+    related_id = models.IntegerField(blank=True, null=True)  # ID of related object (loan_id, offer_id, etc.)
 
     class Meta:
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['user', 'is_read', 'created_at']),
-        ]
 
     def __str__(self):
-        return f"{self.notification_type} - {self.user.name} - {'Read' if self.is_read else 'Unread'}"
-
+        return f"{self.title} - {self.user.name}"
 
 class Message(models.Model):
     message_id = models.AutoField(primary_key=True)

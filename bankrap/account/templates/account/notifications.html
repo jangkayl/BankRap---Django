@@ -32,7 +32,11 @@
     <div class="space-y-4">
         {% if notifications %}
             {% for notification in notifications %}
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-all hover:shadow-md {% if not notification.is_read %}border-l-4 border-l-brand-red{% endif %}">
+                <!-- Make the entire notification card clickable -->
+                <div class="notification-card bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-all hover:shadow-md cursor-pointer {% if not notification.is_read %}border-l-4 border-l-brand-red{% endif %}"
+                     data-notification-id="{{ notification.notification_id }}"
+                     data-action-url="{{ notification.action_url|default:'#' }}"
+                     onclick="handleNotificationClick(this)">
                     <div class="mt-1 flex-shrink-0">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center
                             {% if notification.notification_type == 'LOAN_APPROVED' or notification.notification_type == 'LOAN_FUNDED' %}bg-green-50
@@ -76,7 +80,8 @@
                             <div class="flex items-center space-x-4">
                                 {% if not notification.is_read %}
                                     <a href="{% url 'mark_notification_read' notification.notification_id %}"
-                                       class="text-xs font-medium text-gray-500 hover:text-gray-900">
+                                       class="text-xs font-medium text-gray-500 hover:text-gray-900 mark-read-btn"
+                                       onclick="event.stopPropagation()">
                                         Mark as Read
                                     </a>
                                 {% endif %}
@@ -110,4 +115,79 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function handleNotificationClick(notificationCard) {
+    const notificationId = notificationCard.dataset.notificationId;
+    const actionUrl = notificationCard.dataset.actionUrl;
+
+    // If there's an action URL, navigate to it
+    if (actionUrl && actionUrl !== '#') {
+        window.location.href = actionUrl;
+    } else {
+        // Otherwise, just mark as read
+        markAsRead(notificationId, notificationCard);
+    }
+}
+
+function markAsRead(notificationId, notificationCard) {
+    // Mark as read via AJAX
+    fetch(`/notifications/${notificationId}/read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI to show as read
+            notificationCard.classList.remove('border-l-brand-red');
+
+            // Remove "New" badge if exists
+            const newBadge = notificationCard.querySelector('.bg-red-50');
+            if (newBadge) newBadge.remove();
+
+            // Remove "Mark as Read" link
+            const markReadBtn = notificationCard.querySelector('.mark-read-btn');
+            if (markReadBtn) markReadBtn.remove();
+        }
+    })
+    .catch(error => {
+        console.error('Error marking notification as read:', error);
+    });
+}
+
+// Make notification cards keyboard accessible
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationCards = document.querySelectorAll('.notification-card');
+
+    notificationCards.forEach(card => {
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', 'View notification');
+
+        // Handle Enter key
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleNotificationClick(this);
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.notification-card:hover {
+    transform: translateY(-2px);
+    border-color: #e5e7eb;
+}
+
+.notification-card:focus {
+    outline: 2px solid #dc2626;
+    outline-offset: 2px;
+}
+</style>
 {% endblock %}

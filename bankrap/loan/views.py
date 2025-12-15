@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db.models import Sum
 from datetime import timedelta
 from decimal import Decimal
-from account.models import User, BorrowerProfile, LenderProfile
+from account.models import User, BorrowerProfile, LenderProfile, Notification
 from wallet.models import Wallet, WalletTransaction
 from transaction.models import Transaction
 from .models import LoanRequest, LoanOffer, ActiveLoan
@@ -99,24 +99,39 @@ def loan_request_create(request):
 
     if request.method == 'POST':
         try:
-            LoanRequest.objects.create(
+            # Convert amount to Decimal before saving
+            amount_str = request.POST.get('amount')
+            amount = Decimal(amount_str) if amount_str else Decimal('0')
+
+            # Save the created loan to a variable
+            new_loan = LoanRequest.objects.create(
                 borrower=user,
-                amount=request.POST.get('amount'),
+                amount=amount,  # Use the Decimal value
                 interest_rate=request.POST.get('interest_rate'),
                 term=request.POST.get('term'),
                 purpose=request.POST.get('purpose'),
                 status='PENDING'
             )
+
+            # ========== ADD NOTIFICATION FOR BORROWER HERE ==========
+            Notification.objects.create(
+                user=user,
+                notification_type='LOAN_APPROVED',
+                title='Loan Request Submitted!',
+                message=f'Your loan request for ₱{float(amount):,.2f} has been submitted and is now visible to lenders.',
+                action_url=f'/loans/{new_loan.loan_id}/',  # Link to loan details
+                related_id=new_loan.loan_id,
+                priority='MEDIUM'
+            )
+            # ========================================================
+
             messages.success(request, "Loan request posted successfully!")
             return redirect('my_loan_requests')
         except Exception as e:
             messages.error(request, f"Error: {e}")
 
     return render(request, 'loan/request_create.html', {'user': user})
-
-
 # --- Offer Logic ---
-
 def create_offer(request, loan_id):
     user = get_current_user(request)
     if not user or user.type != 'L': return redirect('login')
@@ -162,7 +177,17 @@ def create_offer(request, loan_id):
                     status='PENDING'
                 )
 
-            messages.success(request, f"Offer sent! ₱{amount} has been put on hold.")
+                Notification.objects.create(
+                    user=loan.borrower,
+                    notification_type='LOAN_OFFER',
+                    title=f'New Loan Offer from {user.name}',
+                    message=f'{user.name} has made an offer of ₱{float(amount):,.2f} on your loan request for "{loan.purpose}".',
+                    action_url=f'/loans/{loan.loan_id}/',  # Link to loan details page
+                    related_id=loan.loan_id,
+                    priority='HIGH'
+                )
+
+            messages.success(request, f"Offer sent! ₱{float(amount):,.2f} has been put on hold.")
             return redirect('loan_marketplace')
 
         except Exception as e:
@@ -171,9 +196,7 @@ def create_offer(request, loan_id):
 
     return render(request, 'loan/offer_create.html', {'loan': loan, 'user': user, 'borrower_rating': borrower_rating})
 
-
 # --- ACCEPT / DECLINE LOGIC ---
-
 def accept_offer(request, offer_id):
     user = get_current_user(request)
     if not user or user.type != 'B': return redirect('login')
@@ -218,6 +241,33 @@ def accept_offer(request, offer_id):
             offer.loan_request.status = 'FUNDED'
             offer.loan_request.save()
 
+            # Convert Decimal to float for formatting
+            offered_amount_float = float(offer.offered_amount)
+
+            # ========== ADD NOTIFICATION FOR LENDER HERE ==========
+            Notification.objects.create(
+                user=offer.lender,
+                notification_type='OFFER_ACCEPTED',
+                title='Your Loan Offer Was Accepted!',
+                message=f'Your offer of ₱{offered_amount_float:,.2f} has been accepted by {user.name}.',
+                action_url=f'/loans/{offer.loan_request.loan_id}/',  # Link to loan details
+                related_id=offer.offer_id,
+                priority='HIGH'
+            )
+            # =======================================================
+
+            # ========== ADD NOTIFICATION FOR BORROWER HERE ==========
+            Notification.objects.create(
+                user=user,
+                notification_type='LOAN_FUNDED',
+                title='Loan Funded Successfully!',
+                message=f'₱{offered_amount_float:,.2f} has been disbursed to your wallet.',
+                action_url='/wallet/',  # Link to wallet page
+                related_id=offer.loan_request.loan_id,
+                priority='HIGH'
+            )
+            # ========================================================
+
             days = 30
             if 'DAYS' in offer.loan_request.term:
                 try:
@@ -256,6 +306,19 @@ def accept_offer(request, offer_id):
                     transaction_type="REFUND",
                     reference_number=f"REFUND-OFFER-{other.offer_id}"
                 )
+
+                # ========== ADD NOTIFICATION HERE ==========
+                Notification.objects.create(
+                    user=other.lender,
+                    notification_type='LOAN_REJECTED',
+                    title='Loan Offer Refunded',
+                    message=f'Your offer of ₱{float(other.offered_amount):,.2f} was not selected. Funds have been returned to your wallet.',
+                    action_url='/wallet/',  # Link to wallet page
+                    related_id=other.offer_id,
+                    priority='MEDIUM'
+                )
+                # ============================================
+
                 other.status = 'DECLINED'
                 other.save()
 
@@ -271,18 +334,30 @@ def accept_offer(request, offer_id):
                         wallet=lender_ref_wallet, amount=pending.offered_amount, transaction_type="REFUND",
                         reference_number=f"REFUND-CANCELLED-{req.loan_id}"
                     )
+
+                    # ========== ADD NOTIFICATION HERE ==========
+                    Notification.objects.create(
+                        user=pending.lender,
+                        notification_type='LOAN_REJECTED',
+                        title='Loan Request Cancelled',
+                        message=f'The loan request you made an offer on has been cancelled. Funds have been returned to your wallet.',
+                        action_url='/wallet/',  # Link to wallet page
+                        related_id=req.loan_id,
+                        priority='MEDIUM'
+                    )
+                    # ============================================
+
                     pending.status = 'DECLINED'
                     pending.save()
                 req.status = 'REJECTED'
                 req.save()
 
-            messages.success(request, f"Offer accepted! ₱{offer.offered_amount} added to wallet.")
+            messages.success(request, f"Offer accepted! ₱{float(offer.offered_amount):,.2f} added to wallet.")
             return redirect('wallet')
 
     except Exception as e:
         messages.error(request, f"Transaction failed: {e}")
         return redirect('my_loan_requests')
-
 
 def decline_offer(request, offer_id):
     user = get_current_user(request)
@@ -312,6 +387,18 @@ def decline_offer(request, offer_id):
             offer.status = 'DECLINED'
             offer.save()
 
+            # ========== ADD NOTIFICATION FOR LENDER HERE ==========
+            Notification.objects.create(
+                user=offer.lender,
+                notification_type='LOAN_REJECTED',
+                title='Loan Offer Declined',
+                message=f'Your offer of ₱{offer.offered_amount:,.2f} was declined by the borrower.',
+                action_url=f'/loans/{offer.loan_request.loan_id}/',  # Fixed: use f-string properly
+                related_id=offer.offer_id,
+                priority='MEDIUM'
+            )
+            # ======================================================
+
             messages.info(request, "Offer declined and funds refunded to lender.")
             return redirect('loan_detail', loan_id=offer.loan_request.loan_id)
 
@@ -319,9 +406,7 @@ def decline_offer(request, offer_id):
         messages.error(request, f"Error declining offer: {e}")
         return redirect('loan_detail', loan_id=offer.loan_request.loan_id)
 
-
 # --- REPAYMENT LOGIC ---
-
 def pay_loan(request, active_loan_id):
     user = get_current_user(request)
     if not user or user.type != 'B':
@@ -345,7 +430,7 @@ def pay_loan(request, active_loan_id):
                 repayment_amount = active_loan.total_repayment
 
                 if borrower_wallet.balance < repayment_amount:
-                    messages.error(request, f"Insufficient funds. You need ₱{repayment_amount}.")
+                    messages.error(request, f"Insufficient funds. You need ₱{float(repayment_amount):,.2f}.")
                     return redirect('repayment_schedule')
 
                 borrower_wallet.withdraw(repayment_amount)
@@ -380,6 +465,30 @@ def pay_loan(request, active_loan_id):
                 active_loan.loan_request.status = 'REPAID'
                 active_loan.loan_request.save()
 
+                # ========== ADD NOTIFICATION FOR BORROWER HERE ==========
+                Notification.objects.create(
+                    user=user,
+                    notification_type='REPAYMENT_MADE',
+                    title='Loan Repayment Successful!',
+                    message=f'You have successfully repaid ₱{float(repayment_amount):,.2f} for your loan.',
+                    action_url='/repayments/',  # Link to repayment schedule
+                    related_id=active_loan_id,
+                    priority='MEDIUM'
+                )
+                # ========================================================
+
+                # ========== ADD NOTIFICATION FOR LENDER HERE ==========
+                Notification.objects.create(
+                    user=active_loan.lender,
+                    notification_type='REPAYMENT_MADE',
+                    title='Loan Repayment Received!',
+                    message=f'{user.name} has repaid ₱{float(repayment_amount):,.2f} for loan #{active_loan.loan_request.loan_id}.',
+                    action_url='/repayments/',  # Link to repayment schedule
+                    related_id=active_loan_id,
+                    priority='MEDIUM'
+                )
+                # ======================================================
+
                 messages.success(request, f"Loan repaid successfully!")
                 return redirect('repayment_schedule')
 
@@ -388,7 +497,6 @@ def pay_loan(request, active_loan_id):
             return redirect('repayment_schedule')
 
     return redirect('repayment_schedule')
-
 
 # --- Stubs & Lists ---
 def loan_request_list(request): return loan_marketplace(request)
