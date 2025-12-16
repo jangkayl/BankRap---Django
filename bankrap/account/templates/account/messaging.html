@@ -3,120 +3,6 @@
 
 {% block title %}Messages - BankRap{% endblock %}
 
-{% block extra_head %}
-<script>
-    let messagePollInterval;
-    let lastMessageId = 0;
-
-    function scrollToBottom() {
-        const chatContainer = document.getElementById('chat-messages');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-    }
-
-    // Initialize lastMessageId from existing messages
-    document.addEventListener('DOMContentLoaded', function() {
-        const lastMessage = document.querySelector('.message-item:last-child');
-        if (lastMessage) {
-            lastMessageId = parseInt(lastMessage.dataset.messageId) || 0;
-        }
-        scrollToBottom(); // Call it here after DOM is loaded
-        startPolling();
-    });
-
-    function startPolling() {
-        // Clear any existing interval
-        if (messagePollInterval) clearInterval(messagePollInterval);
-
-        // Start polling for new messages every 3 seconds
-        messagePollInterval = setInterval(fetchNewMessages, 3000);
-    }
-
-    function fetchNewMessages() {
-        const partnerId = "{{ partner.user_id|default:'' }}";
-        if (!partnerId) return;
-
-        fetch(`/messages/new-messages/?partner_id=${partnerId}&last_message_id=${lastMessageId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.has_new) {
-                    // Add new messages to chat
-                    data.messages.forEach(msg => {
-                        addMessageToChat(msg);
-                        lastMessageId = Math.max(lastMessageId, msg.id);
-                    });
-
-                    // Scroll to bottom
-                    scrollToBottom();
-                }
-            })
-            .catch(error => console.error('Error fetching messages:', error));
-    }
-
-    function addMessageToChat(msg) {
-        const chatContainer = document.getElementById('chat-messages');
-        if (!chatContainer) return;
-
-        const isOwnMessage = msg.sender_id == {{ user.user_id }};
-
-        const messageHtml = `
-            <div class="flex ${isOwnMessage ? 'justify-end' : 'justify-start'} message-item" data-message-id="${msg.id}">
-                <div class="max-w-md">
-                    <div class="flex ${isOwnMessage ? 'items-end justify-end' : 'items-start'} space-x-3">
-                        ${!isOwnMessage ? `
-                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 mb-1">
-                            {{ partner.name|slice:":1"|default:"U" }}
-                        </div>
-                        ` : ''}
-                        <div class="flex flex-col space-y-1 ${isOwnMessage ? 'items-end' : 'items-start'}">
-                            <div class="${isOwnMessage ? 'bg-brand-red text-white rounded-2xl rounded-br-none' : 'bg-white border border-gray-100 text-gray-700 rounded-2xl rounded-bl-none'} px-4 py-3 text-sm shadow-sm">
-                                ${msg.content}
-                            </div>
-                            <span class="text-xs text-gray-400 ${isOwnMessage ? 'mr-1' : 'ml-1'}">
-                                ${msg.time}
-                            </span>
-                        </div>
-                        ${isOwnMessage ? `
-                        <div class="w-8 h-8 rounded-full bg-brand-red flex items-center justify-center text-sm font-bold text-white mb-1">
-                            {{ user.name|slice:":1" }}
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-
-        chatContainer.insertAdjacentHTML('beforeend', messageHtml);
-    }
-
-    // Auto-resize textarea
-    function autoResize(textarea) {
-        if (!textarea) return;
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
-    }
-
-    // Auto-submit form with Enter key
-    document.addEventListener('keydown', function(e) {
-        if (e.target.name === 'content' && e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            const form = document.getElementById('message-form');
-            if (form) form.submit();
-        }
-    });
-
-    // Clear interval when leaving page
-    window.addEventListener('beforeunload', function() {
-        if (messagePollInterval) clearInterval(messagePollInterval);
-    });
-
-    // Make functions globally available
-    window.scrollToBottom = scrollToBottom;
-    window.autoResize = autoResize;
-</script>
-{% endblock %}
-
 {% block content %}
 <div class="h-[calc(100vh-8rem)] flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
@@ -200,11 +86,9 @@
                 </a>
             </div>
             <div class="flex items-center space-x-2">
-                <button onclick="scrollToBottom()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" title="Scroll to bottom">
+                <!-- Remove onclick and add data-scroll-button attribute instead -->
+                <button data-scroll-button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" title="Scroll to bottom">
                     <i data-lucide="arrow-down" class="w-4 h-4"></i>
-                </button>
-                <button class="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <i data-lucide="more-vertical" class="w-5 h-5"></i>
                 </button>
             </div>
         </div>
@@ -256,10 +140,11 @@
                 {% csrf_token %}
                 <input type="hidden" name="with" value="{{ partner.user_id }}">
                 <div class="flex-1 relative">
+                    <!-- Remove oninput and add data-auto-resize attribute instead -->
                     <textarea name="content" rows="1" placeholder="Type your message here..."
-                           class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red transition-all resize-none max-h-32"
+                           class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red transition-all resize-none max-h-32 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                            required
-                           oninput="autoResize(this)"></textarea>
+                           data-auto-resize></textarea>
                     <div class="absolute right-3 bottom-3 text-xs text-gray-400">
                         <i data-lucide="corner-down-left" class="w-3 h-3"></i> Enter to send
                     </div>
@@ -283,4 +168,185 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Move JavaScript to the BOTTOM of the content block -->
+<script>
+    let messagePollInterval;
+    let lastMessageId = 0;
+
+    function scrollToBottom(options = { smooth: true }) {
+        const chatContainer = document.getElementById('chat-messages');
+        if (!chatContainer) return;
+
+        const lastMessage = chatContainer.querySelector('.message-item:last-child');
+        if (lastMessage) {
+            try {
+                lastMessage.scrollIntoView({
+                    behavior: options.smooth ? 'smooth' : 'auto',
+                    block: 'end'
+                });
+            } catch (e) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        } else {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    }
+
+    function autoResize(textarea) {
+        if (!textarea) return;
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+    }
+
+    function isNearBottom(container, threshold = 150) {
+        return (container.scrollHeight - container.scrollTop - container.clientHeight) < threshold;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize lastMessageId from existing messages
+        const lastMessage = document.querySelector('.message-item:last-child');
+        if (lastMessage) {
+            lastMessageId = parseInt(lastMessage.dataset.messageId) || 0;
+        }
+
+        // Set up scroll button click listener
+        const scrollButton = document.querySelector('[data-scroll-button]');
+        if (scrollButton) {
+            scrollButton.addEventListener('click', function() {
+                scrollToBottom({ smooth: true });
+            });
+        }
+
+        // Set up auto-resize for textarea
+        const textarea = document.querySelector('[data-auto-resize]');
+        if (textarea) {
+            // Initial resize
+            autoResize(textarea);
+
+            // Add input event listener
+            textarea.addEventListener('input', function() {
+                autoResize(this);
+            });
+        }
+
+        // Delay slightly to allow layout and fonts/images to settle, then jump to bottom
+        requestAnimationFrame(() => setTimeout(() => scrollToBottom({ smooth: false }), 50));
+
+        startPolling();
+        attachMutationObserver();
+        attachFormHandlers();
+    });
+
+    function startPolling() {
+        if (messagePollInterval) clearInterval(messagePollInterval);
+        messagePollInterval = setInterval(fetchNewMessages, 3000);
+    }
+
+    function fetchNewMessages() {
+        const partnerId = "{{ partner.user_id|default:'' }}";
+        if (!partnerId) return;
+
+        fetch(`/messages/new-messages/?partner_id=${partnerId}&last_message_id=${lastMessageId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.has_new) {
+                    const chatContainer = document.getElementById('chat-messages');
+                    const shouldAutoScroll = chatContainer ? isNearBottom(chatContainer) : true;
+
+                    data.messages.forEach(msg => {
+                        addMessageToChat(msg);
+                        lastMessageId = Math.max(lastMessageId, msg.id);
+                    });
+
+                    if (shouldAutoScroll) {
+                        scrollToBottom({ smooth: true });
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching messages:', error));
+    }
+
+    function addMessageToChat(msg) {
+        const chatContainer = document.getElementById('chat-messages');
+        if (!chatContainer) return;
+
+        const isOwnMessage = msg.sender_id == {{ user.user_id }};
+
+        const messageHtml = `
+            <div class="flex ${isOwnMessage ? 'justify-end' : 'justify-start'} message-item" data-message-id="${msg.id}">
+                <div class="max-w-md">
+                    <div class="flex ${isOwnMessage ? 'items-end justify-end' : 'items-start'} space-x-3">
+                        ${!isOwnMessage ? `
+                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-600 mb-1">
+                            {{ partner.name|slice:":1"|default:"U" }}
+                        </div>
+                        ` : ''}
+                        <div class="flex flex-col space-y-1 ${isOwnMessage ? 'items-end' : 'items-start'}">
+                            <div class="${isOwnMessage ? 'bg-brand-red text-white rounded-2xl rounded-br-none' : 'bg-white border border-gray-100 text-gray-700 rounded-2xl rounded-bl-none'} px-4 py-3 text-sm shadow-sm">
+                                ${msg.content}
+                            </div>
+                            <span class="text-xs text-gray-400 ${isOwnMessage ? 'mr-1' : 'ml-1'}">
+                                ${msg.time}
+                            </span>
+                        </div>
+                        ${isOwnMessage ? `
+                        <div class="w-8 h-8 rounded-full bg-brand-red flex items-center justify-center text-sm font-bold text-white mb-1">
+                            {{ user.name|slice:":1" }}
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.target.name === 'content' && e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const form = document.getElementById('message-form');
+            if (form) form.submit();
+        }
+    });
+
+    window.addEventListener('beforeunload', function() {
+        if (messagePollInterval) clearInterval(messagePollInterval);
+    });
+
+    function attachMutationObserver() {
+        const chatContainer = document.getElementById('chat-messages');
+        if (!chatContainer || window._chatObserverAttached) return;
+
+        const observer = new MutationObserver((mutations) => {
+            let added = false;
+            for (const m of mutations) {
+                if (m.addedNodes && m.addedNodes.length > 0) {
+                    added = true;
+                    break;
+                }
+            }
+            if (!added) return;
+
+            if (isNearBottom(chatContainer)) {
+                scrollToBottom({ smooth: true });
+            }
+        });
+
+        observer.observe(chatContainer, { childList: true, subtree: false });
+        window._chatObserverAttached = true;
+    }
+
+    function attachFormHandlers() {
+        const form = document.getElementById('message-form');
+        if (!form) return;
+
+        form.addEventListener('submit', function() {
+            setTimeout(() => {
+                scrollToBottom({ smooth: true });
+            }, 100);
+        });
+    }
+</script>
 {% endblock %}
