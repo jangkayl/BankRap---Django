@@ -4,8 +4,10 @@ from django.views import View
 from django.db.models import Q, Avg
 from django.db import connection
 from .models import User, BorrowerProfile, LenderProfile
-from ..loan.models import LoanRequest
+
+from ..loan.models import LoanRequest, LoanOffer, ActiveLoan
 from ..review.models import ReviewAndRating
+from ..wallet.models import WalletTransaction
 
 
 def dict_fetch_one(cursor):
@@ -15,7 +17,6 @@ def dict_fetch_one(cursor):
     if row:
         return dict(zip(columns, row))
     return None
-
 
 def get_current_user(request):
     user_id = request.session.get('user_id')
@@ -42,7 +43,40 @@ def dashboard_view(request):
     user = get_current_user(request)
     if not user:
         return redirect('login')
-    return render(request, 'account/dashboard.html', {'user': user})
+
+        # --- Fetch Counts for Dashboard Stats ---
+
+    # 1. Total Transactions Count
+    # We count wallet transactions as they represent all financial activity
+    transaction_count = 0
+    if hasattr(user, 'wallet'):
+        transaction_count =     WalletTransaction.objects.filter(wallet=user.wallet).count()
+
+    # 2. Pending Requests/Offers Count
+    pending_count = 0
+    if user.type == 'B':
+        # Count Pending Loan Requests
+        pending_count = LoanRequest.objects.filter(borrower=user, status='PENDING').count()
+    elif user.type == 'L':
+        # Count Pending Offers Sent
+        pending_count = LoanOffer.objects.filter(lender=user, status='PENDING').count()
+
+    # 3. Active Loans/Investments Count
+    active_count = 0
+    if user.type == 'B':
+        active_count = ActiveLoan.objects.filter(borrower=user, status='ACTIVE').count()
+    elif user.type == 'L':
+        active_count = ActiveLoan.objects.filter(lender=user, status='ACTIVE').count()
+
+    context = {
+        'user': user,
+        'transaction_count': transaction_count,
+        'pending_count': pending_count,
+        'active_count': active_count
+    }
+
+    return render(request, 'account/dashboard.html', context)
+
 
 
 def profile_view(request):
