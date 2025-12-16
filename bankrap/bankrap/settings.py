@@ -79,9 +79,9 @@ WSGI_APPLICATION = 'bankrap.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'bankrap',
+        'NAME': 'bankrap2',
         'USER': 'root',
-        'PASSWORD': 'root',
+        'PASSWORD': 'bre@kingbad123',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {'init_command': "SET SQL_MODE='STRICT_TRANS_TABLES'"}

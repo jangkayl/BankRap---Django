@@ -15,9 +15,7 @@ class User(models.Model):
     address = models.CharField(max_length=40)
     contact_number = models.CharField(max_length=20)
     type = models.CharField(max_length=1, choices=USER_TYPE)
-
     school_id_file = models.FileField(upload_to='school_ids/', blank=True, null=True)
-
     def __str__(self):
         return self.name
 
