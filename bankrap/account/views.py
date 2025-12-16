@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
-from django.db.models import Q, Avg, Count, Sum
+from django.db.models import Q, Avg, Sum
 from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
