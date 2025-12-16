@@ -4,14 +4,12 @@ from django.views import View
 from django.db.models import Q, Avg
 from django.db import connection
 from .models import User, BorrowerProfile, LenderProfile
-
-from ..loan.models import LoanRequest, LoanOffer, ActiveLoan
-from ..review.models import ReviewAndRating
-from ..wallet.models import WalletTransaction
+from loan.models import LoanOffer, LoanRequest, ActiveLoan
+from review.models import ReviewAndRating
+from wallet.models import WalletTransaction
 
 
 def dict_fetch_one(cursor):
-    "Return the single row from a cursor as a dictionary"
     columns = [col[0] for col in cursor.description]
     row = cursor.fetchone()
     if row:
@@ -44,24 +42,18 @@ def dashboard_view(request):
     if not user:
         return redirect('login')
 
-        # --- Fetch Counts for Dashboard Stats ---
-
-    # 1. Total Transactions Count
-    # We count wallet transactions as they represent all financial activity
+    # --- Fetch Counts for Dashboard Stats ---
     transaction_count = 0
     if hasattr(user, 'wallet'):
         transaction_count =     WalletTransaction.objects.filter(wallet=user.wallet).count()
 
-    # 2. Pending Requests/Offers Count
     pending_count = 0
     if user.type == 'B':
-        # Count Pending Loan Requests
         pending_count = LoanRequest.objects.filter(borrower=user, status='PENDING').count()
     elif user.type == 'L':
-        # Count Pending Offers Sent
         pending_count = LoanOffer.objects.filter(lender=user, status='PENDING').count()
 
-    # 3. Active Loans/Investments Count
+
     active_count = 0
     if user.type == 'B':
         active_count = ActiveLoan.objects.filter(borrower=user, status='ACTIVE').count()
@@ -85,49 +77,49 @@ def profile_view(request):
         return redirect('login')
 
     if request.method == 'POST':
-        #UPDATE PROFILE via Stored Procedure
+        #UPDATE PROFILE
         try:
-            # Gather all data from POST
+
             name = request.POST.get('name')
             address = request.POST.get('address')
             contact_number = request.POST.get('contact_number')
             email = request.POST.get('email')
 
-            # Type-specific fields (must be passed to the comprehensive SP)
+
             income = request.POST.get('income', '0.00')
             employment_status = request.POST.get('employment_status', '')
             min_investment_amount = request.POST.get('min_investment_amount', '0.00')
             investment_preference = request.POST.get('investment_preference', '')
 
             with connection.cursor() as cursor:
-                # Call the update procedure
+
                 cursor.execute("CALL update_user_profile(%s, %s, %s, %s, %s, %s, %s, %s, %s)", [
                     user.user_id, name, address, contact_number, email,
                     income, employment_status, min_investment_amount, investment_preference
                 ])
 
-            # Re-fetch the user object to ensure session data is fresh
+
             messages.success(request, "Profile updated successfully!")
             return redirect('profile')
 
         except Exception as e:
             messages.error(request, f"Error updating profile: {e}")
 
-    # --- READ PROFILE via Stored Procedure (for GET request display) ---
+
     try:
         with connection.cursor() as cursor:
-            # Execute the procedure to get the profile data as a result set
+
             cursor.execute("CALL get_user_profile(%s)", [user.user_id])
             profile_data = dict_fetch_one(cursor)
 
         if profile_data:
-            # Manually update the ORM-fetched user object attributes from the SP result
+
             user.name = profile_data.get('name', user.name)
             user.address = profile_data.get('address', user.address)
             user.contact_number = profile_data.get('contact_number', user.contact_number)
             user.email = profile_data.get('email', user.email)
 
-            # Update type-specific fields for template display
+
             if user.type == 'B':
                 user.income = profile_data.get('income', user.income)
                 user.employment_status = profile_data.get('employment_status', user.employment_status)
@@ -137,9 +129,9 @@ def profile_view(request):
 
     except Exception as e:
         messages.warning(request, f"Error fetching profile data via SP: {e}")
-        # Fallback is to use the initial ORM-fetched 'user' object
 
-    # --- Trust Score Calculation for Own Profile (ORM-based) ---
+
+
     reviews_received = ReviewAndRating.objects.filter(reviewee=user)
     avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
     if avg_rating:
@@ -159,18 +151,14 @@ def profile_view(request):
 
 
 def public_profile_view(request, user_id):
-    """
-    Public view of a user's profile. (Remains ORM-based)
-    """
-    # 1. Get the current logged-in user (viewer)
     viewer_id = request.session.get('user_id')
     if not viewer_id:
         return redirect('login')
 
-    # 2. Get the target user (profile owner)
+
     target_user = get_object_or_404(User, pk=user_id)
 
-    # 3. Get Reviews & Score
+
     reviews_received = ReviewAndRating.objects.filter(reviewee=target_user).order_by('-review_date')
     avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
     if avg_rating:
@@ -179,7 +167,7 @@ def public_profile_view(request, user_id):
         avg_rating = 0.0
     review_count = reviews_received.count()
 
-    # 4. Get Open Requests (Only if target is Borrower)
+
     open_requests = []
     if target_user.type == 'B':
         open_requests = LoanRequest.objects.filter(borrower=target_user, status='PENDING').order_by('-request_date')
@@ -202,18 +190,15 @@ def login_view(request):
         password = request.POST.get('password')
 
         try:
-            # --- LOGIN via Stored Procedure ---
+            # LOGIN
             user_id = None
             with connection.cursor() as cursor:
-                # 1. Call the procedure, passing input parameters and a placeholder for the output
                 cursor.execute("CALL authenticate_user(%s, %s, @p_out_user_id)", [identity, password])
-                # 2. Fetch the output variable result
                 cursor.execute("SELECT @p_out_user_id")
                 row = cursor.fetchone()
                 user_id = row[0] if row else None
 
             if user_id:
-                # Fetch user data using ORM (to get name for message)
                 user = User.objects.get(user_id=user_id)
                 request.session['user_id'] = user.user_id
                 messages.success(request, f"Welcome back, {user.name}!")
@@ -242,29 +227,29 @@ def register_view(request):
 
         school_id_file_path = school_id_file.name if school_id_file else None
 
-        # Basic ORM check before SP call to give a user-friendly error
+
         if User.objects.filter(Q(email=email) | Q(student_id=student_id)).exists():
             messages.error(request, "Email or Student ID already registered.")
             return render(request, 'register.html')
 
         try:
-            # --- REGISTER via Stored Procedure ---
+
             new_user_id = None
             with connection.cursor() as cursor:
-                # 1. Call the procedure
+
                 cursor.execute("CALL create_user_and_wallet(%s, %s, %s, %s, %s, %s, %s, %s, @p_out_user_id)",
                                [name, student_id, email, password, address, contact, role, school_id_file_path])
-                # 2. Fetch the output variable result
+
                 cursor.execute("SELECT @p_out_user_id")
                 row = cursor.fetchone()
                 new_user_id = row[0] if row else None
 
             if new_user_id:
-                # Log the user in
+
                 user = User.objects.get(user_id=new_user_id)
                 request.session['user_id'] = user.user_id
                 messages.success(request, "Account created successfully!")
-                return redirect('dashboard')
+                return redirect('login')
             else:
                 messages.error(request, "Registration failed: Database error.")
 
@@ -306,7 +291,7 @@ def settings_view(request):
         return redirect('login')
 
     if request.method == 'POST':
-        # --- 1. Change Password Logic ---
+
         current_password = request.POST.get('current_password')
         new_password = request.POST.get('new_password')
         confirm_password = request.POST.get('confirm_password')
@@ -315,7 +300,7 @@ def settings_view(request):
         email_changed = False
 
         try:
-            # Check Password
+
             if current_password:
                 if user.password != current_password:
                     messages.error(request, "Incorrect current password.")
@@ -327,17 +312,16 @@ def settings_view(request):
                     user.password = new_password
                     password_changed = True
 
-            # --- 2. Change Email Logic ---
+
             new_email = request.POST.get('new_email')
             if new_email and new_email != user.email:
-                # Ensure email isn't taken by someone else
+
                 if User.objects.filter(email=new_email).exclude(user_id=user.user_id).exists():
                     messages.error(request, "This email address is already in use.")
                 else:
                     user.email = new_email
                     email_changed = True
 
-            # --- Save Changes ---
             if password_changed or email_changed:
                 user.save()
                 if password_changed:
