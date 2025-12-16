@@ -2,13 +2,21 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.views import View
 from django.db.models import Q, Avg
+from django.db import connection
 from .models import User, BorrowerProfile, LenderProfile
-from wallet.models import Wallet
-from review.models import ReviewAndRating
-from loan.models import LoanRequest
+from ..loan.models import LoanRequest
+from ..review.models import ReviewAndRating
 
 
-# --- Helper Function ---
+def dict_fetch_one(cursor):
+    "Return the single row from a cursor as a dictionary"
+    columns = [col[0] for col in cursor.description]
+    row = cursor.fetchone()
+    if row:
+        return dict(zip(columns, row))
+    return None
+
+
 def get_current_user(request):
     user_id = request.session.get('user_id')
     if user_id:
@@ -30,8 +38,6 @@ def get_current_user(request):
     return None
 
 
-# --- Views ---
-
 def dashboard_view(request):
     user = get_current_user(request)
     if not user:
@@ -45,36 +51,61 @@ def profile_view(request):
         return redirect('login')
 
     if request.method == 'POST':
+        #UPDATE PROFILE via Stored Procedure
         try:
-            user.name = request.POST.get('name')
-            user.address = request.POST.get('address')
-            user.contact_number = request.POST.get('contact_number')
-            user.email = request.POST.get('email')
+            # Gather all data from POST
+            name = request.POST.get('name')
+            address = request.POST.get('address')
+            contact_number = request.POST.get('contact_number')
+            email = request.POST.get('email')
 
-            if user.type == 'B':
-                income_str = request.POST.get('income')
-                if income_str and income_str.strip():
-                    user.income = income_str
-                else:
-                    user.income = 0
-                user.employment_status = request.POST.get('employment_status')
+            # Type-specific fields (must be passed to the comprehensive SP)
+            income = request.POST.get('income', '0.00')
+            employment_status = request.POST.get('employment_status', '')
+            min_investment_amount = request.POST.get('min_investment_amount', '0.00')
+            investment_preference = request.POST.get('investment_preference', '')
 
-            elif user.type == 'L':
-                min_inv_str = request.POST.get('min_investment_amount')
-                if min_inv_str and min_inv_str.strip():
-                    user.min_investment_amount = min_inv_str
-                else:
-                    user.min_investment_amount = 0
-                user.investment_preference = request.POST.get('investment_preference')
+            with connection.cursor() as cursor:
+                # Call the update procedure
+                cursor.execute("CALL update_user_profile(%s, %s, %s, %s, %s, %s, %s, %s, %s)", [
+                    user.user_id, name, address, contact_number, email,
+                    income, employment_status, min_investment_amount, investment_preference
+                ])
 
-            user.save()
+            # Re-fetch the user object to ensure session data is fresh
             messages.success(request, "Profile updated successfully!")
             return redirect('profile')
 
         except Exception as e:
             messages.error(request, f"Error updating profile: {e}")
 
-    # --- Trust Score Calculation for Own Profile ---
+    # --- READ PROFILE via Stored Procedure (for GET request display) ---
+    try:
+        with connection.cursor() as cursor:
+            # Execute the procedure to get the profile data as a result set
+            cursor.execute("CALL get_user_profile(%s)", [user.user_id])
+            profile_data = dict_fetch_one(cursor)
+
+        if profile_data:
+            # Manually update the ORM-fetched user object attributes from the SP result
+            user.name = profile_data.get('name', user.name)
+            user.address = profile_data.get('address', user.address)
+            user.contact_number = profile_data.get('contact_number', user.contact_number)
+            user.email = profile_data.get('email', user.email)
+
+            # Update type-specific fields for template display
+            if user.type == 'B':
+                user.income = profile_data.get('income', user.income)
+                user.employment_status = profile_data.get('employment_status', user.employment_status)
+            elif user.type == 'L':
+                user.min_investment_amount = profile_data.get('min_investment_amount', user.min_investment_amount)
+                user.investment_preference = profile_data.get('investment_preference', user.investment_preference)
+
+    except Exception as e:
+        messages.warning(request, f"Error fetching profile data via SP: {e}")
+        # Fallback is to use the initial ORM-fetched 'user' object
+
+    # --- Trust Score Calculation for Own Profile (ORM-based) ---
     reviews_received = ReviewAndRating.objects.filter(reviewee=user)
     avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
     if avg_rating:
@@ -95,7 +126,7 @@ def profile_view(request):
 
 def public_profile_view(request, user_id):
     """
-    Public view of a user's profile.
+    Public view of a user's profile. (Remains ORM-based)
     """
     # 1. Get the current logged-in user (viewer)
     viewer_id = request.session.get('user_id')
@@ -137,13 +168,27 @@ def login_view(request):
         password = request.POST.get('password')
 
         try:
-            user = User.objects.filter(Q(email=identity) | Q(student_id=identity), password=password).first()
-            if user:
+            # --- LOGIN via Stored Procedure ---
+            user_id = None
+            with connection.cursor() as cursor:
+                # 1. Call the procedure, passing input parameters and a placeholder for the output
+                cursor.execute("CALL authenticate_user(%s, %s, @p_out_user_id)", [identity, password])
+                # 2. Fetch the output variable result
+                cursor.execute("SELECT @p_out_user_id")
+                row = cursor.fetchone()
+                user_id = row[0] if row else None
+
+            if user_id:
+                # Fetch user data using ORM (to get name for message)
+                user = User.objects.get(user_id=user_id)
                 request.session['user_id'] = user.user_id
                 messages.success(request, f"Welcome back, {user.name}!")
                 return redirect('dashboard')
             else:
                 messages.error(request, "Invalid credentials.")
+
+        except User.DoesNotExist:
+            messages.error(request, "Invalid credentials.")
         except Exception as e:
             messages.error(request, f"Login Error: {e}")
 
@@ -161,47 +206,33 @@ def register_view(request):
         role = request.POST.get('role')
         school_id_file = request.FILES.get('school_id_file')
 
+        school_id_file_path = school_id_file.name if school_id_file else None
+
+        # Basic ORM check before SP call to give a user-friendly error
+        if User.objects.filter(Q(email=email) | Q(student_id=student_id)).exists():
+            messages.error(request, "Email or Student ID already registered.")
+            return render(request, 'register.html')
+
         try:
-            if User.objects.filter(email=email).exists():
-                messages.error(request, "Email already registered.")
-                return render(request, 'register.html')
+            # --- REGISTER via Stored Procedure ---
+            new_user_id = None
+            with connection.cursor() as cursor:
+                # 1. Call the procedure
+                cursor.execute("CALL create_user_and_wallet(%s, %s, %s, %s, %s, %s, %s, %s, @p_out_user_id)",
+                               [name, student_id, email, password, address, contact, role, school_id_file_path])
+                # 2. Fetch the output variable result
+                cursor.execute("SELECT @p_out_user_id")
+                row = cursor.fetchone()
+                new_user_id = row[0] if row else None
 
-            if User.objects.filter(student_id=student_id).exists():
-                messages.error(request, "Student ID already registered.")
-                return render(request, 'register.html')
-
-            new_user = None
-
-            if role == 'L':
-                new_user = LenderProfile.objects.create(
-                    name=name,
-                    email=email,
-                    password=password,
-                    student_id=student_id,
-                    address=address,
-                    contact_number=contact,
-                    type='L',
-                    school_id_file=school_id_file,
-                    min_investment_amount=500.00
-                )
+            if new_user_id:
+                # Log the user in
+                user = User.objects.get(user_id=new_user_id)
+                request.session['user_id'] = user.user_id
+                messages.success(request, "Account created successfully!")
+                return redirect('dashboard')
             else:
-                new_user = BorrowerProfile.objects.create(
-                    name=name,
-                    email=email,
-                    password=password,
-                    student_id=student_id,
-                    address=address,
-                    contact_number=contact,
-                    type='B',
-                    school_id_file=school_id_file,
-                    credit_score=0
-                )
-
-            Wallet.objects.create(user=new_user, balance=0.00)
-            request.session['user_id'] = new_user.user_id
-
-            messages.success(request, "Account created successfully!")
-            return redirect('dashboard')
+                messages.error(request, "Registration failed: Database error.")
 
         except Exception as e:
             messages.error(request, f"Registration failed: {e}")
@@ -281,8 +312,6 @@ def settings_view(request):
                     messages.success(request, "Email updated successfully.")
             elif not current_password and not (new_email and new_email != user.email):
                 # No relevant fields filled for password/email change
-                # Only show "No changes" if nothing was attempted (i.e. empty form submit)
-                # But since we check if fields exist, maybe just pass if nothing happened
                 pass
 
         except Exception as e:
