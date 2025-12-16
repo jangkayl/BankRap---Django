@@ -7,12 +7,15 @@ from datetime import timedelta
 from django.http import JsonResponse
 from decimal import Decimal
 from django.views.decorators.http import require_POST
+from django.db import connection
+from django.db.utils import DatabaseError
 
 from .models import User, BorrowerProfile, LenderProfile, Message, Notification
 from wallet.models import Wallet, WalletTransaction
 from review.models import ReviewAndRating
 from loan.models import LoanRequest, LoanOffer, ActiveLoan
 from transaction.models import Transaction
+
 
 # --- Helper Function ---
 def get_current_user(request):
@@ -34,6 +37,79 @@ def get_current_user(request):
         except User.DoesNotExist:
             return None
     return None
+
+
+# --- Helper Functions for Stored Procedures ---
+def execute_stored_procedure(proc_name, params=None):
+    """Execute a stored procedure and return the results."""
+    try:
+        with connection.cursor() as cursor:
+            # Build the SQL query
+            if params:
+                placeholders = ', '.join(['%s'] * len(params))
+                sql = f"CALL {proc_name}({placeholders})"
+                cursor.execute(sql, params)
+            else:
+                sql = f"CALL {proc_name}()"
+                cursor.execute(sql)
+
+            # Fetch all results
+            results = []
+            while True:
+                rows = cursor.fetchall()
+                if rows:
+                    # Get column names
+                    columns = [col[0] for col in cursor.description]
+                    result_set = [dict(zip(columns, row)) for row in rows]
+                    results.append(result_set)
+                if not cursor.nextset():
+                    break
+
+            return results
+    except DatabaseError as e:
+        print(f"Database error in {proc_name}: {e}")
+        return None
+    except Exception as e:
+        print(f"Error executing {proc_name}: {e}")
+        return None
+
+
+def execute_stored_procedure_with_out_params(proc_name, in_params, out_param_names):
+    """Execute a stored procedure with OUT parameters."""
+    try:
+        with connection.cursor() as cursor:
+            # Prepare the call
+            in_placeholders = ', '.join(['%s'] * len(in_params))
+            out_placeholders = ', '.join(['@' + name for name in out_param_names])
+            placeholders = ', '.join([in_placeholders, out_placeholders]) if in_params else out_placeholders
+
+            # Execute the stored procedure
+            if in_params:
+                cursor.execute(f"CALL {proc_name}({placeholders})", in_params)
+            else:
+                cursor.execute(f"CALL {proc_name}({placeholders})")
+
+            # Get OUT parameter values
+            out_values = {}
+            for name in out_param_names:
+                cursor.execute(f"SELECT @{name}")
+                out_values[name] = cursor.fetchone()[0]
+
+            # Get any result sets
+            results = []
+            while True:
+                rows = cursor.fetchall()
+                if rows:
+                    columns = [col[0] for col in cursor.description]
+                    result_set = [dict(zip(columns, row)) for row in rows]
+                    results.append(result_set)
+                if not cursor.nextset():
+                    break
+
+            return results, out_values
+    except DatabaseError as e:
+        print(f"Database error in {proc_name}: {e}")
+        return None, None
 
 
 # --- Dashboard View ---
@@ -184,7 +260,6 @@ def dashboard_view(request):
     return render(request, 'account/dashboard.html', context)
 
 
-# --- Other views remain the same ---
 def profile_view(request):
     user = get_current_user(request)
     if not user:
@@ -230,15 +305,41 @@ def profile_view(request):
         except Exception as e:
             messages.error(request, f"Error updating profile: {e}")
 
-    # --- Trust Score Calculation for Own Profile ---
-    reviews_received = ReviewAndRating.objects.filter(reviewee=user)
-    avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
-    if avg_rating:
-        avg_rating = round(avg_rating, 1)
-    else:
-        avg_rating = 0.0
+    # --- Trust Score Calculation using Stored Procedure ---
+    try:
+        # Use stored procedure to get review statistics
+        results, out_values = execute_stored_procedure_with_out_params(
+            'GetUserReviewStats',
+            [user.user_id],
+            ['p_avg_rating', 'p_total_reviews', 'p_5_star', 'p_4_star', 'p_3_star', 'p_2_star', 'p_1_star']
+        )
 
-    review_count = reviews_received.count()
+        if results and out_values:
+            avg_rating = float(out_values.get('p_avg_rating', 0))
+            review_count = out_values.get('p_total_reviews', 0)
+
+            # Get detailed breakdown from result set
+            if results and len(results) > 0 and len(results[0]) > 0:
+                review_stats = results[0][0]
+        else:
+            # Fallback to Django ORM if stored procedure fails
+            reviews_received = ReviewAndRating.objects.filter(reviewee=user)
+            avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
+            if avg_rating:
+                avg_rating = round(avg_rating, 1)
+            else:
+                avg_rating = 0.0
+            review_count = reviews_received.count()
+    except Exception as e:
+        print(f"Error getting review stats: {e}")
+        # Fallback to Django ORM
+        reviews_received = ReviewAndRating.objects.filter(reviewee=user)
+        avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
+        if avg_rating:
+            avg_rating = round(avg_rating, 1)
+        else:
+            avg_rating = 0.0
+        review_count = reviews_received.count()
 
     # --- Additional Dynamic Statistics ---
 
@@ -266,7 +367,7 @@ def profile_view(request):
         )
         total_borrowed = total_borrowed_result['total'] or Decimal('0')
 
-        # Calculate total repaid amount (simplified) - FIXED: Use Decimal instead of float
+        # Calculate total repaid amount (simplified)
         total_repaid = total_borrowed * Decimal('0.7')  # Assuming 70% repayment for demo
 
         # Get recent loan requests
@@ -298,7 +399,7 @@ def profile_view(request):
         )
         total_invested = total_invested_result['total'] or Decimal('0')
 
-        # Calculate total returns (simplified) - FIXED: Use Decimal instead of float
+        # Calculate total returns (simplified)
         total_returns = total_invested * Decimal('0.15')  # Assuming 15% return for demo
 
         # Get successful investments (loans that have been repaid)
@@ -321,7 +422,7 @@ def profile_view(request):
         }
 
     # Get recent reviews
-    recent_reviews = reviews_received.order_by('-review_date')[:3]
+    recent_reviews = ReviewAndRating.objects.filter(reviewee=user).order_by('-review_date')[:3]
 
     # Calculate member since
     if hasattr(user, 'profile_created_date'):
@@ -341,6 +442,7 @@ def profile_view(request):
     }
 
     return render(request, 'account/profile.html', context)
+
 
 def public_profile_view(request, user_id):
     """
@@ -366,14 +468,36 @@ def public_profile_view(request, user_id):
         except LenderProfile.DoesNotExist:
             pass
 
-    # 3. Get Reviews & Score
-    reviews_received = ReviewAndRating.objects.filter(reviewee=target_user).order_by('-review_date')
-    avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
-    if avg_rating:
-        avg_rating = round(avg_rating, 1)
-    else:
-        avg_rating = 0.0
-    review_count = reviews_received.count()
+    # 3. Get Reviews & Score using Stored Procedure
+    try:
+        results, out_values = execute_stored_procedure_with_out_params(
+            'GetUserReviewStats',
+            [target_user.user_id],
+            ['p_avg_rating', 'p_total_reviews', 'p_5_star', 'p_4_star', 'p_3_star', 'p_2_star', 'p_1_star']
+        )
+
+        if results and out_values:
+            avg_rating = float(out_values.get('p_avg_rating', 0))
+            review_count = out_values.get('p_total_reviews', 0)
+        else:
+            # Fallback to Django ORM
+            reviews_received = ReviewAndRating.objects.filter(reviewee=target_user)
+            avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
+            if avg_rating:
+                avg_rating = round(avg_rating, 1)
+            else:
+                avg_rating = 0.0
+            review_count = reviews_received.count()
+    except Exception as e:
+        print(f"Error getting review stats: {e}")
+        # Fallback to Django ORM
+        reviews_received = ReviewAndRating.objects.filter(reviewee=target_user)
+        avg_rating = reviews_received.aggregate(Avg('rating'))['rating__avg']
+        if avg_rating:
+            avg_rating = round(avg_rating, 1)
+        else:
+            avg_rating = 0.0
+        review_count = reviews_received.count()
 
     # 4. Get Open Requests (Only if target is Borrower)
     open_requests = []
@@ -475,11 +599,14 @@ def public_profile_view(request, user_id):
     # 8. Check if viewer is looking at their own profile
     is_own_profile = (int(viewer_id) == int(user_id))
 
+    # 9. Get recent reviews for display
+    recent_reviews = ReviewAndRating.objects.filter(reviewee=target_user).order_by('-review_date')[:5]
+
     context = {
         'profile_user': target_user,  # The user being viewed
         'avg_rating': avg_rating,
         'review_count': review_count,
-        'reviews': reviews_received[:5],  # Limit to 5 most recent
+        'reviews': recent_reviews,  # Limit to 5 most recent
         'open_requests': open_requests,
         'viewer_id': viewer_id,
         'user_stats': user_stats,
@@ -490,6 +617,7 @@ def public_profile_view(request, user_id):
     }
 
     return render(request, 'account/public_profile.html', context)
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -593,80 +721,135 @@ def messaging_view(request):
     partner = None
     active_chat_id = None
 
-    # Get all users the current user has messaged with
-    sent_to = User.objects.filter(
-        received_messages__sender=user
-    ).distinct()
-
-    received_from = User.objects.filter(
-        sent_messages__receiver=user
-    ).distinct()
-
-    # Combine and remove duplicates
-    all_partners = (sent_to | received_from).distinct()
-
-    # Format conversations for the sidebar
+    # Get conversations using stored procedure
     conversations = []
-    for partner_user in all_partners:
-        # Get last message in conversation
-        last_message = Message.objects.filter(
-            (Q(sender=user) & Q(receiver=partner_user)) |
-            (Q(sender=partner_user) & Q(receiver=user))
-        ).order_by('-created_at').first()
+    try:
+        results = execute_stored_procedure('GetUserConversations', [user.user_id, partner_id])
+        if results and len(results) > 0:
+            conversations = results[0]
+    except Exception as e:
+        print(f"Error getting conversations: {e}")
+        # Fallback to Django ORM
+        # Get all users the current user has messaged with
+        sent_to = User.objects.filter(
+            received_messages__sender=user
+        ).distinct()
 
-        # Count unread messages from this partner
-        unread_count = Message.objects.filter(
-            sender=partner_user,
-            receiver=user,
-            is_read=False
-        ).count()
+        received_from = User.objects.filter(
+            sent_messages__receiver=user
+        ).distinct()
 
-        conversations.append({
-            'user_id': partner_user.user_id,
-            'name': partner_user.name,
-            'last_message': last_message.content[:50] + "..." if last_message else "No messages yet",
-            'time': last_message.created_at.strftime("%I:%M %p") if last_message else "",
-            'unread': unread_count,
-            'online': False,  # You'd need online status tracking
-            'active': str(partner_user.user_id) == partner_id
-        })
+        # Combine and remove duplicates
+        all_partners = (sent_to | received_from).distinct()
 
-    # Get messages with selected partner
+        # Format conversations for the sidebar
+        for partner_user in all_partners:
+            # Get last message in conversation
+            last_message = Message.objects.filter(
+                (Q(sender=user) & Q(receiver=partner_user)) |
+                (Q(sender=partner_user) & Q(receiver=user))
+            ).order_by('-created_at').first()
+
+            # Count unread messages from this partner
+            unread_count = Message.objects.filter(
+                sender=partner_user,
+                receiver=user,
+                is_read=False
+            ).count()
+
+            conversations.append({
+                'user_id': partner_user.user_id,
+                'name': partner_user.name,
+                'last_message': last_message.content[:50] + "..." if last_message else "No messages yet",
+                'time': last_message.created_at.strftime("%I:%M %p") if last_message else "",
+                'unread_count': unread_count,
+                'online': False,
+                'is_active': str(partner_user.user_id) == partner_id
+            })
+
+    # Get messages with selected partner using stored procedure
     messages_list = []
     if partner_id:
         try:
             partner = User.objects.get(user_id=partner_id)
-            messages_list = Message.objects.filter(
-                (Q(sender=user) & Q(receiver=partner)) |
-                (Q(sender=partner) & Q(receiver=user))
-            ).order_by('created_at')
+            # Use stored procedure to get messages
+            try:
+                results = execute_stored_procedure('GetConversationMessages',
+                                                   [user.user_id, partner.user_id, 0, 50])
+                if results and len(results) > 0:
+                    messages_list = results[0]
 
-            # Mark messages as read
-            Message.objects.filter(sender=partner, receiver=user, is_read=False).update(is_read=True)
+                    # Convert the stored procedure results to a format compatible with template
+                    for msg in messages_list:
+                        msg['sender'] = {'user_id': msg['sender_id'], 'name': msg['sender_name']}
+                        msg['receiver'] = {'user_id': msg['receiver_id'], 'name': msg['receiver_name']}
+                else:
+                    # Fallback to Django ORM
+                    messages_list = Message.objects.filter(
+                        (Q(sender=user) & Q(receiver=partner)) |
+                        (Q(sender=partner) & Q(receiver=user))
+                    ).order_by('created_at')
+            except Exception as e:
+                print(f"Error getting messages via stored procedure: {e}")
+                # Fallback to Django ORM
+                messages_list = Message.objects.filter(
+                    (Q(sender=user) & Q(receiver=partner)) |
+                    (Q(sender=partner) & Q(receiver=user))
+                ).order_by('created_at')
+
         except User.DoesNotExist:
             messages_list = []
 
-    # Handle message sending
+    # Handle message sending using stored procedure
     if request.method == 'POST' and partner:
         content = request.POST.get('content', '').strip()
         if content:
-            # Create the message
-            new_message = Message.objects.create(
-                sender=user,
-                receiver=partner,
-                content=content
-            )
+            try:
+                # Use stored procedure to create message with notification
+                with connection.cursor() as cursor:
+                    cursor.callproc('CreateMessageWithNotification',
+                                    [user.user_id, partner.user_id, content, 0, 0])
+                    cursor.execute('SELECT @_CreateMessageWithNotification_4')
+                    result = cursor.fetchone()
 
-            # Create notification for the receiver
-            Notification.objects.create(
-                user=partner,
-                notification_type='MESSAGE',
-                title=f'New Message from {user.name}',
-                message=f'{content[:100]}...' if len(content) > 100 else content,
-                priority='MEDIUM'
-            )
+                    if result:
+                        message_id = result[0]
+                        messages.success(request, "Message sent!")
+                    else:
+                        # Fallback to Django ORM
+                        new_message = Message.objects.create(
+                            sender=user,
+                            receiver=partner,
+                            content=content
+                        )
+                        # Create notification for the receiver
+                        Notification.objects.create(
+                            user=partner,
+                            notification_type='MESSAGE',
+                            title=f'New Message from {user.name}',
+                            message=f'{content[:100]}...' if len(content) > 100 else content,
+                            priority='MEDIUM'
+                        )
+                        message_id = new_message.message_id
 
-            return redirect(f'{request.path}?with={partner.user_id}')
+                return redirect(f'{request.path}?with={partner.user_id}')
+            except Exception as e:
+                print(f"Error sending message via stored procedure: {e}")
+                # Fallback to Django ORM
+                new_message = Message.objects.create(
+                    sender=user,
+                    receiver=partner,
+                    content=content
+                )
+                # Create notification for the receiver
+                Notification.objects.create(
+                    user=partner,
+                    notification_type='MESSAGE',
+                    title=f'New Message from {user.name}',
+                    message=f'{content[:100]}...' if len(content) > 100 else content,
+                    priority='MEDIUM'
+                )
+                return redirect(f'{request.path}?with={partner.user_id}')
         else:
             messages.error(request, "Message cannot be empty")
 
@@ -680,7 +863,7 @@ def messaging_view(request):
 
 
 def get_new_messages(request):
-    """AJAX endpoint to get new messages"""
+    """AJAX endpoint to get new messages using stored procedure"""
     user = get_current_user(request)
     if not user:
         return JsonResponse({'error': 'Not authenticated'}, status=401)
@@ -691,31 +874,58 @@ def get_new_messages(request):
     try:
         partner = User.objects.get(user_id=partner_id)
 
-        # Get new messages
-        new_messages = Message.objects.filter(
-            (Q(sender=user) & Q(receiver=partner)) |
-            (Q(sender=partner) & Q(receiver=user)),
-            message_id__gt=last_message_id
-        ).order_by('created_at')
+        # Use stored procedure to get new messages
+        try:
+            results = execute_stored_procedure('GetConversationMessages',
+                                               [user.user_id, partner.user_id, last_message_id, 100])
 
-        # Mark as read
-        Message.objects.filter(sender=partner, receiver=user, is_read=False).update(is_read=True)
+            if results and len(results) > 0:
+                messages_data = results[0]
 
-        messages_data = []
-        for msg in new_messages:
-            messages_data.append({
-                'id': msg.message_id,
-                'sender_id': msg.sender.user_id,
-                'content': msg.content,
-                'time': msg.created_at.strftime("%I:%M %p"),
-                'date': msg.created_at.strftime("%b %d")
+                formatted_messages = []
+                for msg in messages_data:
+                    formatted_messages.append({
+                        'id': msg['message_id'],
+                        'sender_id': msg['sender_id'],
+                        'sender_name': msg['sender_name'],
+                        'content': msg['content'],
+                        'time': msg['created_at'].strftime("%I:%M %p") if isinstance(msg['created_at'], datetime) else
+                        msg['created_at'],
+                        'date': msg['created_at'].strftime("%b %d") if isinstance(msg['created_at'], datetime) else ""
+                    })
+
+                return JsonResponse({
+                    'success': True,
+                    'messages': formatted_messages,
+                    'has_new': len(formatted_messages) > 0
+                })
+        except Exception as e:
+            print(f"Error getting new messages via stored procedure: {e}")
+            # Fallback to Django ORM
+            new_messages = Message.objects.filter(
+                (Q(sender=user) & Q(receiver=partner)) |
+                (Q(sender=partner) & Q(receiver=user)),
+                message_id__gt=last_message_id
+            ).order_by('created_at')
+
+            # Mark as read
+            Message.objects.filter(sender=partner, receiver=user, is_read=False).update(is_read=True)
+
+            messages_data = []
+            for msg in new_messages:
+                messages_data.append({
+                    'id': msg.message_id,
+                    'sender_id': msg.sender.user_id,
+                    'content': msg.content,
+                    'time': msg.created_at.strftime("%I:%M %p"),
+                    'date': msg.created_at.strftime("%b %d")
+                })
+
+            return JsonResponse({
+                'success': True,
+                'messages': messages_data,
+                'has_new': len(messages_data) > 0
             })
-
-        return JsonResponse({
-            'success': True,
-            'messages': messages_data,
-            'has_new': len(messages_data) > 0
-        })
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -733,6 +943,7 @@ def start_conversation(request, user_id):
     except User.DoesNotExist:
         messages.error(request, "User not found")
         return redirect('dashboard')
+
 
 def settings_view(request):
     user = get_current_user(request)
@@ -814,46 +1025,72 @@ def notifications_view(request):
         messages.success(request, f"Deleted {deleted_count} read notifications!")
         return redirect('notifications')
 
-    # Get notifications for the current user
-    notifications = Notification.objects.filter(user=user)
+    # Get notifications using stored procedure
+    notifications = []
+    counts = {
+        'all': 0,
+        'unread': 0,
+        'read': 0,
+        'loan_actions': 0,
+        'verifications': 0,
+        'messages': 0
+    }
 
-    # Apply filters
-    if filter_type == 'unread':
-        notifications = notifications.filter(is_read=False)
-    elif filter_type == 'loan_actions':
-        notification_types = ['LOAN_APPROVED', 'LOAN_OFFER', 'OFFER_ACCEPTED', 'LOAN_FUNDED', 'LOAN_REJECTED']
-        notifications = notifications.filter(notification_type__in=notification_types)
-    elif filter_type == 'verifications':
-        notifications = notifications.filter(notification_type='VERIFICATION')
-    elif filter_type == 'messages':
-        notifications = notifications.filter(notification_type='MESSAGE')
+    try:
+        results = execute_stored_procedure('GetUserNotifications',
+                                           [user.user_id, filter_type, 50, 0])
 
-    # Order by creation date (newest first)
-    notifications = notifications.order_by('-created_at')
+        if results and len(results) >= 2:
+            # First result set contains notifications
+            notifications = results[0]
+            # Second result set contains counts
+            if len(results) > 1 and len(results[1]) > 0:
+                count_row = results[1][0]
+                counts = {
+                    'all': count_row.get('all_count', 0),
+                    'unread': count_row.get('unread_count', 0),
+                    'read': count_row.get('read_count', 0),
+                    'loan_actions': count_row.get('loan_actions_count', 0),
+                    'verifications': count_row.get('verifications_count', 0),
+                    'messages': count_row.get('messages_count', 0)
+                }
+    except Exception as e:
+        print(f"Error getting notifications via stored procedure: {e}")
+        # Fallback to Django ORM
+        notifications_qs = Notification.objects.filter(user=user)
 
-    # Get counts for filter tabs
-    all_count = Notification.objects.filter(user=user).count()
-    unread_count = Notification.objects.filter(user=user, is_read=False).count()
-    read_count = all_count - unread_count
-    loan_actions_count = Notification.objects.filter(
-        user=user,
-        notification_type__in=['LOAN_APPROVED', 'LOAN_OFFER', 'OFFER_ACCEPTED', 'LOAN_FUNDED', 'LOAN_REJECTED']
-    ).count()
-    verifications_count = Notification.objects.filter(user=user, notification_type='VERIFICATION').count()
-    messages_count = Notification.objects.filter(user=user, notification_type='MESSAGE').count()
+        # Apply filters
+        if filter_type == 'unread':
+            notifications_qs = notifications_qs.filter(is_read=False)
+        elif filter_type == 'loan_actions':
+            notification_types = ['LOAN_APPROVED', 'LOAN_OFFER', 'OFFER_ACCEPTED', 'LOAN_FUNDED', 'LOAN_REJECTED']
+            notifications_qs = notifications_qs.filter(notification_type__in=notification_types)
+        elif filter_type == 'verifications':
+            notifications_qs = notifications_qs.filter(notification_type='VERIFICATION')
+        elif filter_type == 'messages':
+            notifications_qs = notifications_qs.filter(notification_type='MESSAGE')
+
+        # Order by creation date (newest first)
+        notifications = list(notifications_qs.order_by('-created_at'))
+
+        # Get counts for filter tabs
+        counts = {
+            'all': Notification.objects.filter(user=user).count(),
+            'unread': Notification.objects.filter(user=user, is_read=False).count(),
+            'read': Notification.objects.filter(user=user, is_read=True).count(),
+            'loan_actions': Notification.objects.filter(
+                user=user,
+                notification_type__in=['LOAN_APPROVED', 'LOAN_OFFER', 'OFFER_ACCEPTED', 'LOAN_FUNDED', 'LOAN_REJECTED']
+            ).count(),
+            'verifications': Notification.objects.filter(user=user, notification_type='VERIFICATION').count(),
+            'messages': Notification.objects.filter(user=user, notification_type='MESSAGE').count()
+        }
 
     context = {
         'user': user,
         'notifications': notifications,
         'filter_type': filter_type,
-        'counts': {
-            'all': all_count,
-            'unread': unread_count,
-            'read': read_count,
-            'loan_actions': loan_actions_count,
-            'verifications': verifications_count,
-            'messages': messages_count,
-        }
+        'counts': counts
     }
 
     return render(request, 'account/notifications.html', context)
@@ -878,15 +1115,28 @@ def mark_notification_read(request, notification_id):
             return redirect('login')
 
     try:
-        notification = Notification.objects.get(notification_id=notification_id, user=user)
-        notification.is_read = True
-        notification.save()
+        # Try using stored procedure for batch update (single notification)
+        notification_ids = str(notification_id)
+        try:
+            results = execute_stored_procedure('BatchUpdateNotifications',
+                                               [user.user_id, notification_ids, 'read'])
+            if is_ajax:
+                return JsonResponse({'success': True})
+            else:
+                messages.success(request, "Notification marked as read!")
+                return redirect('notifications')
+        except Exception as e:
+            print(f"Error using stored procedure: {e}")
+            # Fallback to Django ORM
+            notification = Notification.objects.get(notification_id=notification_id, user=user)
+            notification.is_read = True
+            notification.save()
 
-        if is_ajax:
-            return JsonResponse({'success': True})
-        else:
-            messages.success(request, "Notification marked as read!")
-            return redirect('notifications')
+            if is_ajax:
+                return JsonResponse({'success': True})
+            else:
+                messages.success(request, "Notification marked as read!")
+                return redirect('notifications')
 
     except Notification.DoesNotExist:
         if is_ajax:
@@ -900,6 +1150,7 @@ def mark_notification_read(request, notification_id):
         else:
             messages.error(request, f"Error marking notification as read: {e}")
             return redirect('notifications')
+
 
 @require_POST
 def delete_notification(request, notification_id):
@@ -922,14 +1173,27 @@ def delete_notification(request, notification_id):
             return redirect('login')
 
     try:
-        notification = Notification.objects.get(notification_id=notification_id, user=user)
-        notification.delete()
+        # Try using stored procedure for batch delete (single notification)
+        notification_ids = str(notification_id)
+        try:
+            results = execute_stored_procedure('BatchUpdateNotifications',
+                                               [user.user_id, notification_ids, 'delete'])
+            if is_ajax:
+                return JsonResponse({'success': True})
+            else:
+                messages.success(request, "Notification deleted!")
+                return redirect('notifications')
+        except Exception as e:
+            print(f"Error using stored procedure: {e}")
+            # Fallback to Django ORM
+            notification = Notification.objects.get(notification_id=notification_id, user=user)
+            notification.delete()
 
-        if is_ajax:
-            return JsonResponse({'success': True})
-        else:
-            messages.success(request, "Notification deleted!")
-            return redirect('notifications')
+            if is_ajax:
+                return JsonResponse({'success': True})
+            else:
+                messages.success(request, "Notification deleted!")
+                return redirect('notifications')
 
     except Notification.DoesNotExist:
         if is_ajax:
