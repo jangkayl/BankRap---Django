@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from bankrap import views as global_views
 from account import views as account_views
 from wallet import views as wallet_views
@@ -45,8 +45,8 @@ urlpatterns = [
 
     path('transactions/', transaction_views.transaction_history, name='transaction_history'),
 
-    path('reviews/', review_views.reviews_view, name='reviews'),
-    path('reviews/create/<int:loan_id>/', review_views.create_review, name='create_review'),
+    # Reviews URL
+    path('reviews/', include('review.urls')),
 
     path('messages/', account_views.messaging_view, name='messaging'),
     path('settings/', account_views.settings_view, name='settings'),
