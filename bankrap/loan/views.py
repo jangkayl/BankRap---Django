@@ -2,14 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db import transaction as db_transaction
 from django.utils import timezone
-from django.db.models import Sum
+from django.db.models import Sum, Case, When, Value, IntegerField
 from datetime import timedelta
 from decimal import Decimal
 from account.models import User, BorrowerProfile, LenderProfile
 from wallet.models import Wallet, WalletTransaction
 from transaction.models import Transaction
 from .models import LoanRequest, LoanOffer, ActiveLoan
-
 
 # --- Helper ---
 def get_current_user(request):
@@ -378,7 +377,6 @@ def pay_loan(request, active_loan_id):
 
     return redirect('repayment_schedule')
 
-
 # --- Stubs & Lists ---
 def loan_request_list(request): return loan_marketplace(request)
 
@@ -406,19 +404,29 @@ def repayment_schedule(request):
     user = get_current_user(request)
     if not user: return redirect('login')
 
-    active_loans = []
+    # 1. Fetch loans based on user type
+    loans_query = ActiveLoan.objects.none()
     if user.type == 'B':
-        active_loans = ActiveLoan.objects.filter(borrower=user).order_by('due_date')
+        loans_query = ActiveLoan.objects.filter(borrower=user)
     elif user.type == 'L':
-        active_loans = ActiveLoan.objects.filter(lender=user).order_by('due_date')
+        loans_query = ActiveLoan.objects.filter(lender=user)
 
-    active_count = active_loans.filter(status='ACTIVE').count()
+    # 2. Sort Logic: ACTIVE loans first (assigned value 0), others second (value 1), then by due date
+    active_loans = loans_query.annotate(
+        status_priority=Case(
+            When(status='ACTIVE', then=Value(0)),
+            default=Value(1),
+            output_field=IntegerField(),
+        )
+    ).order_by('status_priority', 'due_date')
+
+    active_count = loans_query.filter(status='ACTIVE').count()
 
     # Calculate Stats
-    total_due = active_loans.filter(status='ACTIVE').aggregate(Sum('total_repayment'))['total_repayment__sum'] or 0
-    total_paid = active_loans.filter(status='PAID').aggregate(Sum('total_repayment'))['total_repayment__sum'] or 0
+    total_due = loans_query.filter(status='ACTIVE').aggregate(Sum('total_repayment'))['total_repayment__sum'] or 0
+    total_paid = loans_query.filter(status='PAID').aggregate(Sum('total_repayment'))['total_repayment__sum'] or 0
 
-    next_payment = active_loans.filter(status='ACTIVE').order_by('due_date').first()
+    next_payment = loans_query.filter(status='ACTIVE').order_by('due_date').first()
     next_amount = next_payment.total_repayment if next_payment else 0
     next_date = next_payment.due_date if next_payment else None
 

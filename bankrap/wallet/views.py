@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db import connection
+from django.utils import timezone
 from decimal import Decimal
 from account.models import User
 from .models import Wallet, WalletTransaction
 
 
-# --- Helper ---
 def get_current_user(request):
     user_id = request.session.get('user_id')
     if user_id:
@@ -17,17 +18,12 @@ def get_current_user(request):
     return None
 
 
-# --- Views ---
-
 def wallet_view(request):
     user = get_current_user(request)
     if not user:
         return redirect('login')
 
-    # Ensure wallet exists (create if missing, though register usually handles this)
     wallet, created = Wallet.objects.get_or_create(user=user)
-
-    # Fetch transactions
     transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-transaction_date')
 
     return render(request, 'wallet/wallet.html', {
@@ -44,29 +40,27 @@ def add_funds(request):
 
     if request.method == 'POST':
         amount_str = request.POST.get('amount')
-        reference_number = request.POST.get('reference_number')  # Get Ref Number
+        reference_number = request.POST.get('reference_number')
 
         try:
             amount = Decimal(amount_str)
-            wallet = Wallet.objects.get(user=user)
+            if amount <= 0:
+                raise ValidationError("Amount must be positive.")
 
-            # 1. Update Balance
-            wallet.deposit(amount)
+            current_time = timezone.now()
 
-            # 2. Record Transaction with Reference Number
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                amount=amount,
-                transaction_type="DEPOSIT",
-                reference_number=reference_number  # Save Ref Number
-            )
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "CALL sp_add_funds(%s, %s, %s, %s)",
+                    [user.user_id, amount, reference_number, current_time]
+                )
 
             messages.success(request, f"Successfully added ₱{amount}")
 
         except (ValueError, ValidationError) as e:
             messages.error(request, f"Error adding funds: {e}")
-        except Wallet.DoesNotExist:
-            messages.error(request, "Wallet not found.")
+        except Exception as e:
+            messages.error(request, f"Database error: {e}")
 
     return redirect('wallet')
 
@@ -78,32 +72,35 @@ def withdraw_funds(request):
 
     if request.method == 'POST':
         amount_str = request.POST.get('amount')
-        account_details = request.POST.get('account')  # e.g. Gcash Number
+        account_details = request.POST.get('account')
 
         try:
             amount = Decimal(amount_str)
-            wallet = Wallet.objects.get(user=user)
+            if amount <= 0:
+                raise ValidationError("Amount must be positive.")
 
-            # 1. Update Balance (Model raises ValidationError if insufficient)
-            wallet.withdraw(amount)
+            current_time = timezone.now()
 
-            # 2. Record Transaction
-            # We can use reference_number to store the withdrawal destination account for now
-            WalletTransaction.objects.create(
-                wallet=wallet,
-                amount=amount,
-                transaction_type="WITHDRAW",
-                reference_number=f"To: {account_details}"
-            )
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "CALL sp_withdraw_funds(%s, %s, %s, %s, @status, @message)",
+                    [user.user_id, amount, account_details, current_time]
+                )
 
-            messages.success(request, f"Successfully withdrew ₱{amount}")
+                cursor.execute("SELECT @status, @message")
+                result = cursor.fetchone()
 
-        except ValidationError as e:
-            # Catches "Insufficient wallet balance" from model
-            messages.error(request, e.message)
-        except ValueError:
-            messages.error(request, "Invalid amount entered.")
-        except Wallet.DoesNotExist:
-            messages.error(request, "Wallet not found.")
+                status = result[0]
+                message = result[1]
+
+            if status == 'SUCCESS':
+                messages.success(request, f"Successfully withdrew ₱{amount}")
+            else:
+                messages.error(request, message)
+
+        except (ValueError, ValidationError) as e:
+            messages.error(request, f"Invalid input: {e}")
+        except Exception as e:
+            messages.error(request, f"System error: {e}")
 
     return redirect('wallet')
